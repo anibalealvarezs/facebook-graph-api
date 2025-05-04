@@ -3,7 +3,9 @@
 namespace Anibalealvarezs\FacebookGraphApi;
 
 use Anibalealvarezs\ApiSkeleton\Clients\BearerTokenClient;
+use Anibalealvarezs\FacebookGraphApi\Enums\PageFieldsByPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\TokenSample;
+use Anibalealvarezs\FacebookGraphApi\Enums\UserFieldsByPermission;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -316,30 +318,70 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * @return Response
+     * @param UserFieldsByPermission[] $permissions
+     * @return array
      * @throws GuzzleException
      */
-    public function getMe(): Response
+    public function getMe(
+        array $permissions = [],
+    ): array
     {
         $endpoint = 'v22.0/me';
 
-        return $this->performRequest(
+        // Merge fields from provided permissions
+        $fields = [];
+        foreach ($permissions as $permission) {
+            if ($permission instanceof UserFieldsByPermission) {
+                $fields[] = $permission->fields();
+            }
+        }
+
+        // Use default fields if no permissions are provided
+        $fieldsString = !empty($fields) ? implode(',', array_unique(explode(',', implode(',', $fields)))) : 'id,name';
+
+        $query = [
+            'fields' => $fieldsString,
+        ];
+
+        $response = $this->performRequest(
             method: 'GET',
             endpoint: $endpoint,
+            query: $query,
         );
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 
     /**
-     * @return Response
+     * @param PageFieldsByPermission[] $permissions
+     * @return array
      * @throws GuzzleException
      */
-    public function getMyPages(): Response
+    public function getMyPages(array $permissions = []): array
     {
         $endpoint = 'v22.0/me/accounts';
 
-        return $this->performRequest(
+        // Merge fields from provided permissions
+        $fields = [];
+        foreach ($permissions as $permission) {
+            if ($permission instanceof PageFieldsByPermission) {
+                $fields[] = $permission->fields();
+            }
+        }
+
+        // Use default fields if no permissions are provided
+        $fieldsString = !empty($fields) ? implode(',', array_unique(explode(',', implode(',', array_filter($fields))))) : 'id,name,access_token';
+
+        $query = [
+            'fields' => $fieldsString,
+        ];
+
+        $response = $this->performRequest(
             method: 'GET',
             endpoint: $endpoint,
+            query: $query,
         );
+
+        return json_decode($response->getBody()->getContents(), true);
     }
 }

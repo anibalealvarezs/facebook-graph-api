@@ -2,7 +2,8 @@
 
 namespace Tests\Unit;
 
-use Anibalealvarezs\FacebookGraphApi\Enums\TokenSample;
+use Anibalealvarezs\FacebookGraphApi\Enums\UserFieldsByPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\PageFieldsByPermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
@@ -18,8 +19,6 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use ReflectionException;
 
 class FacebookGraphApiTest extends TestCase
 {
@@ -72,9 +71,9 @@ class FacebookGraphApiTest extends TestCase
         $client = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
             redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
             userAccessToken: $this->userAccessToken,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
             appAccessToken: $this->appAccessToken,
@@ -112,9 +111,9 @@ class FacebookGraphApiTest extends TestCase
         new FacebookGraphApi(
             userId: '',
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
-            redirectUrl: $this->redirectUrl
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId
         );
     }
 
@@ -126,9 +125,9 @@ class FacebookGraphApiTest extends TestCase
         $client = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
-            redirectUrl: $this->redirectUrl
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId
         );
 
         $newUserId = $this->faker->uuid;
@@ -180,6 +179,51 @@ class FacebookGraphApiTest extends TestCase
      */
     public function testGetMeWithUserTokenSuccess(): void
     {
+        $responseData = [
+            'id' => '123',
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'birthday' => '01/01/1990'
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $permissions = [
+            UserFieldsByPermission::PUBLIC_PROFILE,
+            UserFieldsByPermission::EMAIL,
+            UserFieldsByPermission::USER_BIRTHDAY
+        ];
+        $expectedFields = 'id,name,first_name,last_name,middle_name,picture,link,name_format,third_party_id,updated_time,verified,email,birthday';
+
+        $response = $client->getMe($permissions);
+        $this->assertEquals($responseData, $response);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $this->assertEquals(
+            'https://graph.facebook.com/v22.0/me?fields=' . urlencode($expectedFields),
+            (string)$lastRequest->getUri()
+        );
+        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetMeWithDefaultFields(): void
+    {
         $responseData = ['id' => '123', 'name' => 'Test User'];
         $mock = new MockHandler([
             new Response(200, [], json_encode($responseData)),
@@ -188,19 +232,21 @@ class FacebookGraphApiTest extends TestCase
         $client = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
             redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
             guzzleClient: $guzzle
         );
 
         $response = $client->getMe();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals($responseData, json_decode($response->getBody()->getContents(), true));
+        $this->assertEquals($responseData, $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
-        $this->assertEquals('https://graph.facebook.com/v22.0/me', (string)$lastRequest->getUri());
+        $this->assertEquals(
+            'https://graph.facebook.com/v22.0/me?fields=id%2Cname',
+            (string)$lastRequest->getUri()
+        );
         $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
@@ -226,35 +272,48 @@ class FacebookGraphApiTest extends TestCase
         $client = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
             redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
             userAccessToken: $this->userAccessToken,
             guzzleClient: $guzzle,
-            auth: $authMock,
+            auth: $authMock
         );
 
         $response = $client->getMe();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals($responseData, json_decode($response->getBody()->getContents(), true));
+        $this->assertEquals($responseData, $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
-        $this->assertEquals('https://graph.facebook.com/v22.0/me', (string)$lastRequest->getUri());
+        $this->assertEquals(
+            'https://graph.facebook.com/v22.0/me?fields=id%2Cname',
+            (string)$lastRequest->getUri()
+        );
         $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
     /**
-     *
-     * @throws Exception
      * @throws GuzzleException
+     * @throws Exception
      */
     public function testGetMyPagesWithUserTokenSuccess(): void
     {
         $responseData = [
             'data' => [
-                ['id' => '1', 'name' => 'Page 1'],
-                ['id' => '2', 'name' => 'Page 2'],
+                [
+                    'id' => '1',
+                    'name' => 'Page 1',
+                    'access_token' => 'page_token_1',
+                    'category' => 'Business',
+                    'fan_count' => 15000
+                ],
+                [
+                    'id' => '2',
+                    'name' => 'Page 2',
+                    'access_token' => 'page_token_2',
+                    'category' => 'Community',
+                    'fan_count' => 5000
+                ]
             ]
         ];
         $mock = new MockHandler([
@@ -264,19 +323,73 @@ class FacebookGraphApiTest extends TestCase
         $client = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
             redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $permissions = [
+            PageFieldsByPermission::PAGES_SHOW_LIST,
+            PageFieldsByPermission::PAGES_READ_ENGAGEMENT
+        ];
+        $expectedFields = 'id,name,access_token,category,tasks,is_published,username,is_verified,about,description,fan_count,cover,location,phone,website,email,hours,is_permanently_closed,verification_status,business,engagement,followers_count,new_like_count,rating_count,overall_star_rating,affiliation,company_overview,contact_address,founded,general_info,mission,products';
+
+        $response = $client->getMyPages($permissions);
+        $this->assertEquals($responseData, $response);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $this->assertEquals(
+            'https://graph.facebook.com/v22.0/me/accounts?fields=' . urlencode($expectedFields),
+            (string)$lastRequest->getUri()
+        );
+        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetMyPagesWithDefaultFields(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'id' => '1',
+                    'name' => 'Page 1',
+                    'access_token' => 'page_token_1'
+                ],
+                [
+                    'id' => '2',
+                    'name' => 'Page 2',
+                    'access_token' => 'page_token_2'
+                ]
+            ]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
             guzzleClient: $guzzle
         );
 
         $response = $client->getMyPages();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals($responseData, json_decode($response->getBody()->getContents(), true));
+        $this->assertEquals($responseData, $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
-        $this->assertEquals('https://graph.facebook.com/v22.0/me/accounts', (string)$lastRequest->getUri());
+        $this->assertEquals(
+            'https://graph.facebook.com/v22.0/me/accounts?fields=id%2Cname%2Caccess_token',
+            (string)$lastRequest->getUri()
+        );
         $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
@@ -294,9 +407,9 @@ class FacebookGraphApiTest extends TestCase
         $client = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
-            pageId: $this->pageId,
             appSecret: $this->appSecret,
             redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
             guzzleClient: $guzzle
         );

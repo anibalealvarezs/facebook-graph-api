@@ -2,6 +2,8 @@
 
 namespace Tests\Integration;
 
+use Anibalealvarezs\FacebookGraphApi\Enums\UserFieldsByPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\PageFieldsByPermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -43,13 +45,19 @@ class FacebookGraphApiLiveTest extends TestCase
      */
     public function testGetMe(): void
     {
-        $response = $this->api->getMe();
-        $data = json_decode($response->getBody()->getContents(), true);
+        $permissions = [
+            UserFieldsByPermission::PUBLIC_PROFILE,
+            UserFieldsByPermission::EMAIL,
+        ];
+        $data = $this->api->getMe($permissions);
 
-        $this->assertEquals(200, $response->getStatusCode());
         $this->assertIsArray($data);
         $this->assertArrayHasKey('id', $data);
         $this->assertArrayHasKey('name', $data);
+        // Email may be null if not shared, so we check if it's present
+        if (isset($data['email'])) {
+            $this->assertIsString($data['email']);
+        }
     }
 
     /**
@@ -57,11 +65,23 @@ class FacebookGraphApiLiveTest extends TestCase
      */
     public function testGetMyPages(): void
     {
-        $response = $this->api->getMyPages();
-        $data = json_decode($response->getBody()->getContents(), true);
+        $permissions = [
+            PageFieldsByPermission::PAGES_SHOW_LIST,
+            // PageFieldsByPermission::PAGES_READ_ENGAGEMENT
+        ];
+        $data = $this->api->getMyPages($permissions);
 
-        $this->assertEquals(200, $response->getStatusCode());
         $this->assertIsArray($data);
         $this->assertArrayHasKey('data', $data);
+        if (!empty($data['data'])) {
+            $page = $data['data'][0];
+            $this->assertArrayHasKey('id', $page);
+            $this->assertArrayHasKey('name', $page);
+            $this->assertArrayHasKey('access_token', $page);
+            // Fan count may be present if pages_read_engagement is granted
+            if (isset($page['fan_count'])) {
+                $this->assertIsInt($page['fan_count']);
+            }
+        }
     }
 }
