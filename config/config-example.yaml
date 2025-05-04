@@ -1,0 +1,16 @@
+# TOKENS
+fb_graph_user_access_token: #fb_graph_user_access_token
+fb_graph_page_access_token: #fb_graph_page_access_token
+fb_graph_app_access_token: #fb_graph_app_access_token
+fb_graph_client_access_token: #fb_graph_client_access_token
+
+# OPTIONAL TOKENS
+fb_graph_long_lived_user_access_token: #fb_graph_long_lived_user_access_token
+fb_graph_long_lived_page_access_token: #fb_graph_long_lived_page_access_token
+fb_graph_long_lived_client_access_token: #fb_graph_long_lived_client_access_token
+
+# APP CREDENTIALS
+fb_user_id: #fb_user_id
+fb_app_id: #fb_app_id
+fb_app_secret: #fb_app_secret
+fb_app_redirect_uri: # fb_app_redirect_uri
