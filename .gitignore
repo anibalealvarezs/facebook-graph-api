@@ -3,3 +3,4 @@
 /config/config.yaml
 /api-skeleton/
 /.phpunit.result.cache
+/*.log

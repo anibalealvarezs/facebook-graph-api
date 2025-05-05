@@ -2,11 +2,20 @@
 
 namespace Tests\Unit;
 
+use Anibalealvarezs\FacebookGraphApi\Enums\MediaField;
+use Anibalealvarezs\FacebookGraphApi\Enums\MediaProductType;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metric;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
 use Anibalealvarezs\FacebookGraphApi\Enums\UserFieldsByPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\PageFieldsByPermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
+use Carbon\Carbon;
 use Exception;
 use Faker\Factory as Faker;
 use Faker\Generator;
@@ -214,7 +223,6 @@ class FacebookGraphApiTest extends TestCase
             'https://graph.facebook.com/v22.0/me?fields=' . urlencode($expectedFields),
             (string)$lastRequest->getUri()
         );
-        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
@@ -247,7 +255,6 @@ class FacebookGraphApiTest extends TestCase
             'https://graph.facebook.com/v22.0/me?fields=id%2Cname',
             (string)$lastRequest->getUri()
         );
-        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
@@ -288,7 +295,6 @@ class FacebookGraphApiTest extends TestCase
             'https://graph.facebook.com/v22.0/me?fields=id%2Cname',
             (string)$lastRequest->getUri()
         );
-        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
@@ -344,7 +350,6 @@ class FacebookGraphApiTest extends TestCase
             'https://graph.facebook.com/v22.0/me/accounts?fields=' . urlencode($expectedFields),
             (string)$lastRequest->getUri()
         );
-        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
@@ -390,7 +395,6 @@ class FacebookGraphApiTest extends TestCase
             'https://graph.facebook.com/v22.0/me/accounts?fields=id%2Cname%2Caccess_token',
             (string)$lastRequest->getUri()
         );
-        $this->assertArrayHasKey('Authorization', $lastRequest->getHeaders());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
@@ -418,5 +422,568 @@ class FacebookGraphApiTest extends TestCase
         $this->expectExceptionMessage('API error');
 
         $client->getMe();
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramBusinessAccountsWithBusinessManagement(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'id' => 'page123',
+                    'name' => 'Business Page 1',
+                    'is_published' => true,
+                    'restrictions' => [],
+                    'business' => ['id' => 'biz123', 'name' => 'Business Inc'],
+                    'created_by' => 'user123',
+                    'instagram_business_account' => ['id' => '17841412345678901']
+                ],
+                [
+                    'id' => 'page456',
+                    'name' => 'Business Page 2',
+                    'is_published' => true,
+                    'restrictions' => [],
+                    'business' => ['id' => 'biz456', 'name' => 'Other Inc'],
+                    'created_by' => 'user456'
+                ]
+            ]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $result = $client->getInstagramBusinessAccounts();
+        $this->assertCount(2, $result['pages']);
+        $this->assertCount(1, $result['instagram_accounts']);
+        $this->assertEquals('page123', $result['pages'][0]['page_id']);
+        $this->assertEquals('Business Page 1', $result['pages'][0]['page_name']);
+        $this->assertEquals('17841412345678901', $result['pages'][0]['instagram_business_account']);
+        $this->assertEquals('biz123', $result['pages'][0]['business']['id']);
+        $this->assertNull($result['pages'][1]['instagram_business_account']);
+        $this->assertEquals('page456', $result['pages'][1]['page_id']);
+        $this->assertEquals('Business Page 2', $result['pages'][1]['page_name']);
+        $this->assertEquals('biz456', $result['pages'][1]['business']['id']);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $this->assertStringContainsString('fields=' . urlencode('id,name,access_token,category,tasks,is_published,username,is_verified,business,merchant_settings,attribution_details,created_by,created_time,updated_by,updated_time,instagram_business_account') . '&limit=100', (string)$lastRequest->getUri());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramMediaSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'id' => '17912345678901234',
+                    'media_type' => 'IMAGE',
+                    'permalink' => 'https://www.instagram.com/p/ABC123/',
+                    'timestamp' => '2025-05-01T12:00:00+0000',
+                    'caption' => 'Test post'
+                ]
+            ],
+            'paging' => ['cursors' => ['after' => null]]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $media = $client->getInstagramMedia('17841412345678901');
+        $this->assertCount(1, $media);
+        $this->assertEquals('17912345678901234', $media[0]['id']);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $this->assertStringContainsString('fields=' . urlencode(MediaField::toCommaSeparatedList()) . '&limit=100', (string)$lastRequest->getUri());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramMediaInsightsSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'name' => 'likes',
+                    'period' => 'lifetime',
+                    'values' => [['value' => 200]],
+                    'title' => 'Likes'
+                ],
+                [
+                    'name' => 'comments',
+                    'period' => 'lifetime',
+                    'values' => [['value' => 50]],
+                    'title' => 'Comments'
+                ]
+            ]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $insights = $client->getInstagramMediaInsights('17912345678901234');
+        $this->assertCount(2, $insights);
+        $this->assertEquals('likes', $insights[0]['name']);
+        $this->assertEquals(200, $insights[0]['values'][0]['value']);
+        $this->assertEquals('comments', $insights[1]['name']);
+        $this->assertEquals(50, $insights[1]['values'][0]['value']);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $this->assertStringContainsString('metric=' . urlencode('comments,follows,likes,profile_activity,profile_visits,reach,saved,shares,total_interactions,views'), (string)$lastRequest->getUri());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramMediaInsightsFailure(): void
+    {
+        $mock = new MockHandler([
+            new RequestException('API error', new Request('GET', 'v22.0/17912345678901234/insights')),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Failed to retrieve insights for media ID 17912345678901234: API error');
+
+        $client->getInstagramMediaInsights(
+            '17912345678901234',
+            MediaProductType::FEED
+        );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsWithMetricSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'name' => 'reach',
+                    'period' => 'day',
+                    'values' => [
+                        ['value' => 1000, 'end_time' => '2025-05-01T07:00:00+0000'],
+                        ['value' => 1200, 'end_time' => '2025-05-02T07:00:00+0000']
+                    ],
+                    'title' => 'Reach'
+                ]
+            ]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $accountId = '17841412345678901';
+        $since = '2025-05-01';
+        $until = '2025-05-02';
+
+        $insights = $client->getInstagramAccountInsights(
+            $accountId,
+            $since,
+            $until,
+            'America/Caracas',
+            Metric::REACH,
+            null,
+            MetricType::TIME_SERIES,
+            MetricPeriod::DAY
+        );
+
+        $this->assertEquals($responseData['data'], $insights);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $expectedQuery = http_build_query([
+            'metric' => 'reach',
+            'metric_type' => 'time_series',
+            'period' => 'day',
+            'since' => Carbon::parse('2025-05-01', 'America/Caracas')->timestamp,
+            'until' => Carbon::parse('2025-05-02', 'America/Caracas')->timestamp
+        ]);
+        $this->assertStringContainsString($expectedQuery, (string)$lastRequest->getUri());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsWithMetricGroupSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'name' => 'reach',
+                    'period' => 'day',
+                    'values' => [
+                        ['value' => 1000, 'end_time' => '2025-05-01T07:00:00+0000'],
+                        ['value' => 1200, 'end_time' => '2025-05-02T07:00:00+0000']
+                    ],
+                    'title' => 'Reach'
+                ],
+                [
+                    'name' => 'follower_count',
+                    'period' => 'day',
+                    'values' => [
+                        ['value' => 500, 'end_time' => '2025-05-01T07:00:00+0000'],
+                        ['value' => 510, 'end_time' => '2025-05-02T07:00:00+0000']
+                    ],
+                    'title' => 'Follower Count'
+                ]
+            ]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $accountId = '17841412345678901';
+        $since = '2025-05-01';
+        $until = '2025-05-02';
+
+        $insights = $client->getInstagramAccountInsights(
+            $accountId,
+            $since,
+            $until,
+            'America/Caracas',
+            null,
+            MetricGroup::REACH_FOLLOWERS,
+            MetricType::TIME_SERIES,
+            MetricPeriod::DAY
+        );
+
+        $this->assertEquals($responseData['data'], $insights);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $expectedQuery = http_build_query([
+            'metric' => 'reach,follower_count',
+            'metric_type' => 'time_series',
+            'period' => 'day',
+            'since' => Carbon::parse('2025-05-01', 'America/Caracas')->timestamp,
+            'until' => Carbon::parse('2025-05-02', 'America/Caracas')->timestamp
+        ]);
+        $this->assertStringContainsString($expectedQuery, (string)$lastRequest->getUri());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsWithDemographicsAndBreakdown(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'name' => 'follower_demographics',
+                    'period' => 'lifetime',
+                    'values' => [
+                        [
+                            'value' => [
+                                ['value' => 100, 'dimension_values' => ['18-24']],
+                                ['value' => 200, 'dimension_values' => ['25-34']]
+                            ],
+                            'end_time' => '2025-05-02T07:00:00+0000'
+                        ]
+                    ],
+                    'title' => 'Follower Demographics'
+                ]
+            ]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $accountId = '17841412345678901';
+        $since = '2025-05-01';
+        $until = '2025-05-02';
+
+        $insights = $client->getInstagramAccountInsights(
+            $accountId,
+            $since,
+            $until,
+            'America/Caracas',
+            Metric::FOLLOWER_DEMOGRAPHICS,
+            null,
+            null,
+            MetricPeriod::LIFETIME,
+            MetricTimeframe::THIS_MONTH,
+            MetricBreakdown::AGE
+        );
+
+        $this->assertEquals($responseData['data'], $insights);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $expectedQuery = http_build_query([
+            'metric' => 'follower_demographics',
+            'metric_type' => 'total_value',
+            'period' => 'lifetime',
+            'timeframe' => 'this_month',
+            'breakdowns' => 'age',
+            'since' => Carbon::parse('2025-05-01', 'America/Caracas')->timestamp,
+            'until' => Carbon::parse('2025-05-02', 'America/Caracas')->timestamp
+        ]);
+        $this->assertStringContainsString($expectedQuery, (string)$lastRequest->getUri());
+        $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsMissingMetricAndGroup(): void
+    {
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Either `metricGroup` or `metric` must be provided.');
+
+        $client->getInstagramAccountInsights(
+            '17841412345678901',
+            '2025-05-01',
+            '2025-05-02',
+            'America/Caracas'
+        );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsInvalidMetricType(): void
+    {
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid metric type provided for metric.');
+
+        $client->getInstagramAccountInsights(
+            '17841412345678901',
+            '2025-05-01',
+            '2025-05-02',
+            'America/Caracas',
+            Metric::REACH,
+            null,
+            MetricType::TOTAL_VALUE // Invalid, REACH requires TIME_SERIES
+        );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsInvalidPeriod(): void
+    {
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid metric period provided for metric.');
+
+        $client->getInstagramAccountInsights(
+            '17841412345678901',
+            '2025-05-01',
+            '2025-05-02',
+            'America/Caracas',
+            Metric::TOTAL_INTERACTIONS,
+            null,
+            null,
+            MetricPeriod::WEEK // Invalid, TOTAL_INTERACTIONS allows only DAY
+        );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsInvalidTimeframe(): void
+    {
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid metric timeframe provided for metric.');
+
+        $client->getInstagramAccountInsights(
+            '17841412345678901',
+            '2025-05-01',
+            '2025-05-02',
+            'America/Caracas',
+            Metric::REACH,
+            null,
+            null,
+            null,
+            MetricTimeframe::THIS_MONTH // Invalid, REACH has no timeframes
+        );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsInvalidBreakdown(): void
+    {
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid metric breakdown provided for metric.');
+
+        $client->getInstagramAccountInsights(
+            '17841412345678901',
+            '2025-05-01',
+            '2025-05-02',
+            'America/Caracas',
+            Metric::REACH,
+            null,
+            null,
+            null,
+            null,
+            MetricBreakdown::AGE // Invalid, REACH has no breakdowns
+        );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetInstagramAccountInsightsFailure(): void
+    {
+        $mock = new MockHandler([
+            new RequestException('API error', new Request('GET', 'v22.0/17841412345678901/insights')),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Failed to retrieve insights for account ID 17841412345678901: API error');
+
+        $client->getInstagramAccountInsights(
+            '17841412345678901',
+            '2025-05-01',
+            '2025-05-02',
+            'America/Caracas',
+            Metric::REACH,
+            null,
+            MetricType::TIME_SERIES,
+            MetricPeriod::DAY
+        );
     }
 }
