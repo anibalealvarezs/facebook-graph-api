@@ -5,6 +5,7 @@ namespace Anibalealvarezs\FacebookGraphApi\Enums;
 enum MetricGroup: string
 {
     case REACH_FOLLOWERS = 'REACH_FOLLOWERS';
+    case REACH_FOLLOWS_AND_UNFOLLOWS = 'REACH_FOLLOWS_AND_UNFOLLOWS';
     case MULTIPLE = 'MULTIPLE';
     case DEMOGRAPHICS = 'DEMOGRAPHICS';
     case ONLINE_FOLLOWERS = 'ONLINE_FOLLOWERS';
@@ -16,6 +17,10 @@ enum MetricGroup: string
             self::REACH_FOLLOWERS => [
                 Metric::REACH,
                 Metric::FOLLOWER_COUNT,
+            ],
+            self::REACH_FOLLOWS_AND_UNFOLLOWS => [
+                Metric::REACH,
+                Metric::FOLLOWS_AND_UNFOLLOWS,
             ],
             self::MULTIPLE => [
                 Metric::ACCOUNTS_ENGAGED,

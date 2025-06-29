@@ -5,7 +5,7 @@ namespace Anibalealvarezs\FacebookGraphApi\Enums;
 /**
  * Enum for fields available per user permission for the /me endpoint.
  */
-enum UserFieldsByPermission: string
+enum UserPermission: string
 {
     case PUBLIC_PROFILE = 'public_profile';
     case EMAIL = 'email';

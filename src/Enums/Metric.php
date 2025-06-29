@@ -22,11 +22,12 @@ enum Metric: string
     case FOLLOWER_DEMOGRAPHICS = 'follower_demographics';
     case ONLINE_FOLLOWERS = 'online_followers';
     case THREADS_VIEWS = 'threads_views';
+    case FOLLOWS_AND_UNFOLLOWS = 'follows_and_unfollows';
 
     public function allowedMetricTypes(): array
     {
         return match($this) {
-            self::REACH,
+            self::REACH => [MetricType::TIME_SERIES, MetricType::TOTAL_VALUE],
             self::FOLLOWER_COUNT => [MetricType::TIME_SERIES],
             self::ACCOUNTS_ENGAGED,
             self::REACHED_AUDIENCE_DEMOGRAPHICS,
@@ -41,6 +42,7 @@ enum Metric: string
             self::SHARES,
             self::COMMENTS,
             self::LIKES,
+            self::FOLLOWS_AND_UNFOLLOWS,
             self::TOTAL_INTERACTIONS => [MetricType::TOTAL_VALUE],
             self::ONLINE_FOLLOWERS,
             self::THREADS_VIEWS => [],
@@ -55,14 +57,15 @@ enum Metric: string
             self::ACCOUNTS_ENGAGED,
             self::PROFILE_VIEWS,
             self::CONTENT_VIEWS,
-            self::VIEWS,
-            self::PROFILE_LINK_TAPS,
             self::REPLIES,
+            self::THREADS_VIEWS => [],
+            self::FOLLOWS_AND_UNFOLLOWS,
+            self::VIEWS,
             self::SAVES,
             self::SHARES,
-            self::COMMENTS,
             self::LIKES,
-            self::THREADS_VIEWS => [],
+            self::COMMENTS,
+            self::PROFILE_LINK_TAPS,
             self::TOTAL_INTERACTIONS => [MetricPeriod::DAY],
             self::REACHED_AUDIENCE_DEMOGRAPHICS,
             self::ENGAGED_AUDIENCE_DEMOGRAPHICS,
@@ -76,22 +79,39 @@ enum Metric: string
         return match($this) {
             self::REACHED_AUDIENCE_DEMOGRAPHICS,
             self::ENGAGED_AUDIENCE_DEMOGRAPHICS,
-            self::FOLLOWER_DEMOGRAPHICS => [MetricBreakdown::AGE, MetricBreakdown::GENDER, MetricBreakdown::COUNTRY, MetricBreakdown::CITY],
-            self::REACH,
+            self::FOLLOWER_DEMOGRAPHICS => [
+                [MetricBreakdown::AGE, MetricBreakdown::GENDER],
+                [MetricBreakdown::AGE],
+                [MetricBreakdown::GENDER],
+                [MetricBreakdown::COUNTRY],
+                [MetricBreakdown::CITY]
+            ],
             self::FOLLOWER_COUNT,
             self::ACCOUNTS_ENGAGED,
             self::PROFILE_VIEWS,
             self::CONTENT_VIEWS,
-            self::VIEWS,
-            self::PROFILE_LINK_TAPS,
             self::REPLIES,
-            self::SAVES,
-            self::SHARES,
+            self::THREADS_VIEWS,
+            self::ONLINE_FOLLOWERS => [],
+            self::FOLLOWS_AND_UNFOLLOWS => [
+                [MetricBreakdown::FOLLOW_TYPE]
+            ],
             self::COMMENTS,
             self::LIKES,
-            self::THREADS_VIEWS,
-            self::TOTAL_INTERACTIONS,
-            self::ONLINE_FOLLOWERS => [],
+            self::SAVES,
+            self::SHARES,
+            self::TOTAL_INTERACTIONS => [
+                [MetricBreakdown::MEDIA_PRODUCT_TYPE]
+            ],
+            self::VIEWS,
+            self::REACH => [
+                [MetricBreakdown::MEDIA_PRODUCT_TYPE, MetricBreakdown::FOLLOW_TYPE],
+                [MetricBreakdown::MEDIA_PRODUCT_TYPE],
+                [MetricBreakdown::FOLLOW_TYPE]
+            ],
+            self::PROFILE_LINK_TAPS => [
+                [MetricBreakdown::CONTACT_BUTTON_TYPE]
+            ],
         };
     }
 
@@ -115,6 +135,7 @@ enum Metric: string
             self::LIKES,
             self::THREADS_VIEWS,
             self::TOTAL_INTERACTIONS,
+            self::FOLLOWS_AND_UNFOLLOWS,
             self::ONLINE_FOLLOWERS => [],
         };
     }
@@ -123,6 +144,7 @@ enum Metric: string
     {
         return match($this) {
             self::REACH,
+            self::FOLLOWS_AND_UNFOLLOWS,
             self::FOLLOWER_COUNT => MetricGroup::REACH_FOLLOWERS,
             self::REACHED_AUDIENCE_DEMOGRAPHICS,
             self::ENGAGED_AUDIENCE_DEMOGRAPHICS,

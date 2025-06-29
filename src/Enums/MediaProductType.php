@@ -5,11 +5,11 @@ namespace Anibalealvarezs\FacebookGraphApi\Enums;
 enum MediaProductType: string
 {
     case FEED = 'FEED';
-    case REELS = 'REES';
+    case REELS = 'REELS';
     case STORY = 'STORY';
     case AD = 'AD';
 
-    public function fields(): string
+    public function insightsFields(): string
     {
         return match ($this) {
             self::FEED => 'comments,follows,likes,profile_activity,profile_visits,reach,saved,shares,total_interactions,views',

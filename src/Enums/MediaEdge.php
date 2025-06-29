@@ -15,10 +15,10 @@ enum MediaEdge: string
     public function fields(MediaProductType $mediaProductTypes = MediaProductType::FEED): string
     {
         return match ($this) {
-            self::CHILDREN => MediaField::toCommaSeparatedList(),
-            self::COLLABORATORS => UserFieldsByPermission::PUBLIC_PROFILE->fields(),
+            self::CHILDREN => InstagramMediaField::toCommaSeparatedList(),
+            self::COLLABORATORS => UserPermission::PUBLIC_PROFILE->fields(),
             self::COMMENTS => CommentField::toCommaSeparatedList(),
-            self::INSIGHTS => $mediaProductTypes->fields(),
+            self::INSIGHTS => $mediaProductTypes->insightsFields(),
         };
     }
 }

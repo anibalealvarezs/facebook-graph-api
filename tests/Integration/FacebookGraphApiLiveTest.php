@@ -9,8 +9,8 @@ use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
-use Anibalealvarezs\FacebookGraphApi\Enums\UserFieldsByPermission;
-use Anibalealvarezs\FacebookGraphApi\Enums\PageFieldsByPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\UserPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -60,8 +60,8 @@ class FacebookGraphApiLiveTest extends TestCase
     public function testGetMe(): void
     {
         $permissions = [
-            UserFieldsByPermission::PUBLIC_PROFILE,
-            UserFieldsByPermission::EMAIL,
+            UserPermission::PUBLIC_PROFILE,
+            UserPermission::EMAIL,
         ];
         $data = $this->api->getMe($permissions);
 
@@ -82,7 +82,7 @@ class FacebookGraphApiLiveTest extends TestCase
     public function testGetMyPages(): void
     {
         $permissions = [
-            PageFieldsByPermission::PAGES_SHOW_LIST,
+            PagePermission::PAGES_SHOW_LIST,
             // PageFieldsByPermission::PAGES_READ_ENGAGEMENT
         ];
         $data = $this->api->getMyPages($permissions);
@@ -109,8 +109,8 @@ class FacebookGraphApiLiveTest extends TestCase
     public function testGetInstagramBusinessAccounts(): void
     {
         $permissions = [
-            PageFieldsByPermission::PAGES_SHOW_LIST,
-            PageFieldsByPermission::BUSINESS_MANAGEMENT
+            PagePermission::PAGES_SHOW_LIST,
+            PagePermission::BUSINESS_MANAGEMENT
         ];
         $data = $this->api->getInstagramBusinessAccounts($permissions);
 
@@ -153,11 +153,11 @@ class FacebookGraphApiLiveTest extends TestCase
         $igUserId = $accounts['instagram_accounts'][0]['instagram_id'];
         $data = $this->api->getInstagramMedia($igUserId);
 
-        $this->logger->debug('testGetInstagramMedia response', $data);
+        $this->logger->debug('testGetInstagramMedia response', $data['data']);
 
-        $this->assertIsArray($data);
-        if (!empty($data)) {
-            $media = $data[0];
+        $this->assertIsArray($data['data']);
+        if (!empty($data['data'])) {
+            $media = $data['data'][0];
             $this->assertArrayHasKey('id', $media);
             $this->assertArrayHasKey('media_type', $media);
             $this->assertArrayHasKey('permalink', $media);
@@ -179,18 +179,18 @@ class FacebookGraphApiLiveTest extends TestCase
 
         $igUserId = $accounts['instagram_accounts'][0]['instagram_id'];
         $mediaData = $this->api->getInstagramMedia($igUserId);
-        if (empty($mediaData)) {
+        if (empty($mediaData['data'])) {
             $this->markTestSkipped('No media found for Instagram Business Account to test getInstagramMediaInsights');
         }
 
-        $mediaId = $mediaData[0]['id'];
-        $data = $this->api->getInstagramMediaInsights($mediaId, MediaProductType::from($mediaData[0]['media_product_type']));
+        $mediaId = $mediaData['data'][0]['id'];
+        $data = $this->api->getInstagramMediaInsights($mediaId, MediaProductType::from($mediaData['data'][0]['media_product_type']));
 
-        $this->logger->debug('testGetInstagramMediaInsights response', $data);
+        $this->logger->debug('testGetInstagramMediaInsights response', $data['data']);
 
-        $this->assertIsArray($data);
-        if (!empty($data)) {
-            $insight = $data[0];
+        $this->assertIsArray($data['data']);
+        if (!empty($data['data'])) {
+            $insight = $data['data'][0];
             $this->assertArrayHasKey('name', $insight);
             $this->assertArrayHasKey('period', $insight);
             $this->assertArrayHasKey('values', $insight);
@@ -213,20 +213,20 @@ class FacebookGraphApiLiveTest extends TestCase
 
         $igUserId = $accounts['instagram_accounts'][0]['instagram_id'];
         $mediaData = $this->api->getInstagramMedia($igUserId);
-        if (empty($mediaData)) {
+        if (empty($mediaData['data'])) {
             $this->markTestSkipped('No media found for Instagram Business Account to test getInstagramMediaInsightsPolling');
         }
 
-        $mediaId = $mediaData[0]['id'];
+        $mediaId = $mediaData['data'][0]['id'];
 
         // Simulate first call (e.g., "yesterday")
         $firstData = $this->api->getInstagramMediaInsights($mediaId);
 
-        $this->logger->debug('testGetInstagramMediaInsightsPolling first call response', $firstData);
+        $this->logger->debug('testGetInstagramMediaInsightsPolling first call response', $firstData['data']);
 
-        $this->assertIsArray($firstData);
-        if (!empty($firstData)) {
-            $insight = $firstData[0];
+        $this->assertIsArray($firstData['data']);
+        if (!empty($firstData['data'])) {
+            $insight = $firstData['data'][0];
             $this->assertArrayHasKey('name', $insight);
             $this->assertArrayHasKey('period', $insight);
             $this->assertEquals('lifetime', $insight['period']);
@@ -240,11 +240,11 @@ class FacebookGraphApiLiveTest extends TestCase
         sleep(2); // Short delay to allow potential metric changes
         $secondData = $this->api->getInstagramMediaInsights($mediaId);
 
-        $this->logger->debug('testGetInstagramMediaInsightsPolling second call response', $secondData);
+        $this->logger->debug('testGetInstagramMediaInsightsPolling second call response', $secondData['data']);
 
-        $this->assertIsArray($secondData);
-        if (!empty($secondData)) {
-            $insight = $secondData[0];
+        $this->assertIsArray($secondData['data']);
+        if (!empty($secondData['data'])) {
+            $insight = $secondData['data'][0];
             $this->assertArrayHasKey('name', $insight);
             $this->assertArrayHasKey('period', $insight);
             $this->assertEquals('lifetime', $insight['period']);
@@ -284,11 +284,11 @@ class FacebookGraphApiLiveTest extends TestCase
             MetricPeriod::DAY
         );
 
-        $this->logger->debug('testGetInstagramAccountInsightsWithMetric response', $data);
+        $this->logger->debug('testGetInstagramAccountInsightsWithMetric response', $data['data']);
 
-        $this->assertIsArray($data);
-        if (!empty($data)) {
-            $insight = $data[0];
+        $this->assertIsArray($data['data']);
+        if (!empty($data['data'])) {
+            $insight = $data['data'][0];
             $this->assertArrayHasKey('name', $insight);
             $this->assertEquals('reach', $insight['name']);
             $this->assertArrayHasKey('period', $insight);
@@ -328,11 +328,11 @@ class FacebookGraphApiLiveTest extends TestCase
             MetricPeriod::DAY
         );
 
-        $this->logger->debug('testGetInstagramAccountInsightsWithMetricGroup response', $data);
+        $this->logger->debug('testGetInstagramAccountInsightsWithMetricGroup response', $data['data']);
 
-        $this->assertIsArray($data);
-        if (!empty($data)) {
-            $insight = $data[0];
+        $this->assertIsArray($data['data']);
+        if (!empty($data['data'])) {
+            $insight = $data['data'][0];
             $this->assertArrayHasKey('name', $insight);
             $this->assertInArray($insight['name'], ['reach', 'follower_count']);
             $this->assertArrayHasKey('period', $insight);
@@ -374,11 +374,11 @@ class FacebookGraphApiLiveTest extends TestCase
             MetricBreakdown::AGE
         );
 
-        $this->logger->debug('testGetInstagramAccountInsightsWithDemographics response', $data);
+        $this->logger->debug('testGetInstagramAccountInsightsWithDemographics response', $data['data']);
 
-        $this->assertIsArray($data);
-        if (!empty($data)) {
-            $insight = $data[0];
+        $this->assertIsArray($data['data']);
+        if (!empty($data['data'])) {
+            $insight = $data['data'][0];
             $this->assertArrayHasKey('name', $insight);
             $this->assertEquals('follower_demographics', $insight['name']);
             $this->assertArrayHasKey('period', $insight);

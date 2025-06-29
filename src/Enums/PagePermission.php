@@ -5,7 +5,7 @@ namespace Anibalealvarezs\FacebookGraphApi\Enums;
 /**
  * Enum for fields available per page permission for the /me and /me/accounts endpoints.
  */
-enum PageFieldsByPermission: string
+enum PagePermission: string
 {
     case PAGES_SHOW_LIST = 'pages_show_list';
     case PAGES_READ_ENGAGEMENT = 'pages_read_engagement';
@@ -22,5 +22,10 @@ enum PageFieldsByPermission: string
             self::PAGES_MANAGE_METADATA => 'access_token',
             self::BUSINESS_MANAGEMENT => 'business,merchant_settings,attribution_details,created_by,created_time,updated_by,updated_time,instagram_business_account',
         };
+    }
+
+    public function insightsFields(): string
+    {
+        return 'page_fan_adds,page_fan_removes,page_fans,page_fan_adds_unique,page_fan_removes_unique,page_impressions,page_impressions_unique,page_impressions_paid,page_impressions_viral,page_video_views,page_video_views_unique,page_views_total';
     }
 }

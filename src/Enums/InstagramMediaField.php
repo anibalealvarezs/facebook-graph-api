@@ -5,7 +5,7 @@ namespace Anibalealvarezs\FacebookGraphApi\Enums;
 /**
  * Enum for fields available per page permission for the /me and /me/accounts endpoints.
  */
-enum MediaField: string
+enum InstagramMediaField: string
 {
     case ALT_TEXT = 'alt_text';
     case BOOST_ADS_LIST = 'boost_ads_list';
@@ -30,11 +30,16 @@ enum MediaField: string
     /**
      * Returns a comma-separated list of all enum values.
      *
+     * @param bool $ignoreBoostElegibilityInfo
      * @return string
      */
-    public static function toCommaSeparatedList(): string
+    public static function toCommaSeparatedList(bool $ignoreBoostElegibilityInfo = true): string
     {
-        $enumValues = array_map(fn (self $field) => $field->value, self::cases());
+        $enumList = array_filter(
+            self::cases(),
+            fn (self $field) => !$ignoreBoostElegibilityInfo || $field !== self::BOOST_ELIGIBILITY_INFO
+        );
+        $enumValues = array_map(fn ($field) => $field->value, $enumList);
         return implode(',', $enumValues);
     }
 }
