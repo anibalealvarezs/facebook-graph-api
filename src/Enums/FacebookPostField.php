@@ -72,11 +72,18 @@ enum FacebookPostField: string
      */
     public static function toCommaSeparatedList(bool $ignoreOptional = true): string
     {
-        $enumValues = array_map(
-            fn (self $field) => $field->value,
-            array_diff(
-                self::cases(),
-                $ignoreOptional ?
+        $enumValues = array_diff(
+            array_map(
+                function($case) {
+                    return $case->value;
+                },
+                self::cases()
+            ),
+            $ignoreOptional ?
+                array_map(
+                    function($case) {
+                        return $case->value;
+                    },
                     [
                         self::ATTACHMENTS,
                         self::COMMENTS,
@@ -85,8 +92,9 @@ enum FacebookPostField: string
                         self::SHAREDPOSTS,
                         self::SPONSOR_TAGS,
                         self::TO,
-                    ] :
-                    [])
+                    ]
+                ) :
+                []
         );
         return implode(',', $enumValues);
     }
