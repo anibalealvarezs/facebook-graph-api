@@ -1604,8 +1604,7 @@ class FacebookGraphApi extends BearerTokenClient
      * @param string $instagramAccountId
      * @param string $since
      * @param string $timezone
-     * @param MetricGroup|null $metricGroup
-     * @param MetricBreakdown|MetricBreakdown[]|null $metricBreakdown
+     * @param int $option
      * @return array Insights data.
      * @throws GuzzleException
      */
@@ -1613,22 +1612,24 @@ class FacebookGraphApi extends BearerTokenClient
         string $instagramAccountId,
         string $since,
         string $timezone = 'America/Caracas',
-        ?MetricGroup $metricGroup = null,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        int $option = 1,
     ): array
     {
-        $metrics = [Metric::REACH, Metric::VIEWS];
-        if ($metricBreakdown instanceof MetricBreakdown) {
-            $metrics = match($metricBreakdown) {
-                MetricBreakdown::CONTACT_BUTTON_TYPE => Metric::PROFILE_LINK_TAPS,
-                MetricBreakdown::FOLLOW_TYPE => [Metric::FOLLOWS_AND_UNFOLLOWS, Metric::REACH, Metric::VIEWS],
-                MetricBreakdown::MEDIA_PRODUCT_TYPE => [Metric::COMMENTS, Metric::LIKES, Metric::SAVES, Metric::REACH, Metric::SHARES, Metric::TOTAL_INTERACTIONS, Metric::VIEWS],
-                default => [Metric::REACH, Metric::VIEWS],
-            };
-        }
-        if (!is_array($metricBreakdown) && !$metricBreakdown) {
-            $metricBreakdown = [MetricBreakdown::FOLLOW_TYPE, MetricBreakdown::MEDIA_PRODUCT_TYPE];
-        }
+        $metrics = match($option) {
+            1 => [Metric::REACH, Metric::VIEWS],
+            2 => [Metric::FOLLOWS_AND_UNFOLLOWS],
+            3 => [Metric::COMMENTS, Metric::LIKES, Metric::SAVES, Metric::SHARES, Metric::TOTAL_INTERACTIONS],
+            4 => [Metric::PROFILE_LINK_TAPS],
+            default => [Metric::WEBSITE_CLICKS, Metric::PROFILE_VIEWS, Metric::ACCOUNTS_ENGAGED, Metric::REPLIES, Metric::CONTENT_VIEWS],
+        };
+
+        $metricBreakdown = match($option) {
+            1 => [MetricBreakdown::MEDIA_PRODUCT_TYPE, MetricBreakdown::FOLLOW_TYPE],
+            2 => [MetricBreakdown::FOLLOW_TYPE],
+            3 => [MetricBreakdown::MEDIA_PRODUCT_TYPE],
+            4 => [MetricBreakdown::CONTACT_BUTTON_TYPE],
+            default => [],
+        };
 
         return $this->getInstagramAccountInsights(
             instagramAccountId: $instagramAccountId,
@@ -1636,7 +1637,6 @@ class FacebookGraphApi extends BearerTokenClient
             until: Carbon::parse($since)->addDay()->format('Y-m-d'),
             timezone: $timezone,
             metrics: $metrics,
-            metricGroup: $metricGroup,
             metricType: MetricType::TOTAL_VALUE,
             metricPeriod: MetricPeriod::DAY,
             metricBreakdown: $metricBreakdown,
