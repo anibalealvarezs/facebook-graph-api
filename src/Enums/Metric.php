@@ -23,6 +23,7 @@ enum Metric: string
     case ONLINE_FOLLOWERS = 'online_followers';
     case THREADS_VIEWS = 'threads_views';
     case FOLLOWS_AND_UNFOLLOWS = 'follows_and_unfollows';
+    CASE WEBSITE_CLICKS = 'website_clicks';
 
     public function allowedMetricTypes(): array
     {
