@@ -1603,7 +1603,6 @@ class FacebookGraphApi extends BearerTokenClient
      *
      * @param string $instagramAccountId
      * @param string $since
-     * @param string $until
      * @param string $timezone
      * @param MetricGroup|null $metricGroup
      * @param MetricBreakdown|MetricBreakdown[]|null $metricBreakdown
@@ -1613,7 +1612,6 @@ class FacebookGraphApi extends BearerTokenClient
     public function getDailyInstagramAccountTotalValueInsights(
         string $instagramAccountId,
         string $since,
-        string $until,
         string $timezone = 'America/Caracas',
         ?MetricGroup $metricGroup = null,
         MetricBreakdown|array|null $metricBreakdown = null,
@@ -1629,7 +1627,7 @@ class FacebookGraphApi extends BearerTokenClient
         return $this->getInstagramAccountInsights(
             instagramAccountId: $instagramAccountId,
             since: $since,
-            until: $until,
+            until: Carbon::parse($since)->addDay()->format('Y-m-d'),
             timezone: $timezone,
             metrics: $metrics,
             metricGroup: $metricGroup,
@@ -1686,7 +1684,6 @@ class FacebookGraphApi extends BearerTokenClient
      *
      * @param string $instagramAccountId
      * @param string $since
-     * @param string $until
      * @param string $timezone
      * @param MetricGroup|null $metricGroup
      * @return array Insights data.
@@ -1695,7 +1692,6 @@ class FacebookGraphApi extends BearerTokenClient
     public function getDailyInstagramAccountTimeSeriesInsights(
         string $instagramAccountId,
         string $since,
-        string $until,
         string $timezone = 'America/Caracas',
         ?MetricGroup $metricGroup = null,
     ): array
@@ -1703,7 +1699,7 @@ class FacebookGraphApi extends BearerTokenClient
         return $this->getInstagramAccountInsights(
             instagramAccountId: $instagramAccountId,
             since: $since,
-            until: $until,
+            until: Carbon::parse($since)->addDay()->format('Y-m-d'),
             timezone: $timezone,
             metrics: $metricGroup ? null : Metric::REACH,
             metricGroup: $metricGroup,
