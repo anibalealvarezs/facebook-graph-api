@@ -44,6 +44,7 @@ enum Metric: string
             self::COMMENTS,
             self::LIKES,
             self::FOLLOWS_AND_UNFOLLOWS,
+            self::WEBSITE_CLICKS,
             self::TOTAL_INTERACTIONS => [MetricType::TOTAL_VALUE],
             self::ONLINE_FOLLOWERS,
             self::THREADS_VIEWS => [],
@@ -67,6 +68,7 @@ enum Metric: string
             self::LIKES,
             self::COMMENTS,
             self::PROFILE_LINK_TAPS,
+            self::WEBSITE_CLICKS,
             self::TOTAL_INTERACTIONS => [MetricPeriod::DAY],
             self::REACHED_AUDIENCE_DEMOGRAPHICS,
             self::ENGAGED_AUDIENCE_DEMOGRAPHICS,
@@ -93,6 +95,7 @@ enum Metric: string
             self::CONTENT_VIEWS,
             self::REPLIES,
             self::THREADS_VIEWS,
+            self::WEBSITE_CLICKS,
             self::ONLINE_FOLLOWERS => [],
             self::FOLLOWS_AND_UNFOLLOWS => [
                 [MetricBreakdown::FOLLOW_TYPE]
@@ -137,6 +140,7 @@ enum Metric: string
             self::THREADS_VIEWS,
             self::TOTAL_INTERACTIONS,
             self::FOLLOWS_AND_UNFOLLOWS,
+            self::WEBSITE_CLICKS,
             self::ONLINE_FOLLOWERS => [],
         };
     }
@@ -160,6 +164,7 @@ enum Metric: string
             self::SHARES,
             self::COMMENTS,
             self::LIKES,
+            self::WEBSITE_CLICKS,
             self::TOTAL_INTERACTIONS => MetricGroup::MULTIPLE,
             self::THREADS_VIEWS => MetricGroup::THREADS_VIEWS,
             self::ONLINE_FOLLOWERS => MetricGroup::ONLINE_FOLLOWERS
