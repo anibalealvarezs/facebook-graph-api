@@ -1617,12 +1617,18 @@ class FacebookGraphApi extends BearerTokenClient
         MetricBreakdown|array|null $metricBreakdown = null,
     ): array
     {
-        $metrics = match($metricBreakdown) {
-            MetricBreakdown::CONTACT_BUTTON_TYPE => Metric::PROFILE_LINK_TAPS,
-            MetricBreakdown::FOLLOW_TYPE => [Metric::FOLLOWS_AND_UNFOLLOWS, Metric::REACH, Metric::VIEWS],
-            MetricBreakdown::MEDIA_PRODUCT_TYPE => [Metric::COMMENTS, Metric::LIKES, Metric::SAVES, Metric::REACH, Metric::SHARES, Metric::TOTAL_INTERACTIONS, Metric::VIEWS],
-            default => Metric::REACH,
-        };
+        $metrics = [Metric::REACH, Metric::VIEWS];
+        if ($metricBreakdown instanceof MetricBreakdown) {
+            $metrics = match($metricBreakdown) {
+                MetricBreakdown::CONTACT_BUTTON_TYPE => Metric::PROFILE_LINK_TAPS,
+                MetricBreakdown::FOLLOW_TYPE => [Metric::FOLLOWS_AND_UNFOLLOWS, Metric::REACH, Metric::VIEWS],
+                MetricBreakdown::MEDIA_PRODUCT_TYPE => [Metric::COMMENTS, Metric::LIKES, Metric::SAVES, Metric::REACH, Metric::SHARES, Metric::TOTAL_INTERACTIONS, Metric::VIEWS],
+                default => [Metric::REACH, Metric::VIEWS],
+            };
+        }
+        if (!is_array($metricBreakdown) && !$metricBreakdown) {
+            $metricBreakdown = [MetricBreakdown::FOLLOW_TYPE, MetricBreakdown::MEDIA_PRODUCT_TYPE];
+        }
 
         return $this->getInstagramAccountInsights(
             instagramAccountId: $instagramAccountId,
