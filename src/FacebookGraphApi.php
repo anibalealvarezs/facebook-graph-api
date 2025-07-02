@@ -528,7 +528,7 @@ class FacebookGraphApi extends BearerTokenClient
         bool $includeSharedPosts = false,
         bool $includeSponsorTags = false,
         bool $includeTo = false,
-        int $limit = 100,
+        int $limit = 10, // Max is 100, but it's limited to 10 by default due to Facebook API limitations
     ): array {
         $query = [
             'fields' => $postFields ?
