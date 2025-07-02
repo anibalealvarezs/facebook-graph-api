@@ -1437,8 +1437,8 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getInstagramAccountInsights(
         string $instagramAccountId,
-        string $since,
-        string $until,
+        string $since, // Max: 2 years ago
+        string $until, // Max: 30 days from $since
         string $timezone = 'America/Caracas',
         Metric|array|null $metrics = null,
         ?MetricGroup $metricGroup = null,
