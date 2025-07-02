@@ -18,6 +18,6 @@ enum CampaignPermission: string
 
     public function insightsFields(): string
     {
-        return 'campaign_name,campaign_id,impressions,clicks,ctr,cpc,cpm,spend,reach,frequency,actions,action_values,cost_per_action_type,objective,date_start,date_stop';
+        return 'impressions,clicks,ctr,cpc,cpm,spend,reach,frequency,actions,action_values,cost_per_action_type,objective,date_start,date_stop';
     }
 }

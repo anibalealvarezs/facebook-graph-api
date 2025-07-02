@@ -18,6 +18,6 @@ enum AdsetPermission: string
 
     public function insightsFields(): string
     {
-        return 'adset_name,campaign_id,adset_id,impressions,reach,frequency,clicks,spend,ctr,cpc,cpm,actions,action_values,cost_per_action_type,date_start,date_stop';
+        return 'impressions,reach,frequency,clicks,spend,ctr,cpc,cpm,actions,action_values,cost_per_action_type,date_start,date_stop';
     }
 }

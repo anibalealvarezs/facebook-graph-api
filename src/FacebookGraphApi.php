@@ -1000,7 +1000,8 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'metric' => PagePermission::PAGES_SHOW_LIST->insightsFields(),
-            'period' => MetricPeriod::DAY->value
+            'period' => MetricPeriod::DAY->value,
+            'fields' => 'name,period,values',
         ];
 
         if ($since) {
@@ -1056,6 +1057,7 @@ class FacebookGraphApi extends BearerTokenClient
             'metric' => FacebookPostPermission::DEFAULT->insightsFields(),
             'period' => MetricPeriod::LIFETIME->value,
             'limit' => min($limit, 1000),
+            'fields' => 'name,period,values',
         ];
 
         $insights = [];
@@ -1465,7 +1467,9 @@ class FacebookGraphApi extends BearerTokenClient
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . ($metrics ? 'metric' : 'metric group') . '.');
         }
 
-        $query = [];
+        $query = [
+            'fields' => 'name,period,total_value',
+        ];
 
         if($metrics) {
             if (!is_array($metrics)) {
