@@ -23,7 +23,32 @@ enum Metric: string
     case ONLINE_FOLLOWERS = 'online_followers';
     case THREADS_VIEWS = 'threads_views';
     case FOLLOWS_AND_UNFOLLOWS = 'follows_and_unfollows';
-    CASE WEBSITE_CLICKS = 'website_clicks';
+    case WEBSITE_CLICKS = 'website_clicks';
+    case IMPRESSIONS = 'impressions';
+    case CLICKS = 'clicks';
+    case CTR = 'ctr';
+    case CPC = 'cpc';
+    case CPM = 'cpm';
+    case SPEND = 'spend';
+    case FREQUENCY = 'frequency';
+    case ACTIONS = 'actions';
+    case ACTION_VALUES = 'action_values';
+    case COST_PER_ACTION_TYPE = 'cost_per_action_type';
+    case OBJECTIVE = 'objective';
+    case DATE_START = 'date_start';
+    case DATE_STOP = 'date_stop';
+    case UNIQUE_CLICKS = 'unique_clicks';
+    case UNIQUE_CTR = 'unique_ctr';
+    case COST_PER_UNIQUE_CLICK = 'cost_per_unique_click';
+    case COST_PER_INLINE_LINK_CLICK = 'cost_per_inline_link_click';
+    case COST_PER_UNIQUE_OUTBOUND_CLICK = 'cost_per_unique_outbound_click';
+    case COST_PER_UNIQUE_CONVERSION = 'cost_per_unique_conversion';
+    case ESTIMATED_AD_RECALLERS = 'estimated_ad_recallers';
+    case ESTIMATED_AD_RECALL_RATE = 'estimated_ad_recall_rate';
+    case CONVERSION_RATE_RANKING = 'conversion_rate_ranking';
+    case COST_PER_ESTIMATED_AD_RECALLERS = 'cost_per_estimated_ad_recallers';
+    case QUALITY_RANKING = 'quality_ranking';
+    case ENGAGEMENT_RATE_RANKING = 'engagement_rate_ranking';
 
     public function allowedMetricTypes(): array
     {
@@ -47,7 +72,32 @@ enum Metric: string
             self::WEBSITE_CLICKS,
             self::TOTAL_INTERACTIONS => [MetricType::TOTAL_VALUE],
             self::ONLINE_FOLLOWERS,
-            self::THREADS_VIEWS => [],
+            self::THREADS_VIEWS,
+            self::IMPRESSIONS,
+            self::CLICKS,
+            self::CTR,
+            self::CPC,
+            self::CPM,
+            self::SPEND,
+            self::FREQUENCY,
+            self::ACTIONS,
+            self::ACTION_VALUES,
+            self::COST_PER_ACTION_TYPE,
+            self::OBJECTIVE,
+            self::DATE_START,
+            self::DATE_STOP,
+            self::UNIQUE_CLICKS,
+            self::UNIQUE_CTR,
+            self::COST_PER_UNIQUE_CLICK,
+            self::COST_PER_INLINE_LINK_CLICK,
+            self::COST_PER_UNIQUE_OUTBOUND_CLICK,
+            self::COST_PER_UNIQUE_CONVERSION,
+            self::ESTIMATED_AD_RECALLERS,
+            self::ESTIMATED_AD_RECALL_RATE,
+            self::CONVERSION_RATE_RANKING,
+            self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::QUALITY_RANKING,
+            self::ENGAGEMENT_RATE_RANKING => [],
         };
     }
 
@@ -60,6 +110,31 @@ enum Metric: string
             self::PROFILE_VIEWS,
             self::CONTENT_VIEWS,
             self::REPLIES,
+            self::IMPRESSIONS,
+            self::CLICKS,
+            self::CTR,
+            self::CPC,
+            self::CPM,
+            self::SPEND,
+            self::FREQUENCY,
+            self::ACTIONS,
+            self::ACTION_VALUES,
+            self::COST_PER_ACTION_TYPE,
+            self::OBJECTIVE,
+            self::DATE_START,
+            self::DATE_STOP,
+            self::UNIQUE_CLICKS,
+            self::UNIQUE_CTR,
+            self::COST_PER_UNIQUE_CLICK,
+            self::COST_PER_INLINE_LINK_CLICK,
+            self::COST_PER_UNIQUE_OUTBOUND_CLICK,
+            self::COST_PER_UNIQUE_CONVERSION,
+            self::ESTIMATED_AD_RECALLERS,
+            self::ESTIMATED_AD_RECALL_RATE,
+            self::CONVERSION_RATE_RANKING,
+            self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::QUALITY_RANKING,
+            self::ENGAGEMENT_RATE_RANKING,
             self::THREADS_VIEWS => [],
             self::FOLLOWS_AND_UNFOLLOWS,
             self::VIEWS,
@@ -82,6 +157,31 @@ enum Metric: string
         return match($this) {
             self::REACHED_AUDIENCE_DEMOGRAPHICS,
             self::ENGAGED_AUDIENCE_DEMOGRAPHICS,
+            self::IMPRESSIONS,
+            self::CLICKS,
+            self::CTR,
+            self::CPC,
+            self::CPM,
+            self::SPEND,
+            self::FREQUENCY,
+            self::ACTIONS,
+            self::ACTION_VALUES,
+            self::COST_PER_ACTION_TYPE,
+            self::OBJECTIVE,
+            self::DATE_START,
+            self::DATE_STOP,
+            self::UNIQUE_CLICKS,
+            self::UNIQUE_CTR,
+            self::COST_PER_UNIQUE_CLICK,
+            self::COST_PER_INLINE_LINK_CLICK,
+            self::COST_PER_UNIQUE_OUTBOUND_CLICK,
+            self::COST_PER_UNIQUE_CONVERSION,
+            self::ESTIMATED_AD_RECALLERS,
+            self::ESTIMATED_AD_RECALL_RATE,
+            self::CONVERSION_RATE_RANKING,
+            self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::QUALITY_RANKING,
+            self::ENGAGEMENT_RATE_RANKING,
             self::FOLLOWER_DEMOGRAPHICS => [
                 [MetricBreakdown::AGE, MetricBreakdown::GENDER],
                 [MetricBreakdown::AGE],
@@ -141,6 +241,31 @@ enum Metric: string
             self::TOTAL_INTERACTIONS,
             self::FOLLOWS_AND_UNFOLLOWS,
             self::WEBSITE_CLICKS,
+            self::IMPRESSIONS,
+            self::CLICKS,
+            self::CTR,
+            self::CPC,
+            self::CPM,
+            self::SPEND,
+            self::FREQUENCY,
+            self::ACTIONS,
+            self::ACTION_VALUES,
+            self::COST_PER_ACTION_TYPE,
+            self::OBJECTIVE,
+            self::DATE_START,
+            self::DATE_STOP,
+            self::UNIQUE_CLICKS,
+            self::UNIQUE_CTR,
+            self::COST_PER_UNIQUE_CLICK,
+            self::COST_PER_INLINE_LINK_CLICK,
+            self::COST_PER_UNIQUE_OUTBOUND_CLICK,
+            self::COST_PER_UNIQUE_CONVERSION,
+            self::ESTIMATED_AD_RECALLERS,
+            self::ESTIMATED_AD_RECALL_RATE,
+            self::CONVERSION_RATE_RANKING,
+            self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::QUALITY_RANKING,
+            self::ENGAGEMENT_RATE_RANKING,
             self::ONLINE_FOLLOWERS => [],
         };
     }
@@ -167,7 +292,32 @@ enum Metric: string
             self::WEBSITE_CLICKS,
             self::TOTAL_INTERACTIONS => MetricGroup::MULTIPLE,
             self::THREADS_VIEWS => MetricGroup::THREADS_VIEWS,
-            self::ONLINE_FOLLOWERS => MetricGroup::ONLINE_FOLLOWERS
+            self::ONLINE_FOLLOWERS => MetricGroup::ONLINE_FOLLOWERS,
+            self::IMPRESSIONS,
+            self::CLICKS,
+            self::CTR,
+            self::CPC,
+            self::CPM,
+            self::SPEND,
+            self::FREQUENCY,
+            self::ACTIONS,
+            self::ACTION_VALUES,
+            self::COST_PER_ACTION_TYPE,
+            self::OBJECTIVE,
+            self::DATE_START,
+            self::DATE_STOP,
+            self::UNIQUE_CLICKS,
+            self::UNIQUE_CTR,
+            self::COST_PER_UNIQUE_CLICK,
+            self::COST_PER_INLINE_LINK_CLICK,
+            self::COST_PER_UNIQUE_OUTBOUND_CLICK,
+            self::COST_PER_UNIQUE_CONVERSION,
+            self::ESTIMATED_AD_RECALLERS,
+            self::ESTIMATED_AD_RECALL_RATE,
+            self::CONVERSION_RATE_RANKING,
+            self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::QUALITY_RANKING,
+            self::ENGAGEMENT_RATE_RANKING => MetricGroup::OTHERS,
         };
     }
 }

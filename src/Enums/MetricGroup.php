@@ -10,6 +10,7 @@ enum MetricGroup: string
     case DEMOGRAPHICS = 'DEMOGRAPHICS';
     case ONLINE_FOLLOWERS = 'ONLINE_FOLLOWERS';
     case THREADS_VIEWS = 'THREADS_VIEWS';
+    case OTHERS = 'OTHERS';
 
     public function getMetrics(): array
     {
@@ -45,6 +46,33 @@ enum MetricGroup: string
             ],
             self::THREADS_VIEWS => [
                 Metric::THREADS_VIEWS
+            ],
+            self::OTHERS => [
+                Metric::IMPRESSIONS,
+                Metric::CLICKS,
+                Metric::CTR,
+                Metric::CPC,
+                Metric::CPM,
+                Metric::SPEND,
+                Metric::FREQUENCY,
+                Metric::ACTIONS,
+                Metric::ACTION_VALUES,
+                Metric::COST_PER_ACTION_TYPE,
+                Metric::OBJECTIVE,
+                Metric::DATE_START,
+                Metric::DATE_STOP,
+                Metric::UNIQUE_CLICKS,
+                Metric::UNIQUE_CTR,
+                Metric::COST_PER_UNIQUE_CLICK,
+                Metric::COST_PER_INLINE_LINK_CLICK,
+                Metric::COST_PER_UNIQUE_OUTBOUND_CLICK,
+                Metric::COST_PER_UNIQUE_CONVERSION,
+                Metric::ESTIMATED_AD_RECALLERS,
+                Metric::ESTIMATED_AD_RECALL_RATE,
+                Metric::CONVERSION_RATE_RANKING,
+                Metric::COST_PER_ESTIMATED_AD_RECALLERS,
+                Metric::QUALITY_RANKING,
+                Metric::ENGAGEMENT_RATE_RANKING,
             ],
         };
     }
