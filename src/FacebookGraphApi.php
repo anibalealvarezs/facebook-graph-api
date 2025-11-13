@@ -14,6 +14,7 @@ use Anibalealvarezs\FacebookGraphApi\Enums\CreativeField;
 use Anibalealvarezs\FacebookGraphApi\Enums\CreativePermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\InstagramMediaField;
 use Anibalealvarezs\FacebookGraphApi\Enums\MediaProductType;
+use Anibalealvarezs\FacebookGraphApi\Enums\MediaType;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
@@ -414,6 +415,7 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/me/accounts',
                 query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -492,6 +494,7 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/me/adaccounts',
                 query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -563,7 +566,8 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/'.$pageId.'/posts',
                 query: $query,
-                tokenSample: TokenSample::PAGE
+                sleep: 1000000, // 1 second to avoid rate limiting
+                tokenSample: TokenSample::PAGE,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -614,6 +618,7 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/campaigns',
                 query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
                 tokenSample: TokenSample::PAGE
             );
 
@@ -665,6 +670,7 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/ads',
                 query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -715,6 +721,7 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/adsets',
                 query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -765,6 +772,7 @@ class FacebookGraphApi extends BearerTokenClient
                 method: 'GET',
                 endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/adcreatives',
                 query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -816,6 +824,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: 'v22.0/me/accounts',
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -898,7 +907,8 @@ class FacebookGraphApi extends BearerTokenClient
                 $response = $this->performRequest(
                     method: 'GET',
                     endpoint: "v22.0/".$igUserId."/media",
-                    query: $query
+                    query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -938,19 +948,18 @@ class FacebookGraphApi extends BearerTokenClient
      * Get insights for a specific Instagram post.
      *
      * @param string $mediaId The Instagram media ID.
-     * @param MediaProductType $mediaproductType
+     * @param MediaType $mediaType
      * @param int $limit
      * @return array Insights data.
      * @throws GuzzleException
-     * @throws Exception
      */
     public function getInstagramMediaInsights(
         string $mediaId,
-        MediaProductType $mediaproductType = MediaProductType::FEED,
+        MediaType $mediaType = MediaType::CAROUSEL_ALBUM,
         int $limit = 1000,
     ): array {
         $query = [
-            'metric' => $mediaproductType->insightsFields(),
+            'metric' => $mediaType->insightsFields(),
             'limit' => min($limit, 1000),
             'period' => MetricPeriod::LIFETIME->value
         ];
@@ -969,6 +978,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$mediaId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1025,6 +1035,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$pageId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1074,6 +1085,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$postId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1114,16 +1126,17 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => $metrics,
             'limit' => min($limit, 1000),
             'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
 
         if ($metricBreakdown) {
-            $query['breakdown'] = is_array($metricBreakdown) ?
+            $query['breakdowns'] = is_array($metricBreakdown) ?
                 implode(',', array_map(function($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdown'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
         }
 
         $insights = [];
@@ -1138,8 +1151,9 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$adAccountId."/insights",
+                    endpoint: "v22.0/act_".$adAccountId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1180,16 +1194,19 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => $metrics,
             'limit' => min($limit, 1000),
             'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
 
         if ($metricBreakdown) {
-            $query['breakdown'] = is_array($metricBreakdown) ?
+            $query['breakdowns'] = is_array($metricBreakdown) ?
                 implode(',', array_map(function($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdown'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', array_map(function($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
@@ -1206,6 +1223,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$campaignId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1246,16 +1264,19 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => $metrics,
             'limit' => min($limit, 1000),
             'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
 
         if ($metricBreakdown) {
-            $query['breakdown'] = is_array($metricBreakdown) ?
+            $query['breakdowns'] = is_array($metricBreakdown) ?
                 implode(',', array_map(function($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdown'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', array_map(function($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
@@ -1272,6 +1293,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$adId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1312,16 +1334,19 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => $metrics,
             'limit' => min($limit, 1000),
             'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
 
         if ($metricBreakdown) {
-            $query['breakdown'] = is_array($metricBreakdown) ?
+            $query['breakdowns'] = is_array($metricBreakdown) ?
                 implode(',', array_map(function($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdown'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', array_map(function($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
@@ -1338,6 +1363,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$adsetId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1378,16 +1404,17 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => $metrics,
             'limit' => min($limit, 1000),
             'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
 
         if ($metricBreakdown) {
-            $query['breakdown'] = is_array($metricBreakdown) ?
+            $query['breakdowns'] = is_array($metricBreakdown) ?
                 implode(',', array_map(function($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdown'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
         }
 
         $insights = [];
@@ -1404,6 +1431,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$creativeId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -1497,7 +1525,7 @@ class FacebookGraphApi extends BearerTokenClient
                 }
             }
         }
-        
+
         if ($metricPeriod) {
             $query['period'] = $metricPeriod->value;
         } else {
@@ -1511,7 +1539,7 @@ class FacebookGraphApi extends BearerTokenClient
                 }
             }
         }
-        
+
         if ($metricTimeframe) {
             $query['timeframe'] = $metricTimeframe->value;
         } else {
@@ -1525,7 +1553,7 @@ class FacebookGraphApi extends BearerTokenClient
                 }
             }
         }
-        
+
         if ($metricBreakdown) {
             $query['breakdown'] = is_array($metricBreakdown) ?
                 implode(',', array_map(function($b) {
@@ -1585,6 +1613,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "v22.0/".$instagramAccountId."/insights",
                     query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1795,7 +1824,12 @@ class FacebookGraphApi extends BearerTokenClient
             $data = [$data];
         }
         foreach($data as $item) {
-            $allowedCombinations[] = $item->allowedBreakdowns();
+            if ($item instanceof Metric) {
+                $combination = $item->allowedBreakdowns();
+            } else {
+                $combination = Metric::from(trim($item))->allowedBreakdowns();
+            }
+            $allowedCombinations[] = $combination;
         }
 
         foreach ($allowedCombinations as $allowedCombination) {
