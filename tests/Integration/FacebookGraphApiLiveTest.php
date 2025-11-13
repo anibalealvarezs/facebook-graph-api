@@ -106,6 +106,33 @@ class FacebookGraphApiLiveTest extends TestCase
     /**
      * @throws GuzzleException
      */
+    public function testGetMyPagesBybatch(): void
+    {
+        $permissions = [
+            PagePermission::PAGES_SHOW_LIST,
+            // PageFieldsByPermission::PAGES_READ_ENGAGEMENT
+        ];
+        $data = $this->api->getMyPagesByBatch($permissions);
+
+        $this->logger->debug('testGetMyPagesBybatch response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('data', $data);
+        if (!empty($data['data'])) {
+            $page = $data['data'][0];
+            $this->assertArrayHasKey('id', $page);
+            $this->assertArrayHasKey('name', $page);
+            $this->assertArrayHasKey('access_token', $page);
+            // Fan count may be present if pages_read_engagement is granted
+            if (isset($page['fan_count'])) {
+                $this->assertIsInt($page['fan_count']);
+            }
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
     public function testGetInstagramBusinessAccounts(): void
     {
         $permissions = [
