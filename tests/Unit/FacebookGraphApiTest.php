@@ -569,7 +569,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals(50, $insights['data'][1]['values'][0]['value']);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
-        $this->assertStringContainsString('metric=' . urlencode('comments,follows,likes,profile_activity,profile_visits,reach,saved,shares,total_interactions,views'), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('metric=' . urlencode('comments,likes,reach,saved,shares,total_interactions,views'), (string)$lastRequest->getUri());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
