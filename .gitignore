@@ -4,3 +4,5 @@
 /api-skeleton/
 /.phpunit.result.cache
 /*.log
+/phpstan.neon
+/.vscode/

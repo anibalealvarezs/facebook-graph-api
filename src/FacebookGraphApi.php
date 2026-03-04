@@ -107,6 +107,9 @@ class FacebookGraphApi extends BearerTokenClient
         $this->setClientAccesstoken($clientAccesstoken);
         $this->setLongLivedClientAccesstoken($longLivedClientAccesstoken);
         $this->auth = $auth ?? new FacebookGraphAuth($guzzleClient);
+
+        $this->setResponseErrorDetector('error');
+        $this->setErrorMessageParser(fn($data) => $data['error']['message'] ?? json_encode($data));
     }
 
     public function getAppId(): string
@@ -228,7 +231,7 @@ class FacebookGraphApi extends BearerTokenClient
      * @param array $customErrors
      * @param bool $ignoreAuth
      * @param TokenSample $tokenSample
-     * @return Response
+     * @return mixed
      * @throws GuzzleException
      * @throws Exception
      */
@@ -245,13 +248,14 @@ class FacebookGraphApi extends BearerTokenClient
         bool $verify = false,
         bool $allowNewToken = true,
         string $pathToSave = "",
-        bool $stream = null,
-        ?array $errorMessageNesting = null,
+        ?bool $stream = null,
+        mixed $errorMessageNesting = null,
         int $sleep = 0,
         array $customErrors = [],
         bool $ignoreAuth = false,
+        mixed $onFailure = null,
         TokenSample $tokenSample = TokenSample::USER,
-    ): Response {
+    ): mixed {
 
         $this->setSampleBasedToken($tokenSample);
 
@@ -272,7 +276,8 @@ class FacebookGraphApi extends BearerTokenClient
             errorMessageNesting: $errorMessageNesting,
             sleep: $sleep,
             customErrors: $customErrors,
-            ignoreAuth: $ignoreAuth
+            ignoreAuth: $ignoreAuth,
+            onFailure: $onFailure,
         );
     }
 

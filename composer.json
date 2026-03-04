@@ -19,6 +19,13 @@
     },
     "repositories": [
         {
+            "type": "path",
+            "url": "../api-client-skeleton",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
             "type": "composer", "url": "https://satis.anibalalvarez.com/"
         }
     ],
@@ -34,7 +41,8 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.20",
-        "phpunit/phpunit": "^9"
+        "phpunit/phpunit": "^9",
+        "phpstan/phpstan": "^1.10"
     },
     "minimum-stability": "dev",
     "prefer-stable": false
