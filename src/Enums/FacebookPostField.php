@@ -74,14 +74,14 @@ enum FacebookPostField: string
     {
         $enumValues = array_diff(
             array_map(
-                function($case) {
+                function ($case) {
                     return $case->value;
                 },
                 self::cases()
             ),
             $ignoreOptional ?
                 array_map(
-                    function($case) {
+                    function ($case) {
                         return $case->value;
                     },
                     [

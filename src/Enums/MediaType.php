@@ -2,7 +2,7 @@
 
 namespace Anibalealvarezs\FacebookGraphApi\Enums;
 
-enum MediaType : string
+enum MediaType: string
 {
     case IMAGE = 'IMAGE';
     case VIDEO  = 'VIDEO';

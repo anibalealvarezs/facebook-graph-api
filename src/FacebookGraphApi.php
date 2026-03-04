@@ -109,7 +109,7 @@ class FacebookGraphApi extends BearerTokenClient
         $this->auth = $auth ?? new FacebookGraphAuth($guzzleClient);
 
         $this->setResponseErrorDetector('error');
-        $this->setErrorMessageParser(fn($data) => $data['error']['message'] ?? json_encode($data));
+        $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
     }
 
     public function getAppId(): string
@@ -314,7 +314,7 @@ class FacebookGraphApi extends BearerTokenClient
                 );
                 $page = array_filter(
                     $tokenResponse['data'],
-                    fn($page) => $page['id'] === $this->getPageId()
+                    fn ($page) => $page['id'] === $this->getPageId()
                 );
                 if (empty($page)) {
                     throw new Exception('Page not found');
@@ -352,8 +352,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getMe(
         array $permissions = [],
         bool $includeMetadata = true
-    ): array
-    {
+    ): array {
         // Merge fields from provided permissions
         $fields = [];
         foreach ($permissions as $permission) {
@@ -540,9 +539,10 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $query = [
             'fields' => $postFields ?
-                (is_array($postFields) ?
+                (
+                    is_array($postFields) ?
                     implode(',', array_map(fn ($field) => (
-                    $field instanceof FacebookPostField ?
+                        $field instanceof FacebookPostField ?
                         $field->value :
                         $field
                     ), $postFields)) :
@@ -599,9 +599,10 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $query = [
             'fields' => $campaignFields ?
-                (is_array($campaignFields) ?
+                (
+                    is_array($campaignFields) ?
                     implode(',', array_map(fn ($field) => (
-                    $field instanceof CampaignField ?
+                        $field instanceof CampaignField ?
                         $field->value :
                         $field
                     ), $campaignFields)) :
@@ -651,9 +652,10 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $query = [
             'fields' => $adFields ?
-                (is_array($adFields) ?
+                (
+                    is_array($adFields) ?
                     implode(',', array_map(fn ($field) => (
-                    $field instanceof AdField ?
+                        $field instanceof AdField ?
                         $field->value :
                         $field
                     ), $adFields)) :
@@ -702,9 +704,10 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $query = [
             'fields' => $adsetFields ?
-                (is_array($adsetFields) ?
+                (
+                    is_array($adsetFields) ?
                     implode(',', array_map(fn ($field) => (
-                    $field instanceof AdsetField ?
+                        $field instanceof AdsetField ?
                         $field->value :
                         $field
                     ), $adsetFields)) :
@@ -753,9 +756,10 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $query = [
             'fields' => $creatriveFields ?
-                (is_array($creatriveFields) ?
+                (
+                    is_array($creatriveFields) ?
                     implode(',', array_map(fn ($field) => (
-                    $field instanceof CreativeField ?
+                        $field instanceof CreativeField ?
                         $field->value :
                         $field
                     ), $creatriveFields)) :
@@ -806,7 +810,7 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         // Combine fields from permissions, ensuring instagram_business_account is included
         $fields = array_unique(array_filter(array_map(
-            fn($perm) => $perm->fields(),
+            fn ($perm) => $perm->fields(),
             $permissions
         )));
 
@@ -888,9 +892,10 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $query = [
             'fields' => $mediaFields ?
-                (is_array($mediaFields) ?
+                (
+                    is_array($mediaFields) ?
                     implode(',', array_map(fn ($field) => (
-                    $field instanceof InstagramMediaField ?
+                        $field instanceof InstagramMediaField ?
                         $field->value :
                         $field
                     ), $mediaFields)) :
@@ -1136,7 +1141,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($metricBreakdown) {
             $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function($b) {
+                implode(',', array_map(function ($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
@@ -1204,12 +1209,12 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($metricBreakdown) {
             $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function($b) {
+                implode(',', array_map(function ($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdowns'] = implode(',', array_map(function($b) {
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
             }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
@@ -1274,12 +1279,12 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($metricBreakdown) {
             $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function($b) {
+                implode(',', array_map(function ($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdowns'] = implode(',', array_map(function($b) {
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
             }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
@@ -1344,12 +1349,12 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($metricBreakdown) {
             $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function($b) {
+                implode(',', array_map(function ($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdowns'] = implode(',', array_map(function($b) {
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
             }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
@@ -1414,7 +1419,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($metricBreakdown) {
             $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function($b) {
+                implode(',', array_map(function ($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
@@ -1504,7 +1509,7 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => 'name,period,total_value',
         ];
 
-        if($metrics) {
+        if ($metrics) {
             if (!is_array($metrics)) {
                 $metrics = [$metrics];
             }
@@ -1512,9 +1517,10 @@ class FacebookGraphApi extends BearerTokenClient
             foreach ($metrics as $metric) {
                 $metricsArray[] = $metric instanceof Metric ? $metric->value : $metric;
             }
-            $query['metric'] = implode(',', $metricsArray);;
+            $query['metric'] = implode(',', $metricsArray);
+            ;
         } elseif ($metricGroup) {
-            $query['metric'] = implode(',', array_map(fn($e) => $e->value, $metricGroup->getMetrics()));
+            $query['metric'] = implode(',', array_map(fn ($e) => $e->value, $metricGroup->getMetrics()));
         }
 
         if ($metricType) {
@@ -1561,14 +1567,14 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($metricBreakdown) {
             $query['breakdown'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function($b) {
+                implode(',', array_map(function ($b) {
                     return $b->value;
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
             if ($metrics) {
                 $allowedBreakdowns = [];
-                foreach($metrics as $metric) {
+                foreach ($metrics as $metric) {
                     foreach ($metric->allowedBreakdowns() as $breakdown) {
                         foreach ($breakdown as $b) {
                             $allowedBreakdowns[] = $b instanceof MetricBreakdown ? $b->value : $b;
@@ -1581,9 +1587,9 @@ class FacebookGraphApi extends BearerTokenClient
                 }
             } elseif ($metricGroup) {
                 $allowedBreakdowns = [];
-                foreach($metricGroup->getMetrics()[0]->allowedBreakdowns() as $breakdown) {
+                foreach ($metricGroup->getMetrics()[0]->allowedBreakdowns() as $breakdown) {
                     if (is_array($breakdown)) {
-                        foreach($breakdown as $b) {
+                        foreach ($breakdown as $b) {
                             $allowedBreakdowns[] = $b instanceof MetricBreakdown ? $b->value : $b;
                         }
                     } else {
@@ -1647,8 +1653,7 @@ class FacebookGraphApi extends BearerTokenClient
         string $since,
         string $timezone = 'America/Caracas',
         int $option = 1,
-    ): array
-    {
+    ): array {
         $metrics = match($option) {
             1 => [Metric::REACH, Metric::VIEWS],
             2 => [Metric::FOLLOWS_AND_UNFOLLOWS],
@@ -1699,8 +1704,7 @@ class FacebookGraphApi extends BearerTokenClient
         Metric|array|null $metrics = null,
         ?MetricGroup $metricGroup = null,
         MetricBreakdown|array|null $metricBreakdown = null,
-    ): array
-    {
+    ): array {
         if (!$metricGroup && empty(array_intersect($metrics, [Metric::FOLLOWER_DEMOGRAPHICS, Metric::REACHED_AUDIENCE_DEMOGRAPHICS, Metric::ENGAGED_AUDIENCE_DEMOGRAPHICS]))) {
             throw new Exception("Invalid metrics or metricGroup provided.");
         }
@@ -1734,8 +1738,7 @@ class FacebookGraphApi extends BearerTokenClient
         string $since,
         string $timezone = 'America/Caracas',
         ?MetricGroup $metricGroup = null,
-    ): array
-    {
+    ): array {
         return $this->getInstagramAccountInsights(
             instagramAccountId: $instagramAccountId,
             since: $since,
@@ -1828,7 +1831,7 @@ class FacebookGraphApi extends BearerTokenClient
         if ($data instanceof Metric) {
             $data = [$data];
         }
-        foreach($data as $item) {
+        foreach ($data as $item) {
             if ($item instanceof Metric) {
                 $combination = $item->allowedBreakdowns();
             } else {
@@ -1838,9 +1841,9 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         foreach ($allowedCombinations as $allowedCombination) {
-            foreach($allowedCombination as $combo) {
-                $providedValues = array_map(fn($b) => $b instanceof MetricBreakdown ? $b->value : $b, $provided);
-                $comboValues = array_map(fn($b) => $b instanceof MetricBreakdown ? $b->value : $b, $combo);
+            foreach ($allowedCombination as $combo) {
+                $providedValues = array_map(fn ($b) => $b instanceof MetricBreakdown ? $b->value : $b, $provided);
+                $comboValues = array_map(fn ($b) => $b instanceof MetricBreakdown ? $b->value : $b, $combo);
                 if ((count($providedValues) === count($comboValues)) && (array_intersect($providedValues, $comboValues) === $providedValues)) {
                     return true;
                 }
