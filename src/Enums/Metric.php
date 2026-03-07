@@ -2,6 +2,10 @@
 
 namespace Anibalealvarezs\FacebookGraphApi\Enums;
 
+/**
+ * @see https://developers.facebook.com/docs/instagram-api/reference/ig-media/insights/ (Media Insights)
+ * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights/ (User/Account Insights)
+ */
 enum Metric: string
 {
     case REACH = 'reach';

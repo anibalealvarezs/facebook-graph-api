@@ -1,3 +1,6 @@
+# SETTINGS
+fb_graph_token_path: #fb_graph_token_path
+
 # TOKENS
 fb_graph_user_access_token: #fb_graph_user_access_token
 fb_graph_page_access_token: #fb_graph_page_access_token

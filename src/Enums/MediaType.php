@@ -2,6 +2,9 @@
 
 namespace Anibalealvarezs\FacebookGraphApi\Enums;
 
+/**
+ * @see https://developers.facebook.com/docs/instagram-api/reference/ig-media/
+ */
 enum MediaType: string
 {
     case IMAGE = 'IMAGE';

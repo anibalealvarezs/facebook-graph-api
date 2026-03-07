@@ -11,12 +11,12 @@ use PHPUnit\Framework\TestCase;
 class FacebookGraphAuthLiveTest extends TestCase
 {
     protected FacebookGraphAuth $auth;
-    protected string $userId;
-    protected string $appId;
-    protected string $appSecret;
-    protected string $redirectUrl;
-    protected string $userAccessToken;
-    protected string $longLivedUserAccessToken;
+    protected ?string $userId;
+    protected ?string $appId;
+    protected ?string $appSecret;
+    protected ?string $redirectUrl;
+    protected ?string $userAccessToken;
+    protected ?string $longLivedUserAccessToken;
 
     /**
      * @throws Exception
@@ -25,12 +25,12 @@ class FacebookGraphAuthLiveTest extends TestCase
     {
         $config = app_config();
 
-        $this->userId = $config['fb_user_id'];
-        $this->appId = $config['fb_app_id'];
-        $this->appSecret = $config['fb_app_secret'];
-        $this->redirectUrl = $config['fb_app_redirect_uri'];
-        $this->userAccessToken = $config['fb_graph_user_access_token'];
-        $this->longLivedUserAccessToken = $config['fb_graph_long_lived_user_access_token'];
+        $this->userId = $config['fb_user_id'] ?? null;
+        $this->appId = $config['fb_app_id'] ?? null;
+        $this->appSecret = $config['fb_app_secret'] ?? null;
+        $this->redirectUrl = $config['fb_app_redirect_uri'] ?? null;
+        $this->userAccessToken = $config['fb_graph_user_access_token'] ?? null;
+        $this->longLivedUserAccessToken = $config['fb_graph_long_lived_user_access_token'] ?? null;
 
         $this->auth = new FacebookGraphAuth(new Client());
     }
@@ -41,6 +41,9 @@ class FacebookGraphAuthLiveTest extends TestCase
      */
     public function testGetLongLivedUserAccessToken(): void
     {
+        if (!$this->userAccessToken) {
+            $this->markTestSkipped('fb_graph_user_access_token is missing');
+        }
         $response = $this->auth->getLongLivedUserAccessToken(
             $this->appId,
             $this->appSecret,
@@ -68,6 +71,9 @@ class FacebookGraphAuthLiveTest extends TestCase
      */
     public function testGetLongLivedPageAccesstoken(): void
     {
+        if (!$this->longLivedUserAccessToken) {
+            $this->markTestSkipped('fb_graph_long_lived_user_access_token is missing');
+        }
         $response = $this->auth->getLongLivedPageAccesstoken(
             $this->userId,
             $this->longLivedUserAccessToken
@@ -82,6 +88,9 @@ class FacebookGraphAuthLiveTest extends TestCase
      */
     public function testGetLongLivedClientAccesstoken(): void
     {
+        if (!$this->longLivedUserAccessToken) {
+            $this->markTestSkipped('fb_graph_long_lived_user_access_token is missing');
+        }
         $response = $this->auth->getLongLivedClientAccesstoken(
             $this->appId,
             $this->appSecret,
@@ -98,6 +107,9 @@ class FacebookGraphAuthLiveTest extends TestCase
      */
     public function testGetLongLivedUserLongLivedPageAccesstoken(): void
     {
+        if (!$this->userAccessToken) {
+            $this->markTestSkipped('fb_graph_user_access_token is missing');
+        }
         $longLivedUserToken = $this->auth->getLongLivedUserAccessToken(
             $this->appId,
             $this->appSecret,
@@ -119,6 +131,9 @@ class FacebookGraphAuthLiveTest extends TestCase
      */
     public function testGetLongLivedUserLongLivedClientAccesstoken(): void
     {
+        if (!$this->userAccessToken) {
+            $this->markTestSkipped('fb_graph_user_access_token is missing');
+        }
         $longLivedUserToken = $this->auth->getLongLivedUserAccessToken(
             $this->appId,
             $this->appSecret,

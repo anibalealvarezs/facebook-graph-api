@@ -21,11 +21,12 @@ use PHPUnit\Framework\TestCase;
 class FacebookGraphApiLiveTest extends TestCase
 {
     protected FacebookGraphApi $api;
-    protected string $userId;
-    protected string $appId;
-    protected string $appSecret;
-    protected string $redirectUrl;
-    protected string $longLivedUserAccessToken;
+    protected ?string $userId;
+    protected ?string $appId;
+    protected ?string $appSecret;
+    protected ?string $redirectUrl;
+    protected ?string $userAccessToken;
+    protected ?string $longLivedUserAccessToken;
     protected Logger $logger;
 
     /**
@@ -35,18 +36,22 @@ class FacebookGraphApiLiveTest extends TestCase
     {
         $config = app_config();
 
-        $this->userId = $config['fb_user_id'];
-        $this->appId = $config['fb_app_id'];
-        $this->appSecret = $config['fb_app_secret'];
-        $this->redirectUrl = $config['fb_app_redirect_uri'];
-        $this->longLivedUserAccessToken = $config['fb_graph_long_lived_user_access_token'];
+        $this->userId = $config['fb_user_id'] ?? null;
+        $this->appId = $config['fb_app_id'] ?? null;
+        $this->appSecret = $config['fb_app_secret'] ?? null;
+        $this->redirectUrl = $config['fb_app_redirect_uri'] ?? null;
+        $this->userAccessToken = $config['fb_graph_user_access_token'] ?? null;
+        $this->longLivedUserAccessToken = $config['fb_graph_long_lived_user_access_token'] ?? null;
+        $tokenPath = $config['fb_graph_token_path'] ?? '';
 
         $this->api = new FacebookGraphApi(
             userId: $this->userId,
             appId: $this->appId,
             appSecret: $this->appSecret,
             redirectUrl: $this->redirectUrl,
-            longLivedUserAccessToken: $this->longLivedUserAccessToken
+            userAccessToken: $this->userAccessToken,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            tokenPath: $tokenPath
         );
 
         // Initialize Monolog logger

@@ -1067,15 +1067,17 @@ class FacebookGraphApi extends BearerTokenClient
     /**
      * Get insights for a specific Instagram post.
      *
+     * @see https://developers.facebook.com/docs/instagram-api/reference/ig-media/insights/
+     *
      * @param string $mediaId The Instagram media ID.
-     * @param MediaType $mediaType
+     * @param MediaType|MediaProductType $mediaType
      * @param int $limit
      * @return array Insights data.
      * @throws GuzzleException
      */
     public function getInstagramMediaInsights(
         string $mediaId,
-        MediaType $mediaType = MediaType::CAROUSEL_ALBUM,
+        MediaType|MediaProductType $mediaType = MediaType::CAROUSEL_ALBUM,
         int $limit = 1000,
     ): array {
         $query = [
@@ -1568,6 +1570,8 @@ class FacebookGraphApi extends BearerTokenClient
 
     /**
      * Get insights for a specific Instagram account.
+     *
+     * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights/
      *
      * @param string $instagramAccountId
      * @param string $since
