@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dca8ed326fe2c5282d88af60d9c83a11",
+    "content-hash": "310ecb2ebaf601c8175a5f9bc318e5d5",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../api-client-skeleton",
-                "reference": "5c122ef04bff64fb764eadb33b738d13574f4394"
+                "reference": "3dadf4aff88376fe8c08717a197f08a7b8fa6992"
             },
             "require": {
                 "anibalealvarezs/oauth-v1": "@dev",
@@ -47,7 +47,19 @@
                     "email": "anibalealvarezs@gmail.com"
                 }
             ],
-            "description": "description",
+            "description": "Base skeleton for standardizing PHP API clients with advanced error handling and data normalization.",
+            "homepage": "https://github.com/anibalealvarezs/api-client-skeleton",
+            "keywords": [
+                "api",
+                "client",
+                "error-handling",
+                "normalization",
+                "sdk",
+                "skeleton"
+            ],
+            "support": {
+                "issues": "https://github.com/anibalealvarezs/api-client-skeleton/issues"
+            },
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -56,25 +68,19 @@
         {
             "name": "anibalealvarezs/oauth-v1",
             "version": "dev-main",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/anibalealvarezs/oauth-v1.git",
-                "reference": "c47bb38647f4e331c33ff1fc1a0968d6aec00350"
-            },
             "dist": {
-                "type": "zip",
-                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/oauth-v1/anibalealvarezs-oauth-v1-c47bb38647f4e331c33ff1fc1a0968d6aec00350-zip-b2a53f.zip",
-                "reference": "c47bb38647f4e331c33ff1fc1a0968d6aec00350",
-                "shasum": "e4254addab2564db4514669d3b2c7917c94e7e82"
+                "type": "path",
+                "url": "../OAuth-v1",
+                "reference": "2f6fab9faed2c24db376b937ab599bc42a1929eb"
             },
             "require": {
                 "php": ">=8.1"
             },
             "require-dev": {
                 "fakerphp/faker": "^1.20",
+                "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^9"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -95,12 +101,23 @@
                     "email": "anibalealvarezs@gmail.com"
                 }
             ],
-            "description": "description",
+            "description": "A lightweight PHP library for handling OAuth 1.0a authentication and request signing.",
+            "homepage": "https://github.com/anibalealvarezs/OAuth-v1",
+            "keywords": [
+                "api",
+                "authentication",
+                "guzzle-middleware",
+                "oauth",
+                "oauth1",
+                "signing"
+            ],
             "support": {
-                "source": "https://github.com/anibalealvarezs/oauth-v1/tree/main",
-                "issues": "https://github.com/anibalealvarezs/oauth-v1/issues"
+                "issues": "https://github.com/anibalealvarezs/OAuth-v1/issues"
             },
-            "time": "2025-05-02T18:49:31+00:00"
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -178,12 +195,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "b51ac707cfa420b7bfd4e4d5e510ba8008e822b4"
+                "reference": "fb92d95f80a9da51bf8f2a5b26d8e8ea3b6d99ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b51ac707cfa420b7bfd4e4d5e510ba8008e822b4",
-                "reference": "b51ac707cfa420b7bfd4e4d5e510ba8008e822b4",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/fb92d95f80a9da51bf8f2a5b26d8e8ea3b6d99ed",
+                "reference": "fb92d95f80a9da51bf8f2a5b26d8e8ea3b6d99ed",
                 "shasum": ""
             },
             "require": {
@@ -281,7 +298,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.10.0"
+                "source": "https://github.com/guzzle/guzzle/tree/7.10"
             },
             "funding": [
                 {
@@ -297,7 +314,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-08-23T22:36:01+00:00"
+            "time": "2026-03-05T20:35:15+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -305,12 +322,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "481557b130ef3790cf82b713667b43030dc9c957"
+                "reference": "74c1b7186ecda8058c8958a1b2d3e8ef4419a84e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/481557b130ef3790cf82b713667b43030dc9c957",
-                "reference": "481557b130ef3790cf82b713667b43030dc9c957",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/74c1b7186ecda8058c8958a1b2d3e8ef4419a84e",
+                "reference": "74c1b7186ecda8058c8958a1b2d3e8ef4419a84e",
                 "shasum": ""
             },
             "require": {
@@ -365,7 +382,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.3.0"
+                "source": "https://github.com/guzzle/promises/tree/2.3"
             },
             "funding": [
                 {
@@ -381,7 +398,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-08-22T14:34:08+00:00"
+            "time": "2026-03-05T20:35:27+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -389,12 +406,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "21dc724a0583619cd1652f673303492272778051"
+                "reference": "27b6714cf2e71cfcc49718eb81ac711103f08218"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/21dc724a0583619cd1652f673303492272778051",
-                "reference": "21dc724a0583619cd1652f673303492272778051",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/27b6714cf2e71cfcc49718eb81ac711103f08218",
+                "reference": "27b6714cf2e71cfcc49718eb81ac711103f08218",
                 "shasum": ""
             },
             "require": {
@@ -482,7 +499,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.8.0"
+                "source": "https://github.com/guzzle/psr7/tree/2.8"
             },
             "funding": [
                 {
@@ -498,7 +515,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-08-23T21:21:41+00:00"
+            "time": "2026-03-05T21:03:18+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -1972,6 +1989,59 @@
                 "source": "https://github.com/phar-io/version/tree/3.2.1"
             },
             "time": "2022-02-21T01:04:05+00:00"
+        },
+        {
+            "name": "phpstan/phpstan",
+            "version": "1.12.x-dev",
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/37982d6fc7cbb746dda7773530cda557cdf119e1",
+                "reference": "37982d6fc7cbb746dda7773530cda557cdf119e1",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2|^8.0"
+            },
+            "conflict": {
+                "phpstan/phpstan-shim": "*"
+            },
+            "bin": [
+                "phpstan",
+                "phpstan.phar"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHPStan - PHP Static Analysis Tool",
+            "keywords": [
+                "dev",
+                "static analysis"
+            ],
+            "support": {
+                "docs": "https://phpstan.org/user-guide/getting-started",
+                "forum": "https://github.com/phpstan/phpstan/discussions",
+                "issues": "https://github.com/phpstan/phpstan/issues",
+                "security": "https://github.com/phpstan/phpstan/security/policy",
+                "source": "https://github.com/phpstan/phpstan-src"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/ondrejmirtes",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/phpstan",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-02-28T20:30:03+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
