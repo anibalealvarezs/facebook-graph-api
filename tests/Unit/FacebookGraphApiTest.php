@@ -14,6 +14,7 @@ use Anibalealvarezs\FacebookGraphApi\Enums\UserPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
+use Anibalealvarezs\FacebookGraphApi\Exceptions\FacebookRateLimitException;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
 use Carbon\Carbon;
 use Exception;
@@ -424,6 +425,48 @@ class FacebookGraphApiTest extends TestCase
         $this->expectExceptionMessage('API error');
 
         $client->getMe();
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testFacebookRateLimitExceptionHandling(): void
+    {
+        $errorResponse = [
+            'error' => [
+                'message' => '(#4) Application request limit reached',
+                'type' => 'OAuthException',
+                'code' => 4,
+            ]
+        ];
+
+        $headers = [
+            'X-App-Usage' => '{"call_count": 92, "total_cputime": 5, "total_time": 10}'
+        ];
+
+        $mock = new MockHandler([
+            new Response(400, $headers, json_encode($errorResponse)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        try {
+            $client->getMe();
+            $this->fail('Expected FacebookRateLimitException was not thrown.');
+        } catch (FacebookRateLimitException $e) {
+            $this->assertStringContainsString('(#4)', $e->getMessage());
+            $this->assertArrayHasKey('X-App-Usage', $e->getUsageHeader());
+            $this->assertEquals($headers['X-App-Usage'], $e->getUsageHeader()['X-App-Usage']);
+        }
     }
 
     /**

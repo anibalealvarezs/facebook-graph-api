@@ -30,8 +30,10 @@ use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use Anibalealvarezs\FacebookGraphApi\Exceptions\FacebookRateLimitException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Psr7\Response;
+use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
 use InvalidArgumentException;
 
 class FacebookGraphApi extends BearerTokenClient
@@ -389,6 +391,33 @@ class FacebookGraphApi extends BearerTokenClient
             ignoreAuth: $ignoreAuth,
             onFailure: $onFailure,
         );
+    }
+
+    /**
+     * @param Exception $exception
+     * @param mixed $onFailure
+     * @return mixed
+     * @throws Exception
+     */
+    protected function handleException(Exception $exception, mixed $onFailure = null): mixed
+    {
+        if ($exception instanceof ApiRequestException) {
+            $message = $exception->getMessage();
+            if (str_contains($message, '(#4)') || str_contains($message, 'Application request limit reached')) {
+                $usageHeaders = [];
+                $previous = $exception->getPrevious();
+                if ($previous instanceof RequestException && $previous->hasResponse()) {
+                    $response = $previous->getResponse();
+                    foreach (['X-App-Usage', 'X-Ad-Account-Usage', 'X-Business-Use-Case-Usage'] as $header) {
+                        if ($response->hasHeader($header)) {
+                            $usageHeaders[$header] = $response->getHeaderLine($header);
+                        }
+                    }
+                }
+                throw new FacebookRateLimitException($message, 4, $exception, array_filter($usageHeaders));
+            }
+        }
+        return parent::handleException($exception, $onFailure);
     }
 
     /**
@@ -1243,7 +1272,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdAccountInsights(
         string $adAccountId,
         int $limit = 100,
-        MetricBreakdown|array $metricBreakdown = null,
+        MetricBreakdown|array|null $metricBreakdown = null,
     ): array {
 
         $metrics = AdAccountPermission::DEFAULT->insightsFields();
@@ -1311,7 +1340,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getCampaignInsights(
         string $campaignId,
         int $limit = 100,
-        MetricBreakdown|array $metricBreakdown = null,
+        MetricBreakdown|array|null $metricBreakdown = null,
     ): array {
 
         $metrics = CampaignPermission::DEFAULT->insightsFields();
@@ -1381,7 +1410,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdInsights(
         string $adId,
         int $limit = 100,
-        MetricBreakdown|array $metricBreakdown = null,
+        MetricBreakdown|array|null $metricBreakdown = null,
     ): array {
 
         $metrics = AdPermission::DEFAULT->insightsFields();
@@ -1451,7 +1480,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdsetInsights(
         string $adsetId,
         int $limit = 100,
-        MetricBreakdown|array $metricBreakdown = null,
+        MetricBreakdown|array|null $metricBreakdown = null,
     ): array {
 
         $metrics = AdsetPermission::DEFAULT->insightsFields();
