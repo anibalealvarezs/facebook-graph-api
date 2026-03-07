@@ -46,6 +46,8 @@ class FacebookGraphApi extends BearerTokenClient
     protected ?string $longLivedPageAccesstoken;
     protected ?string $clientAccesstoken;
     protected ?string $longLivedClientAccesstoken;
+    protected string $tokenPath = "";
+    protected string $tokenIdentifier = "";
     protected ?FacebookGraphAuth $auth;
 
     /**
@@ -79,7 +81,9 @@ class FacebookGraphApi extends BearerTokenClient
         ?string $clientAccesstoken = null,
         ?string $longLivedClientAccesstoken = null,
         ?Client $guzzleClient = null,
-        ?FacebookGraphAuth $auth = null
+        ?FacebookGraphAuth $auth = null,
+        string $tokenPath = "",
+        string $tokenIdentifier = ""
     ) {
         parent::__construct(
             baseUrl: 'https://graph.facebook.com/',
@@ -107,6 +111,24 @@ class FacebookGraphApi extends BearerTokenClient
         $this->setClientAccesstoken($clientAccesstoken);
         $this->setLongLivedClientAccesstoken($longLivedClientAccesstoken);
         $this->auth = $auth ?? new FacebookGraphAuth($guzzleClient);
+
+        $this->tokenPath = $tokenPath;
+        $this->tokenIdentifier = $tokenIdentifier ?: ($appId ? 'App_' . $appId : "");
+
+        // Load tokens from storage if missing
+        if ($this->tokenPath && file_exists($this->tokenPath)) {
+            $data = json_decode(json: (string) file_get_contents($this->tokenPath), associative: true);
+            $serviceKey = $this->getServiceKey();
+            if (isset($data[$userId][$serviceKey])) {
+                $tokens = $data[$userId][$serviceKey];
+                $this->longLivedUserAccessToken = $this->longLivedUserAccessToken ?: ($tokens['long_lived_user'] ?? null);
+                $this->appAccessToken = $this->appAccessToken ?: ($tokens['app'] ?? null);
+                $this->longLivedClientAccesstoken = $this->longLivedClientAccesstoken ?: ($tokens['long_lived_client'] ?? null);
+                if ($this->getPageId() && isset($tokens['long_lived_pages'][$this->getPageId()])) {
+                    $this->longLivedPageAccesstoken = $this->longLivedPageAccesstoken ?: $tokens['long_lived_pages'][$this->getPageId()];
+                }
+            }
+        }
 
         $this->setResponseErrorDetector('error');
         $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
@@ -160,6 +182,10 @@ class FacebookGraphApi extends BearerTokenClient
     public function setLongLivedUserAccessToken(?string $longLivedUserAccessToken): void
     {
         $this->longLivedUserAccessToken = $longLivedUserAccessToken;
+
+        if ($this->tokenPath && $longLivedUserAccessToken) {
+            $this->persistToken('long_lived_user', $longLivedUserAccessToken);
+        }
     }
 
     public function getAppAccessToken(): ?string
@@ -170,6 +196,10 @@ class FacebookGraphApi extends BearerTokenClient
     public function setAppAccessToken(?string $appAccessToken): void
     {
         $this->appAccessToken = $appAccessToken;
+
+        if ($this->tokenPath && $appAccessToken) {
+            $this->persistToken('app', $appAccessToken);
+        }
     }
 
     public function getPageAccesstoken(): ?string
@@ -190,6 +220,10 @@ class FacebookGraphApi extends BearerTokenClient
     public function setLongLivedPageAccesstoken(?string $longLivedPageAccesstoken): void
     {
         $this->longLivedPageAccesstoken = $longLivedPageAccesstoken;
+
+        if ($this->tokenPath && $longLivedPageAccesstoken) {
+            $this->persistToken('long_lived_page', $longLivedPageAccesstoken);
+        }
     }
 
     public function getClientAccesstoken(): ?string
@@ -210,6 +244,82 @@ class FacebookGraphApi extends BearerTokenClient
     public function setLongLivedClientAccesstoken(?string $longLivedClientAccesstoken): void
     {
         $this->longLivedClientAccesstoken = $longLivedClientAccesstoken;
+
+        if ($this->tokenPath && $longLivedClientAccesstoken) {
+            $this->persistToken('long_lived_client', $longLivedClientAccesstoken);
+        }
+    }
+
+    public function getTokenPath(): string
+    {
+        return $this->tokenPath;
+    }
+
+    public function setTokenPath(string $tokenPath): void
+    {
+        $this->tokenPath = $tokenPath;
+    }
+
+    public function getTokenIdentifier(): string
+    {
+        return $this->tokenIdentifier;
+    }
+
+    public function setTokenIdentifier(string $tokenIdentifier): void
+    {
+        $this->tokenIdentifier = $tokenIdentifier;
+    }
+
+    /**
+     * @param string $type
+     * @param string|null $token
+     * @return void
+     */
+    protected function persistToken(string $type, ?string $token): void
+    {
+        if (!$this->tokenPath || !$token) {
+            return;
+        }
+
+        $data = [];
+        if (file_exists($this->tokenPath)) {
+            $data = json_decode(json: (string) file_get_contents($this->tokenPath), associative: true) ?: [];
+        }
+
+        $userId = $this->getUserId();
+        if (!isset($data[$userId]) || !is_array($data[$userId])) {
+            $data[$userId] = [];
+        }
+
+        $serviceKey = $this->getServiceKey();
+        if (!isset($data[$userId][$serviceKey]) || !is_array($data[$userId][$serviceKey])) {
+            $data[$userId][$serviceKey] = [];
+        }
+
+        if ($type === 'long_lived_page' && $this->getPageId()) {
+            if (!isset($data[$userId][$serviceKey]['long_lived_pages']) || !is_array($data[$userId][$serviceKey]['long_lived_pages'])) {
+                $data[$userId][$serviceKey]['long_lived_pages'] = [];
+            }
+            $data[$userId][$serviceKey]['long_lived_pages'][$this->getPageId()] = $token;
+        } else {
+            $data[$userId][$serviceKey][$type] = $token;
+        }
+
+        // Ensure directory exists
+        $dir = dirname($this->tokenPath);
+        if (!is_dir($dir)) {
+            mkdir(directory: $dir, permissions: 0755, recursive: true);
+        }
+
+        file_put_contents(filename: $this->tokenPath, data: json_encode(value: $data, flags: JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * @return string
+     */
+    protected function getServiceKey(): string
+    {
+        return $this->tokenIdentifier ?: 'app_' . $this->getAppId();
     }
 
     /**
