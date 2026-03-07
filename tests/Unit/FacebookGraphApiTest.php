@@ -342,13 +342,13 @@ class FacebookGraphApiTest extends TestCase
         ];
         $expectedFields = 'id,name,access_token,category,tasks,is_published,username,is_verified,about,description,fan_count,cover,location,phone,website,email,hours,is_permanently_closed,verification_status,business,engagement,followers_count,new_like_count,rating_count,overall_star_rating,affiliation,company_overview,contact_address,founded,general_info,mission,products';
 
-        $limit = Faker::create()->numberBetween(1, 1000);
+        $limit = Faker::create()->numberBetween(1, 100);
         $response = $client->getMyPages(permissions: $permissions, limit: $limit);
         $this->assertEquals($responseData, $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me/accounts?limit='.$limit.'&fields=' . urlencode($expectedFields),
+            'https://graph.facebook.com/v22.0/me/accounts?limit='.min($limit, 100).'&fields=' . urlencode($expectedFields),
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
@@ -388,13 +388,13 @@ class FacebookGraphApiTest extends TestCase
             guzzleClient: $guzzle
         );
 
-        $limit = Faker::create()->numberBetween(1, 1000);
+        $limit = Faker::create()->numberBetween(1, 100);
         $response = $client->getMyPages(limit: $limit);
         $this->assertEquals($responseData, $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me/accounts?limit='.$limit.'&fields=id%2Cname%2Caccess_token',
+            'https://graph.facebook.com/v22.0/me/accounts?limit='.min($limit, 100).'&fields=id%2Cname%2Caccess_token',
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));

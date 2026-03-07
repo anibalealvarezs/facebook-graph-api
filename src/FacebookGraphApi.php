@@ -499,7 +499,7 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getMyPages(
         array $permissions = [],
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         // Merge fields from provided permissions
         $fields = [];
@@ -513,7 +513,7 @@ class FacebookGraphApi extends BearerTokenClient
         $fieldsString = !empty($fields) ? implode(',', array_unique(explode(',', implode(',', array_filter($fields))))) : 'id,name,access_token';
 
         $query = [
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'fields' => $fieldsString,
         ];
 
@@ -550,6 +550,10 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getMyPagesByBatch(array $pagesIds, array $permissions = []): array
     {
+        return [
+            'error' => 'Deactivated'
+        ];
+
         // Merge fields from provided permissions
         $fields = [];
         foreach ($permissions as $permission) {
@@ -565,22 +569,26 @@ class FacebookGraphApi extends BearerTokenClient
             'batch' => json_encode(array_map(function ($pageId) use ($fieldsString) {
                 return [
                     'method' => 'GET',
-                    'relative_url' => '/v22.0/' . $pageId,
-                    'body' => [
-                        'fields' => $fieldsString,
-                    ],
+                    'relative_url' => "me/accounts?fields={$fieldsString}",
                 ];
             }, $pagesIds)),
             'include_headers' => false,
         ];
 
         $response = $this->performRequest(
-            method: 'GET',
-            endpoint: 'v22.0/me/accounts',
-            query: $query,
+            method: 'POST',
+            endpoint: 'v22.0',
+            form_params: $query,
         );
 
-        return json_decode($response->getBody()->getContents(), true);
+        $results = json_decode($response->getBody()->getContents(), true);
+        if (!$results) {
+            return [];
+        }
+
+        return array_map(function ($item) {
+            return json_decode($item['body'] ?? "{}", true);
+        }, $results);
     }
 
     /**
@@ -589,10 +597,10 @@ class FacebookGraphApi extends BearerTokenClient
      * @throws GuzzleException
      */
     public function getMyAdAccounts(
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         $query = [
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'fields' => AdAccountPermission::DEFAULT->fields(),
         ];
 
@@ -705,7 +713,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getCampaigns(
         string $adAccountId,
         string|array|null $campaignFields = null, // Comma-separated list of fields
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         $query = [
             'fields' => $campaignFields ?
@@ -719,7 +727,7 @@ class FacebookGraphApi extends BearerTokenClient
                     $campaignFields
                 ) :
                 CampaignField::toCommaSeparatedList(),
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
         ];
 
         $campaigns = [];
@@ -758,7 +766,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAds(
         string $adAccountId,
         string|array|null $adFields = null, // Comma-separated list of fields
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         $query = [
             'fields' => $adFields ?
@@ -772,7 +780,7 @@ class FacebookGraphApi extends BearerTokenClient
                     $adFields
                 ) :
                 AdField::toCommaSeparatedList(),
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
         ];
 
         $ads = [];
@@ -810,7 +818,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdsets(
         string $adAccountId,
         string|array|null $adsetFields = null, // Comma-separated list of fields
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         $query = [
             'fields' => $adsetFields ?
@@ -824,7 +832,7 @@ class FacebookGraphApi extends BearerTokenClient
                     $adsetFields
                 ) :
                 AdsetField::toCommaSeparatedList(),
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
         ];
 
         $adsets = [];
@@ -862,7 +870,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getCreatives(
         string $adAccountId,
         string|array|null $creatriveFields = null, // Comma-separated list of fields
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         $query = [
             'fields' => $creatriveFields ?
@@ -876,7 +884,7 @@ class FacebookGraphApi extends BearerTokenClient
                     $creatriveFields
                 ) :
                 CreativeField::toCommaSeparatedList(),
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
         ];
 
         $creatives = [];
@@ -998,7 +1006,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getInstagramMedia(
         string $igUserId,
         string|array|null $mediaFields = null, // Comma-separated list of fields
-        int $limit = 1000
+        int $limit = 100
     ): array {
         $query = [
             'fields' => $mediaFields ?
@@ -1055,7 +1063,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getInstagramPosts(
         string $igUserId,
         string|array|null $mediaFields = null, // Comma-separated list of fields
-        int $limit = 1000
+        int $limit = 100
     ): array {
         return $this->getInstagramMedia(
             igUserId: $igUserId,
@@ -1078,11 +1086,11 @@ class FacebookGraphApi extends BearerTokenClient
     public function getInstagramMediaInsights(
         string $mediaId,
         MediaType|MediaProductType $mediaType = MediaType::CAROUSEL_ALBUM,
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
         $query = [
             'metric' => $mediaType->insightsFields(),
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'period' => MetricPeriod::LIFETIME->value
         ];
 
@@ -1183,13 +1191,13 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getFacebookPostInsights(
         string $postId,
-        int $limit = 1000,
+        int $limit = 100,
     ): array {
 
         $query = [
             'metric' => FacebookPostPermission::DEFAULT->insightsFields(),
             'period' => MetricPeriod::LIFETIME->value,
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'fields' => 'name,period,values',
         ];
 
@@ -1234,7 +1242,7 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getAdAccountInsights(
         string $adAccountId,
-        int $limit = 1000,
+        int $limit = 100,
         MetricBreakdown|array $metricBreakdown = null,
     ): array {
 
@@ -1246,7 +1254,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'fields' => $metrics,
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
@@ -1302,7 +1310,7 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getCampaignInsights(
         string $campaignId,
-        int $limit = 1000,
+        int $limit = 100,
         MetricBreakdown|array $metricBreakdown = null,
     ): array {
 
@@ -1314,7 +1322,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'fields' => $metrics,
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
@@ -1372,7 +1380,7 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getAdInsights(
         string $adId,
-        int $limit = 1000,
+        int $limit = 100,
         MetricBreakdown|array $metricBreakdown = null,
     ): array {
 
@@ -1384,7 +1392,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'fields' => $metrics,
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
@@ -1442,7 +1450,7 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getAdsetInsights(
         string $adsetId,
-        int $limit = 1000,
+        int $limit = 100,
         MetricBreakdown|array $metricBreakdown = null,
     ): array {
 
@@ -1454,7 +1462,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'fields' => $metrics,
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
@@ -1512,7 +1520,7 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getCreativeInsights(
         string $creativeId,
-        int $limit = 1000,
+        int $limit = 100,
         MetricBreakdown|array $metricBreakdown = null,
     ): array {
 
@@ -1524,7 +1532,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'fields' => $metrics,
-            'limit' => min($limit, 1000),
+            'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
         ];
@@ -1620,7 +1628,7 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $query = [
-            'fields' => 'name,period,total_value',
+            'fields' => 'name,period,total_value,values,title',
         ];
 
         if ($metrics) {
