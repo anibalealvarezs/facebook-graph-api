@@ -4,15 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "310ecb2ebaf601c8175a5f9bc318e5d5",
+    "content-hash": "48cbbc44ec369a9c405e496ef458db76",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
             "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/anibalealvarezs/api-client-skeleton.git",
+                "reference": "0432f01f0616b5c1c2de423378f9948fc94caa15"
+            },
             "dist": {
-                "type": "path",
-                "url": "../api-client-skeleton",
-                "reference": "3dadf4aff88376fe8c08717a197f08a7b8fa6992"
+                "type": "zip",
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/api-client-skeleton/anibalealvarezs-api-client-skeleton-0432f01f0616b5c1c2de423378f9948fc94caa15-zip-a6bd9a.zip",
+                "reference": "0432f01f0616b5c1c2de423378f9948fc94caa15",
+                "shasum": "b647892150c52d6b4f237d658a02638c770c0c2e"
             },
             "require": {
                 "anibalealvarezs/oauth-v1": "@dev",
@@ -27,6 +33,7 @@
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^9"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -58,20 +65,24 @@
                 "skeleton"
             ],
             "support": {
-                "issues": "https://github.com/anibalealvarezs/api-client-skeleton/issues"
+                "issues": "https://github.com/anibalealvarezs/api-client-skeleton/issues",
+                "source": "https://github.com/anibalealvarezs/api-client-skeleton/tree/main"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-03-07T00:09:05+00:00"
         },
         {
             "name": "anibalealvarezs/oauth-v1",
             "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/anibalealvarezs/oauth-v1.git",
+                "reference": "c42fa2cd07e1bc9206f039092bdcbbd99ac2aea3"
+            },
             "dist": {
-                "type": "path",
-                "url": "../OAuth-v1",
-                "reference": "2f6fab9faed2c24db376b937ab599bc42a1929eb"
+                "type": "zip",
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/oauth-v1/anibalealvarezs-oauth-v1-c42fa2cd07e1bc9206f039092bdcbbd99ac2aea3-zip-13c64e.zip",
+                "reference": "c42fa2cd07e1bc9206f039092bdcbbd99ac2aea3",
+                "shasum": "da3fc10c694f7cd5e2d8ca138b3ba70713e170c4"
             },
             "require": {
                 "php": ">=8.1"
@@ -81,6 +92,7 @@
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^9"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -112,12 +124,10 @@
                 "signing"
             ],
             "support": {
-                "issues": "https://github.com/anibalealvarezs/OAuth-v1/issues"
+                "issues": "https://github.com/anibalealvarezs/OAuth-v1/issues",
+                "source": "https://github.com/anibalealvarezs/oauth-v1/tree/main"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-03-07T00:03:43+00:00"
         },
         {
             "name": "carbonphp/carbon-doctrine-types",
