@@ -102,8 +102,8 @@ class FacebookGraphApi extends BearerTokenClient
             throw new InvalidArgumentException('User ID is required');
         }
         $this->setUserId($userId);
+        $this->pageId = $pageId;
         $this->setAppId($appId);
-        $this->setPageId($pageId);
         $this->setAppSecret($appSecret);
         $this->setRedirectUrl($redirectUrl);
         $this->setUserAccessToken($userAccessToken);
