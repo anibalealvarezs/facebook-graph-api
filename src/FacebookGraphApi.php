@@ -476,8 +476,8 @@ class FacebookGraphApi extends BearerTokenClient
                     fn ($page) => (string) $page['id'] === (string) $this->getPageId()
                 );
                 if (empty($page)) {
-                    $availableIds = array_map(fn($p) => $p['id'], $tokenResponse['data']);
-                    throw new Exception('Page not found. Available IDs: ' . implode(', ', $availableIds));
+                    $available = array_map(fn($p) => "{$p['name']} ({$p['id']})", $tokenResponse['data']);
+                    throw new Exception('Page not found. Available pages: ' . implode(', ', $available));
                 }
                 $page = array_values($page);
                 $this->setLongLivedPageAccesstoken($page[0]['access_token']);
