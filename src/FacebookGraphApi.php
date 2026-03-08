@@ -794,7 +794,7 @@ class FacebookGraphApi extends BearerTokenClient
                 endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/campaigns',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
-                tokenSample: TokenSample::PAGE
+                tokenSample: TokenSample::USER
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -1336,7 +1336,7 @@ class FacebookGraphApi extends BearerTokenClient
                     endpoint: "v22.0/act_".$adAccountId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
+                    tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1406,7 +1406,7 @@ class FacebookGraphApi extends BearerTokenClient
                     endpoint: "v22.0/".$campaignId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
+                    tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1476,7 +1476,7 @@ class FacebookGraphApi extends BearerTokenClient
                     endpoint: "v22.0/".$adId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
+                    tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1546,7 +1546,7 @@ class FacebookGraphApi extends BearerTokenClient
                     endpoint: "v22.0/".$adsetId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
+                    tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1614,7 +1614,7 @@ class FacebookGraphApi extends BearerTokenClient
                     endpoint: "v22.0/".$creativeId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
+                    tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
