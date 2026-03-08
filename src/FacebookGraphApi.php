@@ -51,6 +51,7 @@ class FacebookGraphApi extends BearerTokenClient
     protected string $tokenPath = "";
     protected string $tokenIdentifier = "";
     protected ?FacebookGraphAuth $auth;
+    protected array $storedTokens = [];
 
     /**
      * @param string $userId
@@ -119,10 +120,10 @@ class FacebookGraphApi extends BearerTokenClient
 
         // Load tokens from storage if missing
         if ($this->tokenPath && file_exists($this->tokenPath)) {
-            $data = json_decode(json: (string) file_get_contents($this->tokenPath), associative: true);
+            $this->storedTokens = json_decode(json: (string) file_get_contents($this->tokenPath), associative: true) ?: [];
             $serviceKey = $this->getServiceKey();
-            if (isset($data[$userId][$serviceKey])) {
-                $tokens = $data[$userId][$serviceKey];
+            if (isset($this->storedTokens[$userId][$serviceKey])) {
+                $tokens = $this->storedTokens[$userId][$serviceKey];
                 $this->longLivedUserAccessToken = $this->longLivedUserAccessToken ?: ($tokens['long_lived_user'] ?? null);
                 $this->appAccessToken = $this->appAccessToken ?: ($tokens['app'] ?? null);
                 $this->longLivedClientAccesstoken = $this->longLivedClientAccesstoken ?: ($tokens['long_lived_client'] ?? null);
@@ -153,6 +154,16 @@ class FacebookGraphApi extends BearerTokenClient
 
     public function setPageId(?string $pageId): void
     {
+        if ($pageId !== $this->pageId) {
+            $this->longLivedPageAccesstoken = null;
+            if ($pageId && !empty($this->storedTokens)) {
+                $userId = $this->getUserId();
+                $serviceKey = $this->getServiceKey();
+                if (isset($this->storedTokens[$userId][$serviceKey]['long_lived_pages'][$pageId])) {
+                    $this->longLivedPageAccesstoken = $this->storedTokens[$userId][$serviceKey]['long_lived_pages'][$pageId];
+                }
+            }
+        }
         $this->pageId = $pageId;
     }
 
@@ -314,6 +325,7 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         file_put_contents(filename: $this->tokenPath, data: json_encode(value: $data, flags: JSON_PRETTY_PRINT));
+        $this->storedTokens = $data;
     }
 
     /**
@@ -461,11 +473,12 @@ class FacebookGraphApi extends BearerTokenClient
                 );
                 $page = array_filter(
                     $tokenResponse['data'],
-                    fn ($page) => $page['id'] === $this->getPageId()
+                    fn ($page) => (string) $page['id'] === (string) $this->getPageId()
                 );
                 if (empty($page)) {
                     throw new Exception('Page not found');
                 }
+                $page = array_values($page);
                 $this->setLongLivedPageAccesstoken($page[0]['access_token']);
             }
         } elseif ($tokenSample === TokenSample::CLIENT) {
@@ -1174,6 +1187,7 @@ class FacebookGraphApi extends BearerTokenClient
         ?string $since = null,
         ?string $until = null,
     ): array {
+        $this->setPageId($pageId);
 
         $query = [
             'metric' => PagePermission::PAGES_SHOW_LIST->insightsFields(),
