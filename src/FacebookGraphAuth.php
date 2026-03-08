@@ -82,7 +82,7 @@ class FacebookGraphAuth extends NoAuthClient
         string $userId,
         string $longLivedUserAccessToken,
     ): array {
-        $endpoint = 'me/accounts';
+        $endpoint = $userId . '/accounts';
         $query = [
             'access_token' => $longLivedUserAccessToken,
         ];
@@ -106,7 +106,7 @@ class FacebookGraphAuth extends NoAuthClient
         string $userId,
         string $longLivedUserAccessToken,
     ): array {
-        $endpoint = 'v22.0/me/accounts';
+        $endpoint = 'v22.0/' . $userId . '/accounts';
         $query = [
             'access_token' => $longLivedUserAccessToken,
         ];
