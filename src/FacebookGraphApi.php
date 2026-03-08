@@ -447,6 +447,14 @@ class FacebookGraphApi extends BearerTokenClient
             }
         } elseif ($tokenSample === TokenSample::PAGE) {
             if (!$this->getLongLivedPageAccesstoken() || ($this->getLongLivedPageAccesstoken() === 'placeholder')) {
+                if (!$this->getLongLivedUserAccessToken() || ($this->getLongLivedUserAccessToken() === 'placeholder')) {
+                    $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
+                        $this->getAppId(),
+                        $this->getAppSecret(),
+                        $this->getUserAccessToken(),
+                    );
+                    $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
+                }
                 $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedPageAccesstoken(
                     $this->getUserId(),
                     $this->getLongLivedUserAccessToken(),
@@ -1205,7 +1213,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             return ['data' => $insights];
         } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for media ID ".$pageId.": ".$e->getMessage());
+            throw new Exception("Failed to retrieve insights for account ID ".$pageId.": ".$e->getMessage());
         }
     }
 
