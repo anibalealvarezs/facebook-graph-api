@@ -442,12 +442,16 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($tokenSample === TokenSample::USER) {
             if (!$this->getLongLivedUserAccessToken() || ($this->getLongLivedUserAccessToken() === 'placeholder')) {
-                $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
-                    $this->getAppId(),
-                    $this->getAppSecret(),
-                    $this->getUserAccessToken(),
-                );
-                $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
+                if (str_starts_with($this->getUserAccessToken() ?: '', 'EAA')) {
+                    $this->setLongLivedUserAccessToken($this->getUserAccessToken());
+                } else {
+                    $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
+                        $this->getAppId(),
+                        $this->getAppSecret(),
+                        $this->getUserAccessToken(),
+                    );
+                    $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
+                }
             }
         } elseif ($tokenSample === TokenSample::APP) {
             if (!$this->getAppAccessToken() || ($this->getAppAccessToken() === 'placeholder')) {
@@ -495,11 +499,11 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $this->setToken(
-            match($tokenSample) {
-                TokenSample::USER => $this->getLongLivedUserAccessToken(),
+            match ($tokenSample) {
+                TokenSample::USER => $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
                 TokenSample::APP => $this->getAppAccessToken(),
-                TokenSample::PAGE => $this->getLongLivedPageAccesstoken(),
-                TokenSample::CLIENT => $this->getLongLivedClientAccesstoken(),
+                TokenSample::PAGE => $this->getLongLivedPageAccesstoken() ?: $this->getPageAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
+                TokenSample::CLIENT => $this->getLongLivedClientAccesstoken() ?: $this->getClientAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
             }
         );
     }
