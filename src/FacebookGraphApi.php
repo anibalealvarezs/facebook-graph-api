@@ -443,19 +443,15 @@ class FacebookGraphApi extends BearerTokenClient
         if ($tokenSample === TokenSample::USER) {
             if (!$this->getLongLivedUserAccessToken() || ($this->getLongLivedUserAccessToken() === 'placeholder')) {
                 $userToken = trim($this->getUserAccessToken() ?: '');
-                if (str_starts_with($userToken, 'EAA')) {
+                try {
+                    $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
+                        $this->getAppId(),
+                        $this->getAppSecret(),
+                        $userToken,
+                    );
+                    $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
+                } catch (Exception $e) {
                     $this->setLongLivedUserAccessToken($userToken);
-                } else {
-                    try {
-                        $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
-                            $this->getAppId(),
-                            $this->getAppSecret(),
-                            $userToken,
-                        );
-                        $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
-                    } catch (Exception $e) {
-                        $this->setLongLivedUserAccessToken($userToken);
-                    }
                 }
             }
         } elseif ($tokenSample === TokenSample::APP) {
@@ -470,19 +466,15 @@ class FacebookGraphApi extends BearerTokenClient
             if (!$this->getLongLivedPageAccesstoken() || ($this->getLongLivedPageAccesstoken() === 'placeholder')) {
                 if (!$this->getLongLivedUserAccessToken() || ($this->getLongLivedUserAccessToken() === 'placeholder')) {
                     $userToken = trim($this->getUserAccessToken() ?: '');
-                    if (str_starts_with($userToken, 'EAA')) {
+                    try {
+                        $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
+                            $this->getAppId(),
+                            $this->getAppSecret(),
+                            $userToken,
+                        );
+                        $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
+                    } catch (Exception $e) {
                         $this->setLongLivedUserAccessToken($userToken);
-                    } else {
-                        try {
-                            $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedUserAccessToken(
-                                $this->getAppId(),
-                                $this->getAppSecret(),
-                                $userToken,
-                            );
-                            $this->setLongLivedUserAccessToken($tokenResponse['access_token']);
-                        } catch (Exception $e) {
-                            $this->setLongLivedUserAccessToken($userToken);
-                        }
                     }
                 }
                 $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedPageAccesstoken(
