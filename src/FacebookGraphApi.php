@@ -696,6 +696,102 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get Ads Pixels for a specific ad account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/adspixels/
+     *
+     * @param string $adAccountId
+     * @param int $limit
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getAdAccountPixels(
+        string $adAccountId,
+        int $limit = 100,
+    ): array {
+        $adAccountId = $this->formatAdAccountId($adAccountId);
+
+        $response = $this->performRequest(
+            method: 'GET',
+            endpoint: 'v25.0/' . $adAccountId . '/adspixels',
+            query: [
+                'limit' => min($limit, 100),
+                'fields' => 'id,name,data_use_setting,creation_time,last_fired_time',
+            ],
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get statistics for a specific Ads Pixel.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ads-pixel/stats/
+     *
+     * @param string $pixelId
+     * @param string|null $since
+     * @param string|null $until
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getAdPixelStats(
+        string $pixelId,
+        ?string $since = null,
+        ?string $until = null,
+    ): array {
+        $query = [];
+        if ($since) {
+            $query['since'] = $since;
+        }
+        if ($until) {
+            $query['until'] = $until;
+        }
+
+        $response = $this->performRequest(
+            method: 'GET',
+            endpoint: 'v25.0/' . $pixelId . '/stats',
+            query: $query,
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Send events to a Facebook Pixel (Conversions API).
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/conversions-api/
+     *
+     * @param string $pixelId
+     * @param array $events Array of event arrays. Each event should contain 'event_name', 'event_time', 'user_data', etc.
+     * @param string|null $testEventCode Optional test event code to verify events in Events Manager.
+     * @return array
+     * @throws GuzzleException
+     */
+    public function sendPixelEvents(
+        string $pixelId,
+        array $events,
+        ?string $testEventCode = null,
+    ): array {
+        $data = [
+            'data' => $events,
+        ];
+        if ($testEventCode) {
+            $data['test_event_code'] = $testEventCode;
+        }
+
+        $response = $this->performRequest(
+            method: 'POST',
+            endpoint: 'v25.0/' . $pixelId . '/events',
+            body: json_encode($data),
+            headers: [
+                'Content-Type' => 'application/json',
+            ],
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
      * Get posts published by a Facebook Page.
      *
      * @see https://developers.facebook.com/docs/graph-api/reference/page/feed/
