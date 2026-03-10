@@ -12,6 +12,11 @@ use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
 use Anibalealvarezs\FacebookGraphApi\Enums\UserPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\AdAccountPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\CampaignPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\AdsetPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\AdPermission;
+use Anibalealvarezs\FacebookGraphApi\Enums\CreativePermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 use Anibalealvarezs\FacebookGraphApi\Exceptions\FacebookRateLimitException;
@@ -221,7 +226,7 @@ class FacebookGraphApiTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me?fields=' . urlencode($expectedFields) . '&metadata=1',
+            'https://graph.facebook.com/v25.0/me?fields=' . urlencode($expectedFields) . '',
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
@@ -253,7 +258,7 @@ class FacebookGraphApiTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me?fields=id%2Cname&metadata=1',
+            'https://graph.facebook.com/v25.0/me?fields=id%2Cname',
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
@@ -293,7 +298,7 @@ class FacebookGraphApiTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me?fields=id%2Cname&metadata=1',
+            'https://graph.facebook.com/v25.0/me?fields=id%2Cname',
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
@@ -349,7 +354,7 @@ class FacebookGraphApiTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me/accounts?limit='.min($limit, 100).'&fields=' . urlencode($expectedFields),
+            'https://graph.facebook.com/v25.0/me/accounts?limit='.min($limit, 100).'&fields=' . urlencode($expectedFields),
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
@@ -395,7 +400,7 @@ class FacebookGraphApiTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/v22.0/me/accounts?limit='.min($limit, 100).'&fields=id%2Cname%2Caccess_token',
+            'https://graph.facebook.com/v25.0/me/accounts?limit='.min($limit, 100).'&fields=id%2Cname%2Caccess_token',
             (string)$lastRequest->getUri()
         );
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
@@ -408,7 +413,7 @@ class FacebookGraphApiTest extends TestCase
     public function testGuzzleExceptionHandling(): void
     {
         $mock = new MockHandler([
-            new RequestException('API error', new Request('GET', 'v22.0/me')),
+            new RequestException('API error', new Request('GET', 'v25.0/me')),
         ]);
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(
@@ -623,7 +628,7 @@ class FacebookGraphApiTest extends TestCase
     public function testGetInstagramMediaInsightsFailure(): void
     {
         $mock = new MockHandler([
-            new RequestException('API error', new Request('GET', 'v22.0/17912345678901234/insights')),
+            new RequestException('API error', new Request('GET', 'v25.0/17912345678901234/insights')),
         ]);
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(
@@ -933,7 +938,7 @@ class FacebookGraphApiTest extends TestCase
     public function testGetInstagramAccountInsightsFailure(): void
     {
         $mock = new MockHandler([
-            new RequestException('API error', new Request('GET', 'v22.0/17841412345678901/insights')),
+            new RequestException('API error', new Request('GET', 'v25.0/17841412345678901/insights')),
         ]);
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(
@@ -959,5 +964,392 @@ class FacebookGraphApiTest extends TestCase
             MetricType::TIME_SERIES,
             MetricPeriod::DAY
         );
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdAccountInsightsSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'impressions' => '1000',
+                    'spend' => '50.00',
+                    'date_start' => '2025-05-01',
+                    'date_stop' => '2025-05-01'
+                ]
+            ],
+            'paging' => ['cursors' => ['after' => null]]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $adAccountId = '123456789';
+        $response = $client->getAdAccountInsights($adAccountId);
+
+        $this->assertEquals(['data' => $responseData['data']], $response);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('GET', $lastRequest->getMethod());
+        $this->assertStringContainsString('v25.0/act_123456789/insights', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('level=account', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdAccountPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdAccountInsightsFullSuccess(): void
+    {
+        $responseData = [
+            'data' => [['impressions' => '1000']],
+            'paging' => ['cursors' => ['after' => null]]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $adAccountId = '123456789';
+        $client->getAdAccountInsights($adAccountId, fullMetrics: true);
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('fields=' . urlencode(AdAccountPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetCampaignInsightsFromAdAccountSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'campaign_id' => 'camp123',
+                    'impressions' => '500',
+                    'spend' => '10.00'
+                ]
+            ],
+            'paging' => ['cursors' => ['after' => null]]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $adAccountId = '123456789';
+        $campaignIds = ['camp123'];
+        $response = $client->getCampaignInsightsFromAdAccount($adAccountId, $campaignIds);
+
+        $this->assertEquals(['data' => $responseData['data']], $response);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('level=campaign', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(CampaignPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('filtering=' . urlencode(json_encode([['field' => 'campaign.id', 'operator' => 'IN', 'value' => $campaignIds]])), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetCampaignInsightsFromAdAccountFullSuccess(): void
+    {
+        $responseData = ['data' => [], 'paging' => ['cursors' => ['after' => null]]];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getCampaignInsightsFromAdAccount('123', fullMetrics: true);
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('fields=' . urlencode(CampaignPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdsetInsightsFromAdAccountSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'adset_id' => 'set123',
+                    'impressions' => '300',
+                    'spend' => '5.00'
+                ]
+            ],
+            'paging' => ['cursors' => ['after' => null]]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $adAccountId = '123456789';
+        $adsetIds = ['set123'];
+        $response = $client->getAdsetInsightsFromAdAccount($adAccountId, $adsetIds);
+
+        $this->assertEquals(['data' => $responseData['data']], $response);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('level=adset', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdsetPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('filtering=' . urlencode(json_encode([['field' => 'adset.id', 'operator' => 'IN', 'value' => $adsetIds]])), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdsetInsightsFromAdAccountFullSuccess(): void
+    {
+        $responseData = ['data' => [], 'paging' => ['cursors' => ['after' => null]]];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getAdsetInsightsFromAdAccount('123', fullMetrics: true);
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('fields=' . urlencode(AdsetPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdInsightsFromAdAccountSuccess(): void
+    {
+        $responseData = [
+            'data' => [
+                [
+                    'ad_id' => 'ad123',
+                    'impressions' => '100',
+                    'spend' => '2.00'
+                ]
+            ],
+            'paging' => ['cursors' => ['after' => null]]
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $adAccountId = '123456789';
+        $adIds = ['ad123'];
+        $response = $client->getAdInsightsFromAdAccount($adAccountId, $adIds);
+
+        $this->assertEquals(['data' => $responseData['data']], $response);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('level=ad', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('filtering=' . urlencode(json_encode([['field' => 'ad.id', 'operator' => 'IN', 'value' => $adIds]])), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdAccountPixelsSuccess(): void
+    {
+        $responseData = ['data' => [['id' => 'pixel123', 'name' => 'My Pixel']]];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getAdAccountPixels('123456789');
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/act_123456789/adspixels', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode('id,name,data_use_setting,creation_time,last_fired_time'), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdAccountCustomAudiencesSuccess(): void
+    {
+        $responseData = ['data' => [['id' => 'aud123', 'name' => 'My Audience']]];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getAdAccountCustomAudiences('123456789');
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/act_123456789/customaudiences', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode('id,name,description,approximate_count_lower_bound,approximate_count_upper_bound,delivery_status,subtype'), (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdPixelStatsSuccess(): void
+    {
+        $responseData = ['data' => []];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getAdPixelStats('pixel123', since: '2024-01-01', until: '2024-01-31');
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/pixel123/stats', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('since=2024-01-01', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('until=2024-01-31', (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetCustomAudienceDeliveryStatusSuccess(): void
+    {
+        $responseData = ['id' => 'aud123', 'delivery_status' => ['code' => 200]];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getCustomAudienceDeliveryStatus('aud123');
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/aud123', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=delivery_status', (string)$lastRequest->getUri());
+    }
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testSendPixelEventsSuccess(): void
+    {
+        $responseData = ['fbtrace_id' => 'xyz'];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $events = [
+            [
+                'event_name' => 'Purchase',
+                'event_time' => time(),
+                'user_data' => ['em' => hash('sha256', 'test@example.com')],
+            ]
+        ];
+        $client->sendPixelEvents('pixel123', $events, 'test_code_123');
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/pixel123/events', (string)$lastRequest->getUri());
+        $body = json_decode((string)$lastRequest->getBody(), true);
+        $this->assertEquals($events, $body['data']);
+        $this->assertEquals('test_code_123', $body['test_event_code']);
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testCreateCustomAudienceSuccess(): void
+    {
+        $responseData = ['id' => 'aud123'];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->createCustomAudience('123456789', 'My New Audience', 'CUSTOM', 'A description');
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/act_123456789/customaudiences', (string)$lastRequest->getUri());
+        $this->assertEquals('POST', $lastRequest->getMethod());
+        $this->assertStringContainsString('name=' . urlencode('My New Audience'), (string)$lastRequest->getBody());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testAddUsersToCustomAudienceSuccess(): void
+    {
+        $responseData = ['num_received' => 1];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $schema = ['EMAIL'];
+        $data = [[hash('sha256', 'test@example.com')]];
+        $client->addUsersToCustomAudience('aud123', $schema, $data);
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('v25.0/aud123/users', (string)$lastRequest->getUri());
+        $body = json_decode((string)$lastRequest->getBody(), true);
+        $this->assertEquals($schema, $body['payload']['schema']);
+        $this->assertEquals($data, $body['payload']['data']);
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetAdInsightsFromAdAccountFullSuccess(): void
+    {
+        $responseData = ['data' => [], 'paging' => ['cursors' => ['after' => null]]];
+        $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
+
+        $client->getAdInsightsFromAdAccount('123', fullMetrics: true);
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('fields=' . urlencode(AdPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
     }
 }

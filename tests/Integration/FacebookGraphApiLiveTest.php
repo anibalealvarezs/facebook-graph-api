@@ -429,6 +429,236 @@ class FacebookGraphApiLiveTest extends TestCase
         }
     }
 
+    /**
+     * @throws GuzzleException
+     */
+    public function testGetAdAccountInsightsDefault(): void
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = str_replace('act_', '', $adAccounts['data'][0]['id']);
+        $data = $this->api->getAdAccountInsights($adAccountId);
+
+        $this->logger->debug('testGetAdAccountInsightsDefault response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('data', $data);
+        if (!empty($data['data'])) {
+            $insight = $data['data'][0];
+            $this->assertArrayHasKey('impressions', $insight);
+            $this->assertArrayHasKey('spend', $insight);
+            // Basic set includes these
+            $this->assertArrayHasKey('clicks', $insight);
+            $this->assertArrayHasKey('reach', $insight);
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function testGetAdAccountInsightsFull(): void
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = str_replace('act_', '', $adAccounts['data'][0]['id']);
+        $data = $this->api->getAdAccountInsights($adAccountId, fullMetrics: true);
+
+        $this->logger->debug('testGetAdAccountInsightsFull response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('data', $data);
+        if (!empty($data['data'])) {
+            $insight = $data['data'][0];
+            $this->assertArrayHasKey('impressions', $insight);
+            // Full set should include something like quality_ranking if available
+            // but we at least check that more metrics are present or just that it works
+            $this->assertArrayHasKey('cpm', $insight);
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function testGetAdAccountPixels(): void
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = $adAccounts['data'][0]['id'];
+        $data = $this->api->getAdAccountPixels($adAccountId);
+
+        $this->logger->debug('testGetAdAccountPixels response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('data', $data);
+        if (!empty($data['data'])) {
+            $pixel = $data['data'][0];
+            $this->assertArrayHasKey('id', $pixel);
+            $this->assertArrayHasKey('name', $pixel);
+        } else {
+            $this->markTestSkipped('No Pixels found for the Ad Account');
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function testGetAdAccountCustomAudiences(): void
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = $adAccounts['data'][0]['id'];
+        $data = $this->api->getAdAccountCustomAudiences($adAccountId);
+
+        $this->logger->debug('testGetAdAccountCustomAudiences response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('data', $data);
+        if (!empty($data['data'])) {
+            $audience = $data['data'][0];
+            $this->assertArrayHasKey('id', $audience);
+            $this->assertArrayHasKey('name', $audience);
+        } else {
+            $this->markTestSkipped('No Custom Audiences found for the Ad Account');
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function testGetAdPixelStats(): void
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = $adAccounts['data'][0]['id'];
+        $pixels = $this->api->getAdAccountPixels($adAccountId);
+        if (empty($pixels['data'])) {
+            $this->markTestSkipped('No Pixels found for the Ad Account');
+        }
+
+        $pixelId = $pixels['data'][0]['id'];
+        $data = $this->api->getAdPixelStats($pixelId);
+
+        $this->logger->debug('testGetAdPixelStats response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('data', $data);
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function testSendPixelEvents(): void
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = $adAccounts['data'][0]['id'];
+        $pixels = $this->api->getAdAccountPixels($adAccountId);
+        if (empty($pixels['data'])) {
+            $this->markTestSkipped('No Pixels found for the Ad Account');
+        }
+
+        $pixelId = $pixels['data'][0]['id'];
+
+        $events = [
+            [
+                'event_name' => 'ViewContent',
+                'event_time' => time(),
+                'user_data' => [
+                    'em' => [hash('sha256', 'test@example.com')],
+                ],
+                'action_source' => 'website',
+            ]
+        ];
+
+        // Using a dummy test_event_code to avoid affecting real stats
+        $data = $this->api->sendPixelEvents($pixelId, $events, 'TEST_CODE_' . time());
+
+        $this->logger->debug('testSendPixelEvents response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('events_received', $data);
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function testCreateCustomAudience(): string
+    {
+        $adAccounts = $this->api->getMyAdAccounts();
+        if (empty($adAccounts['data'])) {
+            $this->markTestSkipped('No Ad Accounts found for testing');
+        }
+
+        $adAccountId = $adAccounts['data'][0]['id'];
+        $name = 'Test Audience ' . time();
+
+        $data = $this->api->createCustomAudience(
+            adAccountId: $adAccountId,
+            name: $name,
+            subtype: 'CUSTOM',
+            description: 'Test audience created by integration test'
+        );
+
+        $this->logger->debug('testCreateCustomAudience response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('id', $data);
+
+        return $data['id'];
+    }
+
+    /**
+     * @depends testCreateCustomAudience
+     * @throws GuzzleException
+     */
+    public function testGetCustomAudienceDeliveryStatus(string $audienceId): void
+    {
+        $data = $this->api->getCustomAudienceDeliveryStatus($audienceId);
+
+        $this->logger->debug('testGetCustomAudienceDeliveryStatus response', $data);
+
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('delivery_status', $data);
+    }
+
+    /**
+     * @depends testCreateCustomAudience
+     * @throws GuzzleException
+     */
+    public function testAddUsersToCustomAudience(string $audienceId): void
+    {
+        $schema = ['EMAIL'];
+        $data = [
+            [hash('sha256', 'test1@example.com')],
+            [hash('sha256', 'test2@example.com')],
+        ];
+
+        $response = $this->api->addUsersToCustomAudience($audienceId, $schema, $data);
+
+        $this->logger->debug('testAddUsersToCustomAudience response', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('num_received', $response);
+    }
+
     // Helper method for assertInArray
     private function assertInArray($needle, array $haystack, string $message = ''): void
     {
