@@ -1643,7 +1643,7 @@ class FacebookGraphApi extends BearerTokenClient
         array $additionalParams = [],
         bool $fullMetrics = false,
     ): array {
-        $metrics = CampaignPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = CampaignPermission::DEFAULT->insightsFields($fullMetrics) . ',campaign_id';
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1729,7 +1729,7 @@ class FacebookGraphApi extends BearerTokenClient
         array $additionalParams = [],
         bool $fullMetrics = false,
     ): array {
-        $metrics = AdsetPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = AdsetPermission::DEFAULT->insightsFields($fullMetrics) . ',adset_id,campaign_id';
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1815,7 +1815,7 @@ class FacebookGraphApi extends BearerTokenClient
         array $additionalParams = [],
         bool $fullMetrics = false,
     ): array {
-        $metrics = AdPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = AdPermission::DEFAULT->insightsFields($fullMetrics) . ',ad_id,adset_id,campaign_id';
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -2559,11 +2559,13 @@ class FacebookGraphApi extends BearerTokenClient
         }
         foreach ($data as $item) {
             if ($item instanceof Metric) {
-                $combination = $item->allowedBreakdowns();
+                $allowedCombinations[] = $item->allowedBreakdowns();
             } else {
-                $combination = Metric::from(trim($item))->allowedBreakdowns();
+                $metric = Metric::tryFrom(trim($item));
+                if ($metric) {
+                    $allowedCombinations[] = $metric->allowedBreakdowns();
+                }
             }
-            $allowedCombinations[] = $combination;
         }
 
         foreach ($allowedCombinations as $allowedCombination) {

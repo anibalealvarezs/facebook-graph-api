@@ -412,16 +412,16 @@
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.8.x-dev",
+            "version": "2.9.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "27b6714cf2e71cfcc49718eb81ac711103f08218"
+                "reference": "a496afd2526facc946694dde8d83bc03d160d72c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/27b6714cf2e71cfcc49718eb81ac711103f08218",
-                "reference": "27b6714cf2e71cfcc49718eb81ac711103f08218",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/a496afd2526facc946694dde8d83bc03d160d72c",
+                "reference": "a496afd2526facc946694dde8d83bc03d160d72c",
                 "shasum": ""
             },
             "require": {
@@ -437,6 +437,7 @@
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
                 "http-interop/http-factory-tests": "0.9.0",
+                "jshttp/mime-db": "1.54.0.1",
                 "phpunit/phpunit": "^8.5.44 || ^9.6.25"
             },
             "suggest": {
@@ -509,7 +510,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.8"
+                "source": "https://github.com/guzzle/psr7/tree/2.9"
             },
             "funding": [
                 {
@@ -525,7 +526,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-03-05T21:03:18+00:00"
+            "time": "2026-03-10T15:20:00+00:00"
         },
         {
             "name": "monolog/monolog",
