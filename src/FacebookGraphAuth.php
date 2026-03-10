@@ -18,6 +18,10 @@ class FacebookGraphAuth extends NoAuthClient
     }
 
     /**
+     * Exchange a short-lived user access token for a long-lived one (usually valid for 60 days).
+     *
+     * @see https://developers.facebook.com/docs/facebook-login/guides/access-tokens/get-long-lived/
+     *
      * @param string $clientId
      * @param string $clientSecret
      * @param string $userAccessToken
@@ -47,6 +51,11 @@ class FacebookGraphAuth extends NoAuthClient
     }
 
     /**
+     * Get an App Access Token using client credentials.
+     *
+     * @see https://developers.facebook.com/docs/facebook-login/guides/access-tokens/#apptokens
+     * @note App tokens are used to modify app settings or read insights not tied to a specific user.
+     *
      * @param string $clientId
      * @param string $clientSecret
      * @return array
@@ -73,6 +82,10 @@ class FacebookGraphAuth extends NoAuthClient
     }
 
     /**
+     * Get Facebook Page Access Tokens for the Pages the user administers.
+     *
+     * @see https://developers.facebook.com/docs/facebook-login/guides/access-tokens/#pagetokens
+     *
      * @param string $userId
      * @param string $longLivedUserAccessToken
      * @return array
@@ -97,6 +110,11 @@ class FacebookGraphAuth extends NoAuthClient
     }
 
     /**
+     * Get long-lived Page Access Tokens using a long-lived User Access Token.
+     *
+     * @see https://developers.facebook.com/docs/facebook-login/guides/access-tokens/get-long-lived/#get-a-long-lived-page-access-token
+     * @note This returns a list of Pages the user has a role on, including their permanent Page Access Tokens.
+     *
      * @param string $userId
      * @param string $longLivedUserAccessToken
      * @return array
@@ -121,6 +139,10 @@ class FacebookGraphAuth extends NoAuthClient
     }
 
     /**
+     * Exchange a long-lived User Access Token for a Code to be used on the client side.
+     *
+     * @see https://developers.facebook.com/docs/facebook-login/guides/access-tokens/get-long-lived/#get-a-long-lived-client-access-token
+     *
      * @param string $appId
      * @param string $appSecret
      * @param string $redirectUri

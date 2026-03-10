@@ -515,6 +515,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get current user details.
+     *
+     * @see https://developers.facebook.com/docs/graph-api/reference/user/
+     *
      * @param UserPermission[] $permissions
      * @param bool $includeMetadata
      * @return array
@@ -553,6 +557,11 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get Facebook Pages where the current user has a role.
+     *
+     * @see https://developers.facebook.com/docs/graph-api/reference/user/accounts/
+     * @note Requires 'pages_show_list' or 'pages_read_engagement' permission.
+     *
      * @param PagePermission[] $permissions
      * @param int $limit
      * @return array
@@ -653,6 +662,11 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get Ad Accounts available to the current user.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/user/adaccounts/
+     * @note Ad Account IDs are usually prefixed with 'act_'.
+     *
      * @param int $limit
      * @return array
      * @throws GuzzleException
@@ -691,6 +705,11 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get posts published by a Facebook Page.
+     *
+     * @see https://developers.facebook.com/docs/graph-api/reference/page/feed/
+     * @note This method uses the '/posts' endpoint which only includes posts from the Page itself.
+     *
      * @param string $pageId
      * @param string|FacebookPostField[]|string[]|null $postFields
      * @param bool $includeAttachments
@@ -765,6 +784,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get ad campaigns for a specific ad account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/campaigns/
+     *
      * @param string $adAccountId
      * @param string|CampaignField[]|string[]|null $campaignFields
      * @param int $limit
@@ -818,6 +841,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get individual ads for a specific ad account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/ads/
+     *
      * @param string $adAccountId
      * @param string|AdField[]|string[]|null $adFields
      * @param int $limit
@@ -870,6 +897,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get ad sets for a specific ad account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/adsets/
+     *
      * @param string $adAccountId
      * @param string|AdsetField[]|string[]|null $adsetFields
      * @param int $limit
@@ -922,6 +953,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get ad creatives for a specific ad account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/adcreatives/
+     *
      * @param string $adAccountId
      * @param string|CreativeField[]|string[]|null $creatriveFields
      * @param int $limit
@@ -974,11 +1009,15 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get all Instagram Business account IDs and Pages the user administers, maximizing results.
+     * Get all Instagram Business account IDs and Pages the user administers.
      *
-     * @param array $permissions Array of PageFieldsByPermission enums to specify fields.
-     * @return array Array with 'pages' (all Pages) and 'instagram_accounts' (Pages with Instagram).
-     * @throws Exception|GuzzleException If request fails or no Pages are found.
+     * @see https://developers.facebook.com/docs/instagram-api/getting-started/
+     * @note Instagram accounts must be linked to a Facebook Page to be returned.
+     *
+     * @param array $permissions Array of PagePermission enums to specify fields.
+     * @param int $limit
+     * @return array Array with 'pages' and 'instagram_accounts'.
+     * @throws Exception|GuzzleException
      */
     public function getInstagramBusinessAccounts(
         array $permissions = [
@@ -1055,7 +1094,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get media IDs for an Instagram Business account.
+     * Get media objects (posts, stories, reels) for an Instagram Business account.
+     *
+     * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/media/
      *
      * @param string $igUserId The Instagram User ID.
      * @param string|InstagramMediaField[]|string[]|null $mediaFields
@@ -1134,9 +1175,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance metrics for a specific Instagram post, reel, or story.
      *
      * @see https://developers.facebook.com/docs/instagram-api/reference/ig-media/insights/
+     * @note Metrics vary by media type (e.g., REELs have 'plays', while IMAGEs don't).
      *
      * @param string $mediaId The Instagram media ID.
      * @param MediaType|MediaProductType $mediaType
@@ -1184,7 +1226,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for a Facebook Page.
+     *
+     * @see https://developers.facebook.com/docs/graph-api/reference/page/insights/
      *
      * @param string $pageId
      * @param string|null $since
@@ -1243,7 +1287,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for a specific Facebook Page post.
+     *
+     * @see https://developers.facebook.com/docs/graph-api/reference/post/insights/
      *
      * @param string $postId
      * @param int $limit
@@ -1293,7 +1339,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for an Ad Account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
      *
      * @param string $adAccountId
      * @param int $limit
@@ -1356,12 +1404,271 @@ class FacebookGraphApi extends BearerTokenClient
 
             return ['data' => $insights];
         } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for campaign ID ".$adAccountId.": ".$e->getMessage());
+            throw new Exception("Failed to retrieve insights for ad account ID ".$adAccountId.": ".$e->getMessage());
         }
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for multiple campaigns from the Ad Account Insights endpoint.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
+     * @note Using 'level=campaign' allows retrieving insights for all campaigns in a single request.
+     * @note This is much more efficient than fetching insights for each campaign individually.
+     *
+     * @param string $adAccountId The Ad Account ID.
+     * @param array $campaignIds List of Campaign IDs to filter by.
+     * @param int $limit Number of results per page (max 100).
+     * @param MetricBreakdown|array|null $metricBreakdown Optional breakdown (e.g., age, gender).
+     * @return array Insights data.
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function getCampaignInsightsFromAdAccount(
+        string $adAccountId,
+        array $campaignIds = [],
+        int $limit = 100,
+        MetricBreakdown|array|null $metricBreakdown = null,
+        array $additionalParams = [],
+    ): array {
+        $metrics = CampaignPermission::DEFAULT->insightsFields();
+
+        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+            throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
+        }
+
+        $query = array_merge([
+            'level' => 'campaign',
+            'fields' => $metrics,
+            'limit' => min($limit, 100),
+            'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
+        ], $additionalParams);
+
+        if (!empty($campaignIds)) {
+            $query['filtering'] = json_encode([
+                [
+                    'field' => 'campaign.id',
+                    'operator' => 'IN',
+                    'value' => $campaignIds
+                ]
+            ]);
+        }
+
+        if ($metricBreakdown !== null && !empty($metricBreakdown)) {
+            $query['breakdowns'] = is_array($metricBreakdown) ?
+                implode(',', array_map(function ($b) {
+                    return $b->value;
+                }, $metricBreakdown)) :
+                $metricBreakdown->value;
+        } elseif ($metricBreakdown === null) {
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+        }
+
+        $insights = [];
+        $after = null;
+
+        try {
+            do {
+                if ($after) {
+                    $query['after'] = $after;
+                }
+
+                $response = $this->performRequest(
+                    method: 'GET',
+                    endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    query: $query,
+                    sleep: 1000000, // 1 second to avoid rate limiting
+                    tokenSample: TokenSample::USER,
+                );
+                $data = json_decode($response->getBody()->getContents(), true);
+
+                $insights = array_merge($insights, $data['data'] ?? []);
+                $after = $data['paging']['cursors']['after'] ?? null;
+            } while ($after && count($data['data']) > 0);
+
+            return ['data' => $insights];
+        } catch (Exception $e) {
+            throw new Exception("Failed to retrieve campaign insights from Ad Account ".$adAccountId.": ".$e->getMessage());
+        }
+    }
+
+    /**
+     * Get performance insights for multiple ad sets from the Ad Account Insights endpoint.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
+     * @note Using 'level=adset' allows retrieving insights for all ad sets in a single request.
+     *
+     * @param string $adAccountId The Ad Account ID.
+     * @param array $adsetIds List of Ad Set IDs to filter by.
+     * @param int $limit Number of results per page (max 100).
+     * @param MetricBreakdown|array|null $metricBreakdown Optional breakdown (e.g., age, gender).
+     * @return array Insights data.
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function getAdsetInsightsFromAdAccount(
+        string $adAccountId,
+        array $adsetIds = [],
+        int $limit = 100,
+        MetricBreakdown|array|null $metricBreakdown = null,
+        array $additionalParams = [],
+    ): array {
+        $metrics = AdsetPermission::DEFAULT->insightsFields();
+
+        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+            throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
+        }
+
+        $query = array_merge([
+            'level' => 'adset',
+            'fields' => $metrics,
+            'limit' => min($limit, 100),
+            'time_increment' => 1,
+            'action_breakdowns' => 'action_type',
+        ], $additionalParams);
+
+        if (!empty($adsetIds)) {
+            $query['filtering'] = json_encode([
+                [
+                    'field' => 'adset.id',
+                    'operator' => 'IN',
+                    'value' => $adsetIds
+                ]
+            ]);
+        }
+
+        if ($metricBreakdown !== null && !empty($metricBreakdown)) {
+            $query['breakdowns'] = is_array($metricBreakdown) ?
+                implode(',', array_map(function ($b) {
+                    return $b->value;
+                }, $metricBreakdown)) :
+                $metricBreakdown->value;
+        } elseif ($metricBreakdown === null) {
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+        }
+
+        $insights = [];
+        $after = null;
+
+        try {
+            do {
+                if ($after) {
+                    $query['after'] = $after;
+                }
+
+                $response = $this->performRequest(
+                    method: 'GET',
+                    endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    query: $query,
+                    sleep: 1000000,
+                    tokenSample: TokenSample::USER,
+                );
+                $data = json_decode($response->getBody()->getContents(), true);
+
+                $insights = array_merge($insights, $data['data'] ?? []);
+                $after = $data['paging']['cursors']['after'] ?? null;
+            } while ($after && count($data['data']) > 0);
+
+            return ['data' => $insights];
+        } catch (Exception $e) {
+            throw new Exception("Failed to retrieve adset insights from Ad Account ".$adAccountId.": ".$e->getMessage());
+        }
+    }
+
+    /**
+     * Get performance insights for multiple ads from the Ad Account Insights endpoint.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
+     * @note Using 'level=ad' allows retrieving insights for all ads in a single request.
+     *
+     * @param string $adAccountId The Ad Account ID.
+     * @param array $adIds List of Ad IDs to filter by.
+     * @param int $limit Number of results per page (max 100).
+     * @param MetricBreakdown|array|null $metricBreakdown Optional breakdown (e.g., age, gender).
+     * @return array Insights data.
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function getAdInsightsFromAdAccount(
+        string $adAccountId,
+        array $adIds = [],
+        int $limit = 100,
+        MetricBreakdown|array|null $metricBreakdown = null,
+        array $additionalParams = [],
+    ): array {
+        $metrics = AdPermission::DEFAULT->insightsFields();
+
+        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+            throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
+        }
+
+        $query = array_merge([
+            'level' => 'ad',
+            'fields' => $metrics,
+            'limit' => min($limit, 100),
+            'time_increment' => 1,
+            'action_breakdowns' => 'action_type',
+        ], $additionalParams);
+
+        if (!empty($adIds)) {
+            $query['filtering'] = json_encode([
+                [
+                    'field' => 'ad.id',
+                    'operator' => 'IN',
+                    'value' => $adIds
+                ]
+            ]);
+        }
+
+        if ($metricBreakdown !== null && !empty($metricBreakdown)) {
+            $query['breakdowns'] = is_array($metricBreakdown) ?
+                implode(',', array_map(function ($b) {
+                    return $b->value;
+                }, $metricBreakdown)) :
+                $metricBreakdown->value;
+        } elseif ($metricBreakdown === null) {
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+        }
+
+        $insights = [];
+        $after = null;
+
+        try {
+            do {
+                if ($after) {
+                    $query['after'] = $after;
+                }
+
+                $response = $this->performRequest(
+                    method: 'GET',
+                    endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    query: $query,
+                    sleep: 1000000,
+                    tokenSample: TokenSample::USER,
+                );
+                $data = json_decode($response->getBody()->getContents(), true);
+
+                $insights = array_merge($insights, $data['data'] ?? []);
+                $after = $data['paging']['cursors']['after'] ?? null;
+            } while ($after && count($data['data']) > 0);
+
+            return ['data' => $insights];
+        } catch (Exception $e) {
+            throw new Exception("Failed to retrieve ad insights from Ad Account ".$adAccountId.": ".$e->getMessage());
+        }
+    }
+
+
+    /**
+     * Get performance insights for a specific Ad Campaign.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-campaign/insights/
      *
      * @param string $campaignId
      * @param int $limit
@@ -1431,7 +1738,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for a specific Ad.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/adgroup/insights/
      *
      * @param string $adId
      * @param int $limit
@@ -1501,7 +1810,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for a specific Ad Set.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-set/insights/
      *
      * @param string $adsetId
      * @param int $limit
@@ -1571,7 +1882,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram post.
+     * Get performance insights for an Ad Creative.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-creative/
      *
      * @param string $creativeId
      * @param int $limit
@@ -1583,7 +1896,7 @@ class FacebookGraphApi extends BearerTokenClient
     public function getCreativeInsights(
         string $creativeId,
         int $limit = 100,
-        MetricBreakdown|array $metricBreakdown = null,
+        MetricBreakdown|array|null $metricBreakdown = null,
     ): array {
 
         $metrics = CreativePermission::DEFAULT->insightsFields();
@@ -1639,9 +1952,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get insights for a specific Instagram account.
+     * Get performance metrics for an Instagram Business account.
      *
      * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights/
+     * @note 'since' must be within the last 2 years, and the range ('until' - 'since') cannot exceed 30 days.
      *
      * @param string $instagramAccountId
      * @param string $since
@@ -1823,7 +2137,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get daily insights for a specific Instagram account measured in total values.
+     * Get daily insights (Reach, Views, etc.) for an Instagram account as Total Values.
+     *
+     * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights/
      *
      * @param string $instagramAccountId
      * @param string $since
@@ -1867,7 +2183,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get lifetime insights for a specific Instagram account measured in total values.
+     * Get lifetime metrics (mostly Demographics) for an Instagram account as Total Values.
+     *
+     * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights/
+     * @note Lifetime metrics do not support specific time ranges but return current accumulated data.
      *
      * @param string $instagramAccountId
      * @param string $since
@@ -1907,8 +2226,10 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * Get daily insights for a specific Instagram account measured in time series.
-     * Allowed for `reach` metric only.
+     * Get daily Reach metrics for an Instagram account as a Time Series.
+     *
+     * @see https://developers.facebook.com/docs/instagram-api/reference/ig-user/insights/
+     * @note Currently, only the 'reach' metric supports 'time_series'.
      *
      * @param string $instagramAccountId
      * @param string $since
