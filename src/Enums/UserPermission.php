@@ -23,6 +23,10 @@ enum UserPermission: string
     case USER_POSTS = 'user_posts';
     case USER_RELIGION_POLITICS = 'user_religion_politics';
     case USER_AGE_RANGE = 'user_age_range';
+    case ADS_READ = 'ads_read';
+    case ADS_MANAGEMENT = 'ads_management';
+    case LEADS_RETRIEVAL = 'leads_retrieval';
+    case CATALOG_MANAGEMENT = 'catalog_management';
 
     public function fields(): string
     {
@@ -43,6 +47,10 @@ enum UserPermission: string
             self::USER_POSTS => 'political,quotes,public_key',
             self::USER_RELIGION_POLITICS => 'religion',
             self::USER_AGE_RANGE => 'age_range',
+            self::ADS_READ => '',
+            self::ADS_MANAGEMENT => '',
+            self::LEADS_RETRIEVAL => '',
+            self::CATALOG_MANAGEMENT => '',
         };
     }
 }
