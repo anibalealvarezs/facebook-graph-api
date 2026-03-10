@@ -543,13 +543,9 @@ class FacebookGraphApi extends BearerTokenClient
             'fields' => $fieldsString,
         ];
 
-        if ($includeMetadata) {
-            $query['metadata'] = '1';
-        }
-
         $response = $this->performRequest(
             method: 'GET',
-            endpoint: 'v22.0/me',
+            endpoint: 'v25.0/me',
             query: $query,
         );
 
@@ -597,7 +593,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/me/accounts',
+                endpoint: 'v25.0/me/accounts',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
@@ -620,10 +616,6 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getMyPagesByBatch(array $pagesIds, array $permissions = []): array
     {
-        return [
-            'error' => 'Deactivated'
-        ];
-
         // Merge fields from provided permissions
         $fields = [];
         foreach ($permissions as $permission) {
@@ -639,15 +631,14 @@ class FacebookGraphApi extends BearerTokenClient
             'batch' => json_encode(array_map(function ($pageId) use ($fieldsString) {
                 return [
                     'method' => 'GET',
-                    'relative_url' => "me/accounts?fields={$fieldsString}",
+                    'relative_url' => "{$pageId}?fields={$fieldsString}",
                 ];
             }, $pagesIds)),
-            'include_headers' => false,
         ];
 
         $response = $this->performRequest(
             method: 'POST',
-            endpoint: 'v22.0',
+            endpoint: 'v25.0',
             form_params: $query,
         );
 
@@ -689,7 +680,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/me/adaccounts',
+                endpoint: 'v25.0/me/adaccounts',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
@@ -767,7 +758,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/'.$pageId.'/posts',
+                endpoint: 'v25.0/'.$pageId.'/posts',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
                 tokenSample: TokenSample::PAGE,
@@ -824,7 +815,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/campaigns',
+                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/campaigns',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
                 tokenSample: TokenSample::USER
@@ -881,7 +872,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/ads',
+                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/ads',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
@@ -937,7 +928,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/adsets',
+                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/adsets',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
@@ -993,7 +984,7 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/adcreatives',
+                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/adcreatives',
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
@@ -1049,7 +1040,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v22.0/me/accounts',
+                    endpoint: 'v25.0/me/accounts',
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                 );
@@ -1136,7 +1127,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$igUserId."/media",
+                    endpoint: "v25.0/".$igUserId."/media",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                 );
@@ -1209,7 +1200,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$mediaId."/insights",
+                    endpoint: "v25.0/".$mediaId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                 );
@@ -1269,7 +1260,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$pageId."/insights",
+                    endpoint: "v25.0/".$pageId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
@@ -1321,7 +1312,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$postId."/insights",
+                    endpoint: "v25.0/".$postId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
@@ -1354,16 +1345,17 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
+        bool $fullMetrics = false,
     ): array {
 
-        $metrics = AdAccountPermission::DEFAULT->insightsFields();
+        $metrics = AdAccountPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
         $query = [
-            'fields' => $metrics,
+            'level' => 'account', 'fields' => $metrics,
             'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
@@ -1376,7 +1368,9 @@ class FacebookGraphApi extends BearerTokenClient
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdowns'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
@@ -1391,7 +1385,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/act_".$adAccountId."/insights",
+                    endpoint: "v25.0/act_".$adAccountId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1429,8 +1423,9 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         array $additionalParams = [],
+        bool $fullMetrics = false,
     ): array {
-        $metrics = CampaignPermission::DEFAULT->insightsFields();
+        $metrics = CampaignPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1477,7 +1472,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1514,8 +1509,9 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         array $additionalParams = [],
+        bool $fullMetrics = false,
     ): array {
-        $metrics = AdsetPermission::DEFAULT->insightsFields();
+        $metrics = AdsetPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1562,7 +1558,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000,
                     tokenSample: TokenSample::USER,
@@ -1599,8 +1595,9 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         array $additionalParams = [],
+        bool $fullMetrics = false,
     ): array {
-        $metrics = AdPermission::DEFAULT->insightsFields();
+        $metrics = AdPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1647,7 +1644,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v22.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000,
                     tokenSample: TokenSample::USER,
@@ -1681,9 +1678,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $campaignId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
+        bool $fullMetrics = false,
     ): array {
 
-        $metrics = CampaignPermission::DEFAULT->insightsFields();
+        $metrics = CampaignPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1720,7 +1718,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$campaignId."/insights",
+                    endpoint: "v25.0/".$campaignId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1753,9 +1751,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $adId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
+        bool $fullMetrics = false,
     ): array {
 
-        $metrics = AdPermission::DEFAULT->insightsFields();
+        $metrics = AdPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1792,7 +1791,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$adId."/insights",
+                    endpoint: "v25.0/".$adId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1825,9 +1824,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $adsetId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
+        bool $fullMetrics = false,
     ): array {
 
-        $metrics = AdsetPermission::DEFAULT->insightsFields();
+        $metrics = AdsetPermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1864,7 +1864,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$adsetId."/insights",
+                    endpoint: "v25.0/".$adsetId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1897,9 +1897,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $creativeId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
+        bool $fullMetrics = false,
     ): array {
 
-        $metrics = CreativePermission::DEFAULT->insightsFields();
+        $metrics = CreativePermission::DEFAULT->insightsFields($fullMetrics);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1919,7 +1920,9 @@ class FacebookGraphApi extends BearerTokenClient
                 }, $metricBreakdown)) :
                 $metricBreakdown->value;
         } else {
-            $query['breakdowns'] = implode(',', Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]);
+            $query['breakdowns'] = implode(',', array_map(function ($b) {
+                return $b->value;
+            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
@@ -1934,7 +1937,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$creativeId."/insights",
+                    endpoint: "v25.0/".$creativeId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -2120,7 +2123,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v22.0/".$instagramAccountId."/insights",
+                    endpoint: "v25.0/".$instagramAccountId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                 );
