@@ -792,6 +792,128 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * Get Custom Audiences for a specific ad account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/customaudiences/
+     *
+     * @param string $adAccountId
+     * @param int $limit
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getAdAccountCustomAudiences(
+        string $adAccountId,
+        int $limit = 100,
+    ): array {
+        $adAccountId = $this->formatAdAccountId($adAccountId);
+
+        $response = $this->performRequest(
+            method: 'GET',
+            endpoint: 'v25.0/' . $adAccountId . '/customaudiences',
+            query: [
+                'limit' => min($limit, 100),
+                'fields' => 'id,name,description,approximate_count_lower_bound,approximate_count_upper_bound,delivery_status,subtype',
+            ],
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Get delivery status for a specific Custom Audience.
+     *
+     * @param string $audienceId
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getCustomAudienceDeliveryStatus(
+        string $audienceId,
+    ): array {
+        $response = $this->performRequest(
+            method: 'GET',
+            endpoint: 'v25.0/' . $audienceId,
+            query: [
+                'fields' => 'delivery_status',
+            ],
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Create a Custom Audience for an Ad Account.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/customaudiences/#Creating
+     *
+     * @param string $adAccountId
+     * @param string $name
+     * @param string $subtype E.g., 'CUSTOM', 'WEBSITE', 'APP', 'OFFLINE', 'CRM'.
+     * @param string|null $description
+     * @return array
+     * @throws GuzzleException
+     */
+    public function createCustomAudience(
+        string $adAccountId,
+        string $name,
+        string $subtype = 'CUSTOM',
+        ?string $description = null,
+    ): array {
+        $adAccountId = $this->formatAdAccountId($adAccountId);
+
+        $params = [
+            'name' => $name,
+            'subtype' => $subtype,
+            'customer_file_source' => 'USER_PROVIDED_ONLY',
+        ];
+        if ($description) {
+            $params['description'] = $description;
+        }
+
+        $response = $this->performRequest(
+            method: 'POST',
+            endpoint: 'v25.0/' . $adAccountId . '/customaudiences',
+            form_params: $params,
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * Add users to a Custom Audience.
+     *
+     * @see https://developers.facebook.com/docs/marketing-api/reference/custom-audience/users/
+     *
+     * @param string $audienceId
+     * @param array $schema List of fields being uploaded (e.g., ['EMAIL', 'PHONE']).
+     * @param array $data List of user data arrays, hashed if required by Facebook.
+     * @return array
+     * @throws GuzzleException
+     */
+    public function addUsersToCustomAudience(
+        string $audienceId,
+        array $schema,
+        array $data,
+    ): array {
+        $payload = [
+            'payload' => [
+                'schema' => $schema,
+                'data' => $data,
+            ],
+        ];
+
+        $response = $this->performRequest(
+            method: 'POST',
+            endpoint: 'v25.0/' . $audienceId . '/users',
+            body: json_encode($payload),
+            headers: [
+                'Content-Type' => 'application/json',
+            ],
+        );
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
      * Get posts published by a Facebook Page.
      *
      * @see https://developers.facebook.com/docs/graph-api/reference/page/feed/
