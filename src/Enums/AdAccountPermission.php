@@ -16,11 +16,12 @@ enum AdAccountPermission: string
         };
     }
 
-    public function insightsFields(): string
+    public function insightsFields(bool $full = false): string
     {
-        return 'impressions,clicks,ctr,cpc,cpm,spend,reach,frequency,actions,action_values,cost_per_action_type,objective,
-                date_start,date_stop,unique_clicks,unique_ctr,cost_per_unique_click,cost_per_inline_link_click,
-                cost_per_unique_outbound_click,cost_per_unique_conversion,estimated_ad_recallers,estimated_ad_recall_rate,
-                conversion_rate_ranking,cost_per_estimated_ad_recallers,quality_ranking,engagement_rate_ranking';
+        $basic = 'spend,impressions,reach,clicks,ctr,cpc,frequency,cost_per_result,results,purchase_roas,actions';
+        if (!$full) {
+            return $basic;
+        }
+        return $basic . ',cpm,action_values,cost_per_action_type,cost_per_unique_click,cost_per_inline_link_click,cost_per_inline_post_engagement,cost_per_unique_outbound_click,cost_per_estimated_ad_recallers,cost_per_thruplay,estimated_ad_recallers,optimization_goal,objective,date_start,date_stop,unique_clicks,unique_ctr,estimated_ad_recall_rate,conversion_rate_ranking,quality_ranking,engagement_rate_ranking,website_purchase_roas,mobile_app_purchase_roas,cost_per_objective_result,result_rate,objective_results,video_30_sec_watched_actions,video_avg_time_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions,video_play_actions,video_thruplay_watched_actions';
     }
 }

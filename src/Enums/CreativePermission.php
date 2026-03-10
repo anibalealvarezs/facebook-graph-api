@@ -16,8 +16,12 @@ enum CreativePermission: string
         };
     }
 
-    public function insightsFields(): string
+    public function insightsFields(bool $full = false): string
     {
-        return 'impressions,reach,frequency,clicks,spend,ctr,cpc,cpm,actions,action_values,cost_per_action_type,date_start,date_stop';
+        $basic = 'spend,impressions,reach,clicks,ctr,cpc,frequency,actions'; // Basic for creatives
+        if (!$full) {
+            return $basic;
+        }
+        return $basic . ',cpm,action_values,cost_per_action_type,date_start,date_stop';
     }
 }

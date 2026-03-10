@@ -124,7 +124,7 @@ class FacebookGraphAuth extends NoAuthClient
         string $userId,
         string $longLivedUserAccessToken,
     ): array {
-        $endpoint = 'v22.0/' . $userId . '/accounts';
+        $endpoint = 'v25.0/' . $userId . '/accounts';
         $query = [
             'access_token' => $longLivedUserAccessToken,
         ];
@@ -156,7 +156,7 @@ class FacebookGraphAuth extends NoAuthClient
         string $redirectUri,
         string $longLivedUserAccessToken,
     ): array {
-        $endpoint = 'v22.0/oauth/client_code';
+        $endpoint = 'v25.0/oauth/client_code';
         $query = [
             'client_id' => $appId,
             'client_secret' => $appSecret,

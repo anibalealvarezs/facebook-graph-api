@@ -51,6 +51,11 @@ enum Metric: string
     case ESTIMATED_AD_RECALL_RATE = 'estimated_ad_recall_rate';
     case CONVERSION_RATE_RANKING = 'conversion_rate_ranking';
     case COST_PER_ESTIMATED_AD_RECALLERS = 'cost_per_estimated_ad_recallers';
+    case COST_PER_RESULT = 'cost_per_result';
+    case COST_PER_INLINE_POST_ENGAGEMENT = 'cost_per_inline_post_engagement';
+    case COST_PER_THRUPLAY = 'cost_per_thruplay';
+    case OPTIMIZATION_GOAL = 'optimization_goal';
+    case THRUPLAY = 'thruplay';
     case QUALITY_RANKING = 'quality_ranking';
     case ENGAGEMENT_RATE_RANKING = 'engagement_rate_ranking';
 
@@ -100,6 +105,11 @@ enum Metric: string
             self::ESTIMATED_AD_RECALL_RATE,
             self::CONVERSION_RATE_RANKING,
             self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::COST_PER_RESULT,
+            self::COST_PER_INLINE_POST_ENGAGEMENT,
+            self::COST_PER_THRUPLAY,
+            self::OPTIMIZATION_GOAL,
+            self::THRUPLAY,
             self::QUALITY_RANKING,
             self::ENGAGEMENT_RATE_RANKING => [],
         };
@@ -137,6 +147,11 @@ enum Metric: string
             self::ESTIMATED_AD_RECALL_RATE,
             self::CONVERSION_RATE_RANKING,
             self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::COST_PER_RESULT,
+            self::COST_PER_INLINE_POST_ENGAGEMENT,
+            self::COST_PER_THRUPLAY,
+            self::OPTIMIZATION_GOAL,
+            self::THRUPLAY,
             self::QUALITY_RANKING,
             self::ENGAGEMENT_RATE_RANKING,
             self::THREADS_VIEWS => [],
@@ -184,6 +199,11 @@ enum Metric: string
             self::ESTIMATED_AD_RECALL_RATE,
             self::CONVERSION_RATE_RANKING,
             self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::COST_PER_RESULT,
+            self::COST_PER_INLINE_POST_ENGAGEMENT,
+            self::COST_PER_THRUPLAY,
+            self::OPTIMIZATION_GOAL,
+            self::THRUPLAY,
             self::QUALITY_RANKING,
             self::ENGAGEMENT_RATE_RANKING,
             self::FOLLOWER_DEMOGRAPHICS => [
@@ -268,6 +288,11 @@ enum Metric: string
             self::ESTIMATED_AD_RECALL_RATE,
             self::CONVERSION_RATE_RANKING,
             self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::COST_PER_RESULT,
+            self::COST_PER_INLINE_POST_ENGAGEMENT,
+            self::COST_PER_THRUPLAY,
+            self::OPTIMIZATION_GOAL,
+            self::THRUPLAY,
             self::QUALITY_RANKING,
             self::ENGAGEMENT_RATE_RANKING,
             self::ONLINE_FOLLOWERS => [],
@@ -320,6 +345,11 @@ enum Metric: string
             self::ESTIMATED_AD_RECALL_RATE,
             self::CONVERSION_RATE_RANKING,
             self::COST_PER_ESTIMATED_AD_RECALLERS,
+            self::COST_PER_RESULT,
+            self::COST_PER_INLINE_POST_ENGAGEMENT,
+            self::COST_PER_THRUPLAY,
+            self::OPTIMIZATION_GOAL,
+            self::THRUPLAY,
             self::QUALITY_RANKING,
             self::ENGAGEMENT_RATE_RANKING => MetricGroup::OTHERS,
         };
