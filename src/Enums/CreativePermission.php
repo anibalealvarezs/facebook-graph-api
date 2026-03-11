@@ -16,12 +16,14 @@ enum CreativePermission: string
         };
     }
 
-    public function insightsFields(bool $full = false): string
+    public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
         $basic = 'spend,impressions,reach,clicks,ctr,cpc,frequency,actions'; // Basic for creatives
-        if (!$full) {
-            return $basic;
-        }
-        return $basic . ',cpm,action_values,cost_per_action_type,date_start,date_stop';
+        $key = $basic . ',cpm,date_start,date_stop';
+        return match ($set) {
+            MetricSet::BASIC => $basic,
+            MetricSet::KEY => $key,
+            MetricSet::FULL => $key . ',action_values,cost_per_action_type',
+        };
     }
 }

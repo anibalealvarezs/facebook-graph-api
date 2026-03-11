@@ -58,6 +58,13 @@ enum Metric: string
     case THRUPLAY = 'thruplay';
     case QUALITY_RANKING = 'quality_ranking';
     case ENGAGEMENT_RATE_RANKING = 'engagement_rate_ranking';
+    case PURCHASE_ROAS = 'purchase_roas';
+    case WEBSITE_PURCHASE_ROAS = 'website_purchase_roas';
+    case MOBILE_APP_PURCHASE_ROAS = 'mobile_app_purchase_roas';
+    case OBJECTIVE_RESULTS = 'objective_results';
+    case COST_PER_OBJECTIVE_RESULT = 'cost_per_objective_result';
+    case RESULTS = 'results';
+    case RESULT_RATE = 'result_rate';
 
     public function allowedMetricTypes(): array
     {
@@ -111,7 +118,14 @@ enum Metric: string
             self::OPTIMIZATION_GOAL,
             self::THRUPLAY,
             self::QUALITY_RANKING,
-            self::ENGAGEMENT_RATE_RANKING => [],
+            self::ENGAGEMENT_RATE_RANKING,
+            self::PURCHASE_ROAS,
+            self::WEBSITE_PURCHASE_ROAS,
+            self::MOBILE_APP_PURCHASE_ROAS,
+            self::OBJECTIVE_RESULTS,
+            self::COST_PER_OBJECTIVE_RESULT,
+            self::RESULTS,
+            self::RESULT_RATE => [],
         };
     }
 
@@ -351,7 +365,14 @@ enum Metric: string
             self::OPTIMIZATION_GOAL,
             self::THRUPLAY,
             self::QUALITY_RANKING,
-            self::ENGAGEMENT_RATE_RANKING => MetricGroup::OTHERS,
+            self::ENGAGEMENT_RATE_RANKING,
+            self::PURCHASE_ROAS,
+            self::WEBSITE_PURCHASE_ROAS,
+            self::MOBILE_APP_PURCHASE_ROAS,
+            self::OBJECTIVE_RESULTS,
+            self::COST_PER_OBJECTIVE_RESULT,
+            self::RESULTS,
+            self::RESULT_RATE => MetricGroup::OTHERS,
         };
     }
 }

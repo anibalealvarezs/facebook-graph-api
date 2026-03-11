@@ -25,6 +25,7 @@ use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\FacebookPostField;
 use Anibalealvarezs\FacebookGraphApi\Enums\FacebookPostPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\TokenSample;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricSet;
 use Anibalealvarezs\FacebookGraphApi\Enums\UserPermission;
 use Carbon\Carbon;
 use Exception;
@@ -1563,11 +1564,11 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
         array $additionalParams = [],
     ): array {
 
-        $metrics = AdAccountPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = AdAccountPermission::DEFAULT->insightsFields($metricSet);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1642,9 +1643,9 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         array $additionalParams = [],
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
-        $metrics = CampaignPermission::DEFAULT->insightsFields($fullMetrics) . ',campaign_id';
+        $metrics = CampaignPermission::DEFAULT->insightsFields($metricSet) . ',campaign_id';
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1728,9 +1729,9 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         array $additionalParams = [],
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
-        $metrics = AdsetPermission::DEFAULT->insightsFields($fullMetrics) . ',adset_id,campaign_id';
+        $metrics = AdsetPermission::DEFAULT->insightsFields($metricSet) . ',adset_id,campaign_id';
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1814,9 +1815,9 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         array $additionalParams = [],
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
-        $metrics = AdPermission::DEFAULT->insightsFields($fullMetrics) . ',ad_id,adset_id,campaign_id';
+        $metrics = AdPermission::DEFAULT->insightsFields($metricSet) . ',ad_id,adset_id,campaign_id';
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1897,10 +1898,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $campaignId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
 
-        $metrics = CampaignPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = CampaignPermission::DEFAULT->insightsFields($metricSet);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -1970,10 +1971,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $adId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
 
-        $metrics = AdPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = AdPermission::DEFAULT->insightsFields($metricSet);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -2043,10 +2044,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $adsetId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
 
-        $metrics = AdsetPermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = AdsetPermission::DEFAULT->insightsFields($metricSet);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
@@ -2116,10 +2117,10 @@ class FacebookGraphApi extends BearerTokenClient
         string $creativeId,
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
-        bool $fullMetrics = false,
+        MetricSet $metricSet = MetricSet::BASIC,
     ): array {
 
-        $metrics = CreativePermission::DEFAULT->insightsFields($fullMetrics);
+        $metrics = CreativePermission::DEFAULT->insightsFields($metricSet);
 
         if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
