@@ -384,6 +384,7 @@ enum Metric: string
             self::COST_PER_OBJECTIVE_RESULT,
             self::RESULTS,
             self::RESULT_RATE => MetricGroup::OTHERS,
+            default => MetricGroup::OTHERS,
         };
     }
 }
