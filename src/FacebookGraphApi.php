@@ -1564,6 +1564,7 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         MetricBreakdown|array|null $metricBreakdown = null,
         bool $fullMetrics = false,
+        array $additionalParams = [],
     ): array {
 
         $metrics = AdAccountPermission::DEFAULT->insightsFields($fullMetrics);
@@ -1572,12 +1573,12 @@ class FacebookGraphApi extends BearerTokenClient
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
-        $query = [
+        $query = array_merge([
             'level' => 'account', 'fields' => $metrics,
             'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
-        ];
+        ], $additionalParams);
 
         if ($metricBreakdown) {
             $query['breakdowns'] = is_array($metricBreakdown) ?
