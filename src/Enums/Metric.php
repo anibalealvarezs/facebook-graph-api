@@ -126,6 +126,7 @@ enum Metric: string
             self::COST_PER_OBJECTIVE_RESULT,
             self::RESULTS,
             self::RESULT_RATE => [],
+            default => []
         };
     }
 
@@ -182,6 +183,7 @@ enum Metric: string
             self::ENGAGED_AUDIENCE_DEMOGRAPHICS,
             self::FOLLOWER_DEMOGRAPHICS,
             self::ONLINE_FOLLOWERS => [MetricPeriod::LIFETIME],
+            default => []
         };
     }
 
@@ -254,6 +256,14 @@ enum Metric: string
             self::PROFILE_LINK_TAPS => [
                 [MetricBreakdown::CONTACT_BUTTON_TYPE]
             ],
+            self::PURCHASE_ROAS,
+            self::WEBSITE_PURCHASE_ROAS,
+            self::MOBILE_APP_PURCHASE_ROAS,
+            self::OBJECTIVE_RESULTS,
+            self::COST_PER_OBJECTIVE_RESULT,
+            self::RESULTS,
+            self::RESULT_RATE => [],
+            default => [],
         };
     }
 
@@ -310,6 +320,7 @@ enum Metric: string
             self::QUALITY_RANKING,
             self::ENGAGEMENT_RATE_RANKING,
             self::ONLINE_FOLLOWERS => [],
+            default => []
         };
     }
 
