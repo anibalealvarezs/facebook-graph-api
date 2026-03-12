@@ -944,6 +944,7 @@ class FacebookGraphApi extends BearerTokenClient
         bool $includeSponsorTags = false,
         bool $includeTo = false,
         int $limit = 10, // Max is 100, but it's limited to 10 by default due to Facebook API limitations
+        array $additionalParams = [],
     ): array {
         $query = [
             'fields' => $postFields ?
@@ -966,6 +967,10 @@ class FacebookGraphApi extends BearerTokenClient
                 . ($includeTo ? ',to' : ''),
             'limit' => min($limit, 100),
         ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
 
         $posts = [];
         $after = null;
@@ -1008,6 +1013,7 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         string|array|null $campaignFields = null, // Comma-separated list of fields
         int $limit = 100,
+        array $additionalParams = [],
     ): array {
         $query = [
             'fields' => $campaignFields ?
@@ -1023,6 +1029,10 @@ class FacebookGraphApi extends BearerTokenClient
                 CampaignField::toCommaSeparatedList(),
             'limit' => min($limit, 100),
         ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
 
         $campaigns = [];
         $after = null;
@@ -1065,6 +1075,7 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         string|array|null $adFields = null, // Comma-separated list of fields
         int $limit = 100,
+        array $additionalParams = [],
     ): array {
         $query = [
             'fields' => $adFields ?
@@ -1080,6 +1091,10 @@ class FacebookGraphApi extends BearerTokenClient
                 AdField::toCommaSeparatedList(),
             'limit' => min($limit, 100),
         ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
 
         $ads = [];
         $after = null;
@@ -1121,6 +1136,7 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         string|array|null $adsetFields = null, // Comma-separated list of fields
         int $limit = 100,
+        array $additionalParams = [],
     ): array {
         $query = [
             'fields' => $adsetFields ?
@@ -1136,6 +1152,10 @@ class FacebookGraphApi extends BearerTokenClient
                 AdsetField::toCommaSeparatedList(),
             'limit' => min($limit, 100),
         ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
 
         $adsets = [];
         $after = null;
@@ -1177,6 +1197,7 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         string|array|null $creatriveFields = null, // Comma-separated list of fields
         int $limit = 100,
+        array $additionalParams = [],
     ): array {
         $query = [
             'fields' => $creatriveFields ?
@@ -1192,6 +1213,10 @@ class FacebookGraphApi extends BearerTokenClient
                 CreativeField::toCommaSeparatedList(),
             'limit' => min($limit, 100),
         ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
 
         $creatives = [];
         $after = null;
@@ -1318,7 +1343,8 @@ class FacebookGraphApi extends BearerTokenClient
     public function getInstagramMedia(
         string $igUserId,
         string|array|null $mediaFields = null, // Comma-separated list of fields
-        int $limit = 100
+        int $limit = 100,
+        array $additionalParams = [],
     ): array {
         $query = [
             'fields' => $mediaFields ?
@@ -1334,6 +1360,10 @@ class FacebookGraphApi extends BearerTokenClient
                 InstagramMediaField::toCommaSeparatedList(),
             'limit' => min($limit, 100)
         ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
 
         $media = [];
         $after = null;
@@ -1375,12 +1405,14 @@ class FacebookGraphApi extends BearerTokenClient
     public function getInstagramPosts(
         string $igUserId,
         string|array|null $mediaFields = null, // Comma-separated list of fields
-        int $limit = 100
+        int $limit = 100,
+        array $additionalParams = [],
     ): array {
         return $this->getInstagramMedia(
             igUserId: $igUserId,
             mediaFields: $mediaFields,
-            limit: $limit
+            limit: $limit,
+            additionalParams: $additionalParams,
         );
     }
 

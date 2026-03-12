@@ -10,6 +10,7 @@ use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricSet;
 use Anibalealvarezs\FacebookGraphApi\Enums\UserPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\AdAccountPermission;
@@ -21,6 +22,7 @@ use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
 use Anibalealvarezs\FacebookGraphApi\Exceptions\FacebookRateLimitException;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
+use Anibalealvarezs\FacebookGraphApi\Exceptions;
 use Carbon\Carbon;
 use Exception;
 use Faker\Factory as Faker;
@@ -1005,7 +1007,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertStringContainsString('v25.0/act_123456789/insights', (string)$lastRequest->getUri());
         $this->assertStringContainsString('level=account', (string)$lastRequest->getUri());
-        $this->assertStringContainsString('fields=' . urlencode(AdAccountPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdAccountPermission::DEFAULT->insightsFields(MetricSet::BASIC)), (string)$lastRequest->getUri());
     }
 
     /**
@@ -1033,10 +1035,10 @@ class FacebookGraphApiTest extends TestCase
         );
 
         $adAccountId = '123456789';
-        $client->getAdAccountInsights($adAccountId, fullMetrics: true);
+        $client->getAdAccountInsights($adAccountId, metricSet: MetricSet::FULL);
 
         $lastRequest = $mock->getLastRequest();
-        $this->assertStringContainsString('fields=' . urlencode(AdAccountPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdAccountPermission::DEFAULT->insightsFields(MetricSet::FULL)), (string)$lastRequest->getUri());
     }
 
     /**
@@ -1076,7 +1078,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals(['data' => $responseData['data']], $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertStringContainsString('level=campaign', (string)$lastRequest->getUri());
-        $this->assertStringContainsString('fields=' . urlencode(CampaignPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(CampaignPermission::DEFAULT->insightsFields(MetricSet::BASIC)), (string)$lastRequest->getUri());
         $this->assertStringContainsString('filtering=' . urlencode(json_encode([['field' => 'campaign.id', 'operator' => 'IN', 'value' => $campaignIds]])), (string)$lastRequest->getUri());
     }
 
@@ -1091,10 +1093,10 @@ class FacebookGraphApiTest extends TestCase
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
 
-        $client->getCampaignInsightsFromAdAccount('123', fullMetrics: true);
+        $client->getCampaignInsightsFromAdAccount(adAccountId: '123', metricSet: MetricSet::FULL);
 
         $lastRequest = $mock->getLastRequest();
-        $this->assertStringContainsString('fields=' . urlencode(CampaignPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(CampaignPermission::DEFAULT->insightsFields(MetricSet::FULL)), (string)$lastRequest->getUri());
     }
 
     /**
@@ -1134,7 +1136,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals(['data' => $responseData['data']], $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertStringContainsString('level=adset', (string)$lastRequest->getUri());
-        $this->assertStringContainsString('fields=' . urlencode(AdsetPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdsetPermission::DEFAULT->insightsFields(MetricSet::BASIC)), (string)$lastRequest->getUri());
         $this->assertStringContainsString('filtering=' . urlencode(json_encode([['field' => 'adset.id', 'operator' => 'IN', 'value' => $adsetIds]])), (string)$lastRequest->getUri());
     }
 
@@ -1149,10 +1151,10 @@ class FacebookGraphApiTest extends TestCase
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
 
-        $client->getAdsetInsightsFromAdAccount('123', fullMetrics: true);
+        $client->getAdsetInsightsFromAdAccount('123', metricSet: MetricSet::FULL);
 
         $lastRequest = $mock->getLastRequest();
-        $this->assertStringContainsString('fields=' . urlencode(AdsetPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdsetPermission::DEFAULT->insightsFields(MetricSet::FULL)), (string)$lastRequest->getUri());
     }
 
     /**
@@ -1192,7 +1194,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals(['data' => $responseData['data']], $response);
         $lastRequest = $mock->getLastRequest();
         $this->assertStringContainsString('level=ad', (string)$lastRequest->getUri());
-        $this->assertStringContainsString('fields=' . urlencode(AdPermission::DEFAULT->insightsFields(false)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdPermission::DEFAULT->insightsFields(MetricSet::BASIC)), (string)$lastRequest->getUri());
         $this->assertStringContainsString('filtering=' . urlencode(json_encode([['field' => 'ad.id', 'operator' => 'IN', 'value' => $adIds]])), (string)$lastRequest->getUri());
     }
 
@@ -1347,9 +1349,9 @@ class FacebookGraphApiTest extends TestCase
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(userId: $this->userId, appId: $this->appId, appSecret: $this->appSecret, redirectUrl: $this->redirectUrl, pageId: $this->pageId, longLivedUserAccessToken: $this->longLivedUserAccessToken, guzzleClient: $guzzle);
 
-        $client->getAdInsightsFromAdAccount('123', fullMetrics: true);
+        $client->getAdInsightsFromAdAccount('123', metricSet: MetricSet::FULL);
 
         $lastRequest = $mock->getLastRequest();
-        $this->assertStringContainsString('fields=' . urlencode(AdPermission::DEFAULT->insightsFields(true)), (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode(AdPermission::DEFAULT->insightsFields(MetricSet::FULL)), (string)$lastRequest->getUri());
     }
 }

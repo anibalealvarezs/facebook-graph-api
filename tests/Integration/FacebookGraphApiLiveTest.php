@@ -7,6 +7,7 @@ use Anibalealvarezs\FacebookGraphApi\Enums\Metric;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricSet;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
 use Anibalealvarezs\FacebookGraphApi\Enums\UserPermission;
@@ -469,7 +470,7 @@ class FacebookGraphApiLiveTest extends TestCase
         }
 
         $adAccountId = str_replace('act_', '', $adAccounts['data'][0]['id']);
-        $data = $this->api->getAdAccountInsights($adAccountId, fullMetrics: true);
+        $data = $this->api->getAdAccountInsights(adAccountId: $adAccountId, metricSet: MetricSet::FULL);
 
         $this->logger->debug('testGetAdAccountInsightsFull response', $data);
 
