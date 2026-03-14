@@ -1637,7 +1637,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/act_".$adAccountId."/insights",
+                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
