@@ -16,8 +16,12 @@ enum FacebookPostPermission: string
         };
     }
 
-    public function insightsFields(): string
+    public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
-        return 'post_impressions,post_impressions_unique';
+        $basic = 'post_impressions,post_impressions_unique';
+        return match ($set) {
+            MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
+            MetricSet::CUSTOM => '',
+        };
     }
 }

@@ -24,6 +24,7 @@ enum AdAccountPermission: string
             MetricSet::BASIC => $basic,
             MetricSet::KEY => $key,
             MetricSet::FULL => $key . ',action_values,cost_per_action_type,cost_per_unique_click,cost_per_inline_link_click,cost_per_inline_post_engagement,cost_per_unique_outbound_click,cost_per_estimated_ad_recallers,cost_per_thruplay,estimated_ad_recallers,optimization_goal,objective,date_start,date_stop,unique_clicks,unique_ctr,estimated_ad_recall_rate,conversion_rate_ranking,quality_ranking,engagement_rate_ranking,video_30_sec_watched_actions,video_avg_time_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions,video_play_actions,video_thruplay_watched_actions',
+            MetricSet::CUSTOM => '',
         };
     }
 }

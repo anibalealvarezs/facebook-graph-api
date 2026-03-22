@@ -1432,9 +1432,13 @@ class FacebookGraphApi extends BearerTokenClient
         string $mediaId,
         MediaType|MediaProductType $mediaType = MediaType::CAROUSEL_ALBUM,
         int $limit = 100,
+        MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = [],
     ): array {
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, $mediaType->insightsFields($metricSet));
+
         $query = [
-            'metric' => $mediaType->insightsFields(),
+            'metric' => $metrics,
             'limit' => min($limit, 100),
             'period' => MetricPeriod::LIFETIME->value
         ];
@@ -1483,11 +1487,15 @@ class FacebookGraphApi extends BearerTokenClient
         string $pageId,
         ?string $since = null,
         ?string $until = null,
+        MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = [],
     ): array {
         $this->setPageId($pageId);
 
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, PagePermission::PAGES_SHOW_LIST->insightsFields($metricSet));
+
         $query = [
-            'metric' => PagePermission::PAGES_SHOW_LIST->insightsFields(),
+            'metric' => $metrics,
             'period' => MetricPeriod::DAY->value,
             'fields' => 'name,period,values',
         ];
@@ -1542,10 +1550,14 @@ class FacebookGraphApi extends BearerTokenClient
     public function getFacebookPostInsights(
         string $postId,
         int $limit = 100,
+        MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = []
     ): array {
 
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, FacebookPostPermission::DEFAULT->insightsFields($metricSet));
+
         $query = [
-            'metric' => FacebookPostPermission::DEFAULT->insightsFields(),
+            'metric' => $metrics,
             'period' => MetricPeriod::LIFETIME->value,
             'limit' => min($limit, 100),
             'fields' => 'name,period,values',
@@ -1595,14 +1607,15 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdAccountInsights(
         string $adAccountId,
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         MetricSet $metricSet = MetricSet::BASIC,
         array $additionalParams = [],
+        array $customMetrics = [],
     ): array {
 
-        $metrics = AdAccountPermission::DEFAULT->insightsFields($metricSet);
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, AdAccountPermission::DEFAULT->insightsFields($metricSet));
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
@@ -1614,11 +1627,7 @@ class FacebookGraphApi extends BearerTokenClient
         ], $additionalParams);
 
         if ($metricBreakdown) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -1673,13 +1682,17 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         array $campaignIds = [],
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         array $additionalParams = [],
         MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = [],
     ): array {
-        $metrics = CampaignPermission::DEFAULT->insightsFields($metricSet) . ',campaign_id';
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, CampaignPermission::DEFAULT->insightsFields($metricSet));
+        if ($metricSet !== MetricSet::CUSTOM) {
+             $metrics .= ',campaign_id';
+        }
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
@@ -1702,11 +1715,7 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         if ($metricBreakdown !== null && !empty($metricBreakdown)) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } elseif ($metricBreakdown === null) {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -1759,13 +1768,17 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         array $adsetIds = [],
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         array $additionalParams = [],
         MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = [],
     ): array {
-        $metrics = AdsetPermission::DEFAULT->insightsFields($metricSet) . ',adset_id,campaign_id';
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, AdsetPermission::DEFAULT->insightsFields($metricSet));
+        if ($metricSet !== MetricSet::CUSTOM) {
+             $metrics .= ',adset_id,campaign_id';
+        }
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
@@ -1773,8 +1786,8 @@ class FacebookGraphApi extends BearerTokenClient
             'level' => 'adset',
             'fields' => $metrics,
             'limit' => min($limit, 100),
-            'time_increment' => 1,
-            'action_breakdowns' => 'action_type',
+            'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ], $additionalParams);
 
         if (!empty($adsetIds)) {
@@ -1788,11 +1801,7 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         if ($metricBreakdown !== null && !empty($metricBreakdown)) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } elseif ($metricBreakdown === null) {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -1845,13 +1854,17 @@ class FacebookGraphApi extends BearerTokenClient
         string $adAccountId,
         array $adIds = [],
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         array $additionalParams = [],
         MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = [],
     ): array {
-        $metrics = AdPermission::DEFAULT->insightsFields($metricSet) . ',ad_id,adset_id,campaign_id';
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, AdPermission::DEFAULT->insightsFields($metricSet));
+        if ($metricSet !== MetricSet::CUSTOM) {
+             $metrics .= ',ad_id,adset_id,campaign_id';
+        }
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
@@ -1859,8 +1872,8 @@ class FacebookGraphApi extends BearerTokenClient
             'level' => 'ad',
             'fields' => $metrics,
             'limit' => min($limit, 100),
-            'time_increment' => 1,
-            'action_breakdowns' => 'action_type',
+            'time_increment' => 1, // Ensure daily breakdown
+            'action_breakdowns' => 'action_type', // Default breakdown for actions
         ], $additionalParams);
 
         if (!empty($adIds)) {
@@ -1874,11 +1887,7 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         if ($metricBreakdown !== null && !empty($metricBreakdown)) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } elseif ($metricBreakdown === null) {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -1929,29 +1938,27 @@ class FacebookGraphApi extends BearerTokenClient
     public function getCampaignInsights(
         string $campaignId,
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         MetricSet $metricSet = MetricSet::BASIC,
+        array $additionalParams = [],
+        array $customMetrics = [],
     ): array {
 
-        $metrics = CampaignPermission::DEFAULT->insightsFields($metricSet);
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, CampaignPermission::DEFAULT->insightsFields($metricSet));
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
-        $query = [
+        $query = array_merge([
             'fields' => $metrics,
             'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
-        ];
+        ], $additionalParams);
 
         if ($metricBreakdown) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -2002,29 +2009,27 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdInsights(
         string $adId,
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         MetricSet $metricSet = MetricSet::BASIC,
+        array $additionalParams = [],
+        array $customMetrics = [],
     ): array {
 
-        $metrics = AdPermission::DEFAULT->insightsFields($metricSet);
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, AdPermission::DEFAULT->insightsFields($metricSet));
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
-        $query = [
+        $query = array_merge([
             'fields' => $metrics,
             'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
-        ];
+        ], $additionalParams);
 
         if ($metricBreakdown) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -2075,29 +2080,27 @@ class FacebookGraphApi extends BearerTokenClient
     public function getAdsetInsights(
         string $adsetId,
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         MetricSet $metricSet = MetricSet::BASIC,
+        array $additionalParams = [],
+        array $customMetrics = [],
     ): array {
 
-        $metrics = AdsetPermission::DEFAULT->insightsFields($metricSet);
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, AdsetPermission::DEFAULT->insightsFields($metricSet));
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
-        $query = [
+        $query = array_merge([
             'fields' => $metrics,
             'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
-        ];
+        ], $additionalParams);
 
         if ($metricBreakdown) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -2148,29 +2151,27 @@ class FacebookGraphApi extends BearerTokenClient
     public function getCreativeInsights(
         string $creativeId,
         int $limit = 100,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        MetricBreakdown|string|array|null $metricBreakdown = null,
         MetricSet $metricSet = MetricSet::BASIC,
+        array $additionalParams = [],
+        array $customMetrics = [],
     ): array {
 
-        $metrics = CreativePermission::DEFAULT->insightsFields($metricSet);
+        $metrics = $this->resolveMetrics($metricSet, $customMetrics, CreativePermission::DEFAULT->insightsFields($metricSet));
 
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
+        if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
             throw new InvalidArgumentException('Invalid metric breakdown provided for ' . $metrics . '.');
         }
 
-        $query = [
+        $query = array_merge([
             'fields' => $metrics,
             'limit' => min($limit, 100),
             'time_increment' => 1, // Ensure daily breakdown
             'action_breakdowns' => 'action_type', // Default breakdown for actions
-        ];
+        ], $additionalParams);
 
         if ($metricBreakdown) {
-            $query['breakdowns'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
+            $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
@@ -2584,8 +2585,53 @@ class FacebookGraphApi extends BearerTokenClient
      * @param Metric|MetricGroup|Metric[] $data
      * @return bool
      */
-    protected function isValidMetricBreakdown(MetricBreakdown|array $metricBreakdown, Metric|MetricGroup|array $data): bool
+    /**
+     * @param MetricSet $set
+     * @param array $customMetrics
+     * @param string $defaultFields
+     * @return string
+     */
+    protected function resolveMetrics(MetricSet $set, array $customMetrics, string $defaultFields): string
     {
+        if ($set === MetricSet::CUSTOM) {
+            if (empty($customMetrics)) {
+                return $defaultFields;
+            }
+            return implode(',', array_unique(array_map(function ($m) {
+                return $m instanceof Metric ? $m->value : $m;
+            }, $customMetrics)));
+        }
+        return $defaultFields;
+    }
+
+    /**
+     * @param MetricBreakdown|string|array|null $metricBreakdown
+     * @return string|null
+     */
+    protected function resolveBreakdowns(MetricBreakdown|string|array|null $metricBreakdown): ?string
+    {
+        if (!$metricBreakdown) {
+            return null;
+        }
+
+        if (is_string($metricBreakdown)) {
+            return $metricBreakdown;
+        }
+
+        if (is_array($metricBreakdown)) {
+            return implode(',', array_map(function ($b) {
+                return $b instanceof MetricBreakdown ? $b->value : $b;
+            }, $metricBreakdown));
+        }
+
+        return $metricBreakdown->value;
+    }
+
+    protected function isValidMetricBreakdown(MetricBreakdown|string|array $metricBreakdown, Metric|MetricGroup|array $data): bool
+    {
+        if (is_string($metricBreakdown)) {
+            return true; // We assume custom strings are valid or let the API decide
+        }
         $provided = is_array($metricBreakdown) ? $metricBreakdown : [$metricBreakdown];
         $allowedCombinations = [];
         if ($data instanceof Metric) {

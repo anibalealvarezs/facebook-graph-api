@@ -24,6 +24,7 @@ enum CreativePermission: string
             MetricSet::BASIC => $basic,
             MetricSet::KEY => $key,
             MetricSet::FULL => $key . ',action_values,cost_per_action_type',
+            MetricSet::CUSTOM => '',
         };
     }
 }

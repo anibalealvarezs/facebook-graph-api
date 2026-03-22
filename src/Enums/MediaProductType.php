@@ -12,13 +12,17 @@ enum MediaProductType: string
     case STORY = 'STORY';
     case AD = 'AD';
 
-    public function insightsFields(): string
+    public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
-        return match ($this) {
+        $basic = match ($this) {
             self::FEED => 'comments,follows,likes,profile_activity,profile_visits,reach,saved,shares,total_interactions,views',
             self::REELS => 'comments,ig_reels_avg_watch_time,ig_reels_video_view_total_time,likes,reach,saved,shares,total_interactions,views',
             self::STORY => 'follows,navigation,profile_activity,profile_visits,reach,replies,shares,total_interactions,views',
             self::AD => 'comments,engagement_rate,impressions,likes,reach,saved,shares,total_interactions',
+        };
+        return match ($set) {
+            MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
+            MetricSet::CUSTOM => '',
         };
     }
 }

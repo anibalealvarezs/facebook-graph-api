@@ -11,13 +11,17 @@ enum MediaType: string
     case VIDEO  = 'VIDEO';
     case CAROUSEL_ALBUM = 'CAROUSEL_ALBUM';
 
-    public function insightsFields(): string
+    public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
-        return match ($this) {
+        $basic = match ($this) {
             self::IMAGE,
             self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,views',
             self::VIDEO => 'reach,saved',
             default => 'comments,ig_reels_avg_watch_time,ig_reels_video_view_total_time,likes,reach,saved,shares,total_interactions,views',
+        };
+        return match ($set) {
+            MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
+            MetricSet::CUSTOM => '',
         };
     }
 }

@@ -530,7 +530,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals('biz456', $result['pages'][1]['business']['id']);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
-        $this->assertStringContainsString('fields=' . urlencode('id,name,access_token,category,tasks,is_published,username,is_verified,business,merchant_settings,attribution_details,created_by,created_time,updated_by,updated_time,instagram_business_account') . '&limit=100', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode('id,name,access_token,category,tasks,is_published,username,is_verified,business,merchant_settings,instagram_business_account') . '&limit=100', (string)$lastRequest->getUri());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
