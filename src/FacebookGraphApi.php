@@ -567,17 +567,21 @@ class FacebookGraphApi extends BearerTokenClient
     public function getMyPages(
         array $permissions = [],
         int $limit = 100,
+        ?string $fields = null,
     ): array {
         // Merge fields from provided permissions
-        $fields = [];
-        foreach ($permissions as $permission) {
-            if ($permission instanceof PagePermission) {
-                $fields[] = $permission->fields();
-            }
-        }
+        $fieldsString = $fields;
 
-        // Use default fields if no permissions are provided
-        $fieldsString = !empty($fields) ? implode(',', array_unique(explode(',', implode(',', array_filter($fields))))) : 'id,name,access_token';
+        if (!$fieldsString) {
+            $permissionFields = [];
+            foreach ($permissions as $permission) {
+                if ($permission instanceof PagePermission) {
+                    $permissionFields[] = $permission->fields();
+                }
+            }
+            // Use default fields if no permissions are provided
+            $fieldsString = !empty($permissionFields) ? implode(',', array_unique(explode(',', implode(',', array_filter($permissionFields))))) : 'id,name,access_token';
+        }
 
         $query = [
             'limit' => min($limit, 100),
@@ -595,6 +599,66 @@ class FacebookGraphApi extends BearerTokenClient
             $response = $this->performRequest(
                 method: 'GET',
                 endpoint: 'v25.0/me/accounts',
+                query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
+            );
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            $pages = [...$pages, ...$data['data']];
+
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data']) > 0);
+
+        return ['data' => $pages];
+    }
+
+    /**
+     * Get Facebook Pages for a specific user.
+     *
+     * @param string $userId
+     * @param array $permissions
+     * @param int $limit
+     * @param string|null $fields
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getPages(
+        string $userId,
+        array $permissions = [],
+        int $limit = 100,
+        ?string $fields = null,
+    ): array {
+        // Merge fields from provided permissions
+        $fieldsString = $fields;
+
+        if (!$fieldsString) {
+            $permissionFields = [];
+            foreach ($permissions as $permission) {
+                if ($permission instanceof PagePermission) {
+                    $permissionFields[] = $permission->fields();
+                }
+            }
+            // Use default fields if no permissions are provided
+            $fieldsString = !empty($permissionFields) ? implode(',', array_unique(explode(',', implode(',', array_filter($permissionFields))))) : 'id,name,access_token';
+        }
+
+        $query = [
+            'limit' => min($limit, 100),
+            'fields' => $fieldsString,
+        ];
+
+        $pages = [];
+        $after = null;
+
+        do {
+            if ($after) {
+                $query['after'] = $after;
+            }
+
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: "v25.0/{$userId}/accounts",
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
@@ -665,10 +729,11 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getMyAdAccounts(
         int $limit = 100,
+        ?string $fields = null,
     ): array {
         $query = [
             'limit' => min($limit, 100),
-            'fields' => AdAccountPermission::DEFAULT->fields(),
+            'fields' => $fields ?: AdAccountPermission::DEFAULT->fields(),
         ];
 
         $accounts = [];
@@ -682,6 +747,50 @@ class FacebookGraphApi extends BearerTokenClient
             $response = $this->performRequest(
                 method: 'GET',
                 endpoint: 'v25.0/me/adaccounts',
+                query: $query,
+                sleep: 1000000, // 1 second to avoid rate limiting
+            );
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            $accounts = [...$accounts, ...$data['data']];
+
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data']) > 0);
+
+        return ['data' => $accounts];
+    }
+
+    /**
+     * Get Ad Accounts for a specific user.
+     *
+     * @param string $userId
+     * @param int $limit
+     * @param string|null $fields
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getAdAccounts(
+        string $userId,
+        int $limit = 100,
+        ?string $fields = null,
+    ): array {
+        $query = [
+            'limit' => min($limit, 100),
+            'fields' => $fields ?: AdAccountPermission::DEFAULT->fields(),
+        ];
+
+        $accounts = [];
+        $after = null;
+
+        do {
+            if ($after) {
+                $query['after'] = $after;
+            }
+
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: "v25.0/{$userId}/adaccounts",
                 query: $query,
                 sleep: 1000000, // 1 second to avoid rate limiting
             );
