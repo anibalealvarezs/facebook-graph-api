@@ -27,6 +27,9 @@ enum UserPermission: string
     case ADS_MANAGEMENT = 'ads_management';
     case LEADS_RETRIEVAL = 'leads_retrieval';
     case CATALOG_MANAGEMENT = 'catalog_management';
+    case READ_INSIGHTS = 'read_insights';
+    case INSTAGRAM_BASIC = 'instagram_basic';
+    case INSTAGRAM_MANAGE_INSIGHTS = 'instagram_manage_insights';
 
     public function fields(): string
     {
@@ -51,6 +54,9 @@ enum UserPermission: string
             self::ADS_MANAGEMENT => '',
             self::LEADS_RETRIEVAL => '',
             self::CATALOG_MANAGEMENT => '',
+            self::READ_INSIGHTS => '',
+            self::INSTAGRAM_BASIC => '',
+            self::INSTAGRAM_MANAGE_INSIGHTS => '',
         };
     }
 }
