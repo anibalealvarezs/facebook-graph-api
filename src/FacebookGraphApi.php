@@ -51,6 +51,8 @@ class FacebookGraphApi extends BearerTokenClient
     protected ?string $longLivedClientAccesstoken;
     protected string $tokenPath = "";
     protected string $tokenIdentifier = "";
+    protected string $apiVersion = "";
+    protected int $sleep = 1000000;
     protected ?FacebookGraphAuth $auth;
     protected array $storedTokens = [];
 
@@ -87,7 +89,9 @@ class FacebookGraphApi extends BearerTokenClient
         ?Client $guzzleClient = null,
         ?FacebookGraphAuth $auth = null,
         string $tokenPath = "",
-        string $tokenIdentifier = ""
+        string $tokenIdentifier = "",
+        string $apiVersion = 'v25.0',
+        int $sleep = 200000,
     ) {
         parent::__construct(
             baseUrl: 'https://graph.facebook.com/',
@@ -103,8 +107,10 @@ class FacebookGraphApi extends BearerTokenClient
             throw new InvalidArgumentException('User ID is required');
         }
         $this->setUserId($userId);
-        $this->pageId = $pageId;
+        $this->apiVersion = $apiVersion;
+        $this->sleep = $sleep;
         $this->setAppId($appId);
+        $this->pageId = $pageId;
         $this->setAppSecret($appSecret);
         $this->setRedirectUrl($redirectUrl);
         $this->setUserAccessToken($userAccessToken);
@@ -695,9 +701,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: "v25.0/{$userId}/accounts",
+                endpoint: "{$userId}/accounts",
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -740,7 +746,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'POST',
-            endpoint: 'v25.0',
+            endpoint: '',
             form_params: $query,
         );
 
@@ -783,9 +789,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/me/adaccounts',
+                endpoint: 'me/adaccounts',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -827,9 +833,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: "v25.0/{$userId}/adaccounts",
+                endpoint: "{$userId}/adaccounts",
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -1092,25 +1098,31 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 10, // Max is 100, but it's limited to 10 by default due to Facebook API limitations
         array $additionalParams = [],
     ): array {
+
+        $fieldsString = null;
+        if ($postFields) {
+            $fieldsString = is_array($postFields) ?
+                implode(',', array_map(fn ($field) => (
+                    $field instanceof FacebookPostField ?
+                    $field->value :
+                    $field
+                ), $postFields)) :
+                $postFields;
+        } else {
+            $fieldsString = FacebookPostField::toSafeFieldList($includeDynamicPosts, $includeSharedPosts, $includeSponsorTags, $includeTo);
+            if ($includeAttachments) {
+                $fieldsString .= ',attachments';
+            }
+            if ($includeComments) {
+                $fieldsString .= ',comments';
+            }
+            if ($includeReactions) {
+                $fieldsString .= ',reactions';
+            }
+        }
+
         $query = [
-            'fields' => $postFields ?
-                (
-                    is_array($postFields) ?
-                    implode(',', array_map(fn ($field) => (
-                        $field instanceof FacebookPostField ?
-                        $field->value :
-                        $field
-                    ), $postFields)) :
-                    $postFields
-                ) :
-                FacebookPostField::toCommaSeparatedList()
-                . ($includeAttachments ? ',attachments' : '')
-                . ($includeComments ? ',comments' : '')
-                . ($includeReactions ? ',reactions' : '')
-                . ($includeDynamicPosts ? ',dynamic_posts' : '')
-                . ($includeSharedPosts ? ',sharedposts' : '')
-                . ($includeSponsorTags ? ',sponsor_tags' : '')
-                . ($includeTo ? ',to' : ''),
+            'fields' => $fieldsString,
             'limit' => min($limit, 100),
         ];
 
@@ -1128,9 +1140,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/'.$pageId.'/posts',
+                endpoint: $pageId.'/posts',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
                 tokenSample: TokenSample::PAGE,
             );
 
@@ -1522,9 +1534,9 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$igUserId."/media",
+                    endpoint: $igUserId."/media",
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 
@@ -1601,9 +1613,9 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$mediaId."/insights",
+                    endpoint: $mediaId."/insights",
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 

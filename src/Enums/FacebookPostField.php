@@ -98,4 +98,46 @@ enum FacebookPostField: string
         );
         return implode(',', $enumValues);
     }
+
+    /**
+     * @param bool $includeDynamicPosts
+     * @param bool $includeSharedPosts
+     * @param bool $includeSponsorTags
+     * @param bool $includeTo
+     * @return string
+     */
+    public static function toSafeFieldList(
+        bool $includeDynamicPosts = false,
+        bool $includeSharedPosts = false,
+        bool $includeSponsorTags = false,
+        bool $includeTo = false,
+    ): string {
+        $unsafe = [
+            self::PLACE->value,
+            self::COORDINATES->value,
+            self::TARGETING->value,
+            self::FEED_TARGETING->value,
+            self::PRIVACY->value,
+        ];
+
+        $fields = array_filter(
+            array_column(self::cases(), 'value'),
+            fn ($field) => !in_array($field, $unsafe)
+        );
+
+        if (!$includeDynamicPosts) {
+            $fields = array_diff($fields, [self::DYNAMIC_POSTS->value]);
+        }
+        if (!$includeSharedPosts) {
+            $fields = array_diff($fields, [self::SHAREDPOSTS->value]);
+        }
+        if (!$includeSponsorTags) {
+            $fields = array_diff($fields, [self::SPONSOR_TAGS->value]);
+        }
+        if (!$includeTo) {
+            $fields = array_diff($fields, [self::TO->value]);
+        }
+
+        return implode(',', $fields);
+    }
 }
