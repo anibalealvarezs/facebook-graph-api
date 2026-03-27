@@ -873,7 +873,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'GET',
-            endpoint: 'v25.0/' . $adAccountId . '/adspixels',
+            endpoint: '' . $adAccountId . '/adspixels',
             query: [
                 'limit' => min($limit, 100),
                 'fields' => 'id,name,data_use_setting,creation_time,last_fired_time',
@@ -909,7 +909,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'GET',
-            endpoint: 'v25.0/' . $pixelId . '/stats',
+            endpoint: '' . $pixelId . '/stats',
             query: $query,
         );
 
@@ -941,7 +941,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'POST',
-            endpoint: 'v25.0/' . $pixelId . '/events',
+            endpoint: '' . $pixelId . '/events',
             body: json_encode($data),
             headers: [
                 'Content-Type' => 'application/json',
@@ -969,7 +969,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'GET',
-            endpoint: 'v25.0/' . $adAccountId . '/customaudiences',
+            endpoint: '' . $adAccountId . '/customaudiences',
             query: [
                 'limit' => min($limit, 100),
                 'fields' => 'id,name,description,approximate_count_lower_bound,approximate_count_upper_bound,delivery_status,subtype',
@@ -991,7 +991,7 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $response = $this->performRequest(
             method: 'GET',
-            endpoint: 'v25.0/' . $audienceId,
+            endpoint: '' . $audienceId,
             query: [
                 'fields' => 'delivery_status',
             ],
@@ -1031,7 +1031,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'POST',
-            endpoint: 'v25.0/' . $adAccountId . '/customaudiences',
+            endpoint: '' . $adAccountId . '/customaudiences',
             form_params: $params,
         );
 
@@ -1063,7 +1063,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'POST',
-            endpoint: 'v25.0/' . $audienceId . '/users',
+            endpoint: '' . $audienceId . '/users',
             body: json_encode($payload),
             headers: [
                 'Content-Type' => 'application/json',
@@ -1684,7 +1684,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$pageId."/insights",
+                    endpoint: "".$pageId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
@@ -1740,7 +1740,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$postId."/insights",
+                    endpoint: "".$postId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::PAGE,
@@ -1811,7 +1811,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1898,7 +1898,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -1984,7 +1984,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000,
                     tokenSample: TokenSample::USER,
@@ -2070,7 +2070,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/insights',
+                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
                     sleep: 1000000,
                     tokenSample: TokenSample::USER,
@@ -2142,7 +2142,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$campaignId."/insights",
+                    endpoint: "".$campaignId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -2213,7 +2213,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$adId."/insights",
+                    endpoint: "".$adId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -2284,7 +2284,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$adsetId."/insights",
+                    endpoint: "".$adsetId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -2355,7 +2355,7 @@ class FacebookGraphApi extends BearerTokenClient
                 // Get valid metrics from enum
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$creativeId."/insights",
+                    endpoint: "".$creativeId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                     tokenSample: TokenSample::USER,
@@ -2541,7 +2541,7 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: "v25.0/".$instagramAccountId."/insights",
+                    endpoint: "".$instagramAccountId."/insights",
                     query: $query,
                     sleep: 1000000, // 1 second to avoid rate limiting
                 );
