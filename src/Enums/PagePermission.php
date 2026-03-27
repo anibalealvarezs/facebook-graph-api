@@ -26,7 +26,7 @@ enum PagePermission: string
 
     public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
-        $basic = 'page_fan_adds,page_fan_removes,page_fans,page_impressions,page_impressions_paid,page_impressions_viral,page_video_views,page_views_total';
+        $basic = 'page_follows,page_impressions,page_impressions_paid,page_video_views,page_views_total';
         return match ($set) {
             MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
             MetricSet::CUSTOM => '',
