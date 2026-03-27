@@ -112,42 +112,39 @@ enum FacebookPostField: string
         bool $includeSponsorTags = false,
         bool $includeTo = false,
     ): string {
-        $unsafe = [
-            self::PLACE,
-            self::COORDINATES,
-            self::TARGETING,
-            self::FEED_TARGETING,
-            self::PRIVACY,
-            self::ADMIN_CREATOR,
-            self::ALLOWED_ADVERTISING_OBJECTIVES,
-            self::APPLICATION,
-            self::CALL_TO_ACTION,
-            self::CAN_REPLY_PRIVATELY,
-            self::IS_ELIGIBLE_FOR_PROMOTION,
-            self::PROMOTABLE_ID,
-            self::SCHEDULED_PUBLISH_TIME,
-            self::TIMELINE_VISIBILITY,
+        $safeFields = [
+            self::ID,
+            self::MESSAGE,
+            self::CREATED_TIME,
+            self::STATUS_TYPE,
+            self::STORY,
+            self::STORY_TAGS,
+            self::SHARES,
+            self::FULL_PICTURE,
+            self::PERMALINK_URL,
+            self::FROM,
+            self::UPDATED_TIME,
+            self::IS_PUBLISHED,
+            self::IS_HIDDEN,
+            self::IS_EXPIRED,
+            self::IS_POPULAR,
+            self::IS_SPHERICAL,
         ];
 
-        $optional = [
-            self::DYNAMIC_POSTS,
-            self::SHAREDPOSTS,
-            self::SPONSOR_TAGS,
-            self::TO,
-        ];
+        if ($includeTo) {
+            $safeFields[] = self::TO;
+        }
 
-        $fields = array_filter(
-            self::cases(),
-            function ($case) use ($unsafe, $optional, $includeDynamicPosts, $includeSharedPosts, $includeSponsorTags, $includeTo) {
-                if (in_array($case, $unsafe)) return false;
-                if ($case === self::DYNAMIC_POSTS && !$includeDynamicPosts) return false;
-                if ($case === self::SHAREDPOSTS && !$includeSharedPosts) return false;
-                if ($case === self::SPONSOR_TAGS && !$includeSponsorTags) return false;
-                if ($case === self::TO && !$includeTo) return false;
-                return true;
-            }
-        );
+        if ($includeDynamicPosts) {
+            $safeFields[] = self::DYNAMIC_POSTS;
+        }
+        if ($includeSharedPosts) {
+            $safeFields[] = self::SHAREDPOSTS;
+        }
+        if ($includeSponsorTags) {
+            $safeFields[] = self::SPONSOR_TAGS;
+        }
 
-        return implode(',', array_map(fn ($case) => $case->value, $fields));
+        return implode(',', array_map(fn ($case) => $case->value, $safeFields));
     }
 }
