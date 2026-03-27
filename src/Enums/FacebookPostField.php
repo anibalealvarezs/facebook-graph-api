@@ -113,31 +113,41 @@ enum FacebookPostField: string
         bool $includeTo = false,
     ): string {
         $unsafe = [
-            self::PLACE->value,
-            self::COORDINATES->value,
-            self::TARGETING->value,
-            self::FEED_TARGETING->value,
-            self::PRIVACY->value,
+            self::PLACE,
+            self::COORDINATES,
+            self::TARGETING,
+            self::FEED_TARGETING,
+            self::PRIVACY,
+            self::ADMIN_CREATOR,
+            self::ALLOWED_ADVERTISING_OBJECTIVES,
+            self::APPLICATION,
+            self::CALL_TO_ACTION,
+            self::CAN_REPLY_PRIVATELY,
+            self::IS_ELIGIBLE_FOR_PROMOTION,
+            self::PROMOTABLE_ID,
+            self::SCHEDULED_PUBLISH_TIME,
+            self::TIMELINE_VISIBILITY,
+        ];
+
+        $optional = [
+            self::DYNAMIC_POSTS,
+            self::SHAREDPOSTS,
+            self::SPONSOR_TAGS,
+            self::TO,
         ];
 
         $fields = array_filter(
-            array_column(self::cases(), 'value'),
-            fn ($field) => !in_array($field, $unsafe)
+            self::cases(),
+            function ($case) use ($unsafe, $optional, $includeDynamicPosts, $includeSharedPosts, $includeSponsorTags, $includeTo) {
+                if (in_array($case, $unsafe)) return false;
+                if ($case === self::DYNAMIC_POSTS && !$includeDynamicPosts) return false;
+                if ($case === self::SHAREDPOSTS && !$includeSharedPosts) return false;
+                if ($case === self::SPONSOR_TAGS && !$includeSponsorTags) return false;
+                if ($case === self::TO && !$includeTo) return false;
+                return true;
+            }
         );
 
-        if (!$includeDynamicPosts) {
-            $fields = array_diff($fields, [self::DYNAMIC_POSTS->value]);
-        }
-        if (!$includeSharedPosts) {
-            $fields = array_diff($fields, [self::SHAREDPOSTS->value]);
-        }
-        if (!$includeSponsorTags) {
-            $fields = array_diff($fields, [self::SPONSOR_TAGS->value]);
-        }
-        if (!$includeTo) {
-            $fields = array_diff($fields, [self::TO->value]);
-        }
-
-        return implode(',', $fields);
+        return implode(',', array_map(fn ($case) => $case->value, $fields));
     }
 }
