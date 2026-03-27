@@ -155,30 +155,33 @@ class FacebookGraphApi extends BearerTokenClient
 
     public function setPageId(?string $pageId): void
     {
-        if ($pageId !== $this->pageId) {
-            $this->longLivedPageAccesstoken = null;
-            if ($pageId && !empty($this->storedTokens)) {
-                $userId = $this->getUserId();
-                $serviceKey = $this->getServiceKey();
-                
-                // Try usual path first
-                if (isset($this->storedTokens[$userId][$serviceKey]['long_lived_pages'][$pageId])) {
-                    $this->longLivedPageAccesstoken = $this->storedTokens[$userId][$serviceKey]['long_lived_pages'][$pageId];
-                } else {
-                    // Search in ALL users and services if not found
-                    foreach ($this->storedTokens as $uId => $services) {
-                        if (!is_array($services)) continue;
-                        foreach ($services as $sKey => $data) {
-                            if (isset($data['long_lived_pages'][$pageId])) {
-                                $this->longLivedPageAccesstoken = $data['long_lived_pages'][$pageId];
-                                break 2;
-                            }
-                        }
-                    }
+        $this->pageId = $pageId;
+        $this->longLivedPageAccesstoken = null; // Clean to avoid leak
+
+        if ($pageId && !empty($this->storedTokens)) {
+            // Deep recursive search to bypass App_... and case-mismatches
+            $this->longLivedPageAccesstoken = $this->findTokenDeeply($this->storedTokens, $pageId);
+        }
+    }
+
+    protected function findTokenDeeply(array $data, string $pageId): ?string
+    {
+        // Check current level
+        if (isset($data['long_lived_pages'][$pageId])) {
+            return $data['long_lived_pages'][$pageId];
+        }
+
+        // Recurse deeper
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $result = $this->findTokenDeeply($value, $pageId);
+                if ($result) {
+                    return $result;
                 }
             }
         }
-        $this->pageId = $pageId;
+
+        return null;
     }
 
     public function getAppSecret(): string
@@ -319,17 +322,38 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $serviceKey = $this->getServiceKey();
-        if (!isset($data[$userId][$serviceKey]) || !is_array($data[$userId][$serviceKey])) {
-            $data[$userId][$serviceKey] = [];
+        
+        // Deep ensure structure for serviceKey to avoid destroying data
+        if (!isset($data[$userId])) {
+            $data[$userId] = [];
+        }
+        
+        // Check case-insensitive existence of serviceKey
+        $existingKey = null;
+        foreach (array_keys($data[$userId]) as $k) {
+            if (strtolower((string) $k) === strtolower($serviceKey)) {
+                $existingKey = $k;
+                break;
+            }
+        }
+        
+        $keyToUse = $existingKey ?: $serviceKey;
+        if (!isset($data[$userId][$keyToUse]) || !is_array($data[$userId][$keyToUse])) {
+            $data[$userId][$keyToUse] = [];
         }
 
         if ($type === 'long_lived_page' && $this->getPageId()) {
-            if (!isset($data[$userId][$serviceKey]['long_lived_pages']) || !is_array($data[$userId][$serviceKey]['long_lived_pages'])) {
-                $data[$userId][$serviceKey]['long_lived_pages'] = [];
+            if (!isset($data[$userId][$keyToUse]['long_lived_pages']) || !is_array($data[$userId][$keyToUse]['long_lived_pages'])) {
+                $data[$userId][$keyToUse]['long_lived_pages'] = [];
             }
-            $data[$userId][$serviceKey]['long_lived_pages'][$this->getPageId()] = $token;
+            $data[$userId][$keyToUse]['long_lived_pages'][$this->getPageId()] = $token;
         } else {
-            $data[$userId][$serviceKey][$type] = $token;
+            $data[$userId][$keyToUse][$type] = $token;
+        }
+
+        // Final consistency check: if the main facebook_marketing node has the token, update it too
+        if (isset($data['facebook_marketing']) && $type !== 'long_lived_page') {
+            $data['facebook_marketing']['access_token'] = $token;
         }
 
         // Ensure directory exists
