@@ -160,8 +160,21 @@ class FacebookGraphApi extends BearerTokenClient
             if ($pageId && !empty($this->storedTokens)) {
                 $userId = $this->getUserId();
                 $serviceKey = $this->getServiceKey();
+                
+                // Try usual path first
                 if (isset($this->storedTokens[$userId][$serviceKey]['long_lived_pages'][$pageId])) {
                     $this->longLivedPageAccesstoken = $this->storedTokens[$userId][$serviceKey]['long_lived_pages'][$pageId];
+                } else {
+                    // Search in ALL users and services if not found
+                    foreach ($this->storedTokens as $uId => $services) {
+                        if (!is_array($services)) continue;
+                        foreach ($services as $sKey => $data) {
+                            if (isset($data['long_lived_pages'][$pageId])) {
+                                $this->longLivedPageAccesstoken = $data['long_lived_pages'][$pageId];
+                                break 2;
+                            }
+                        }
+                    }
                 }
             }
         }
