@@ -190,6 +190,11 @@ class FacebookGraphApi extends BearerTokenClient
         return null;
     }
 
+    public function getBaseUrl(): string
+    {
+        return parent::getBaseUrl() . ($this->apiVersion ? $this->apiVersion . '/' : '');
+    }
+
     public function getAppSecret(): string
     {
         return $this->appSecret;
@@ -548,14 +553,16 @@ class FacebookGraphApi extends BearerTokenClient
             }
         }
 
-        $this->setToken(
-            match ($tokenSample) {
-                TokenSample::USER => $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
-                TokenSample::APP => $this->getAppAccessToken(),
-                TokenSample::PAGE => $this->getLongLivedPageAccesstoken() ?: $this->getPageAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
-                TokenSample::CLIENT => $this->getLongLivedClientAccesstoken() ?: $this->getClientAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
-            }
-        );
+        $token = match ($tokenSample) {
+            TokenSample::USER => $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
+            TokenSample::APP => $this->getAppAccessToken(),
+            TokenSample::PAGE => $this->getLongLivedPageAccesstoken() ?: $this->getPageAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
+            TokenSample::CLIENT => $this->getLongLivedClientAccesstoken() ?: $this->getClientAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
+        };
+
+        if ($token) {
+            $this->setToken($token);
+        }
     }
 
     /**
@@ -589,7 +596,7 @@ class FacebookGraphApi extends BearerTokenClient
 
         $response = $this->performRequest(
             method: 'GET',
-            endpoint: 'v25.0/me',
+            endpoint: 'me',
             query: $query,
         );
 
@@ -641,9 +648,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/me/accounts',
+                endpoint: 'me/accounts',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -1202,9 +1209,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/campaigns',
+                endpoint: $this->formatAdAccountId($adAccountId) . '/campaigns',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
                 tokenSample: TokenSample::USER
             );
 
@@ -1264,9 +1271,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/ads',
+                endpoint: $this->formatAdAccountId($adAccountId) . '/ads',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -1325,9 +1332,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/adsets',
+                endpoint: $this->formatAdAccountId($adAccountId) . '/adsets',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -1386,9 +1393,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             $response = $this->performRequest(
                 method: 'GET',
-                endpoint: 'v25.0/' . $this->formatAdAccountId($adAccountId) . '/adcreatives',
+                endpoint: $this->formatAdAccountId($adAccountId) . '/adcreatives',
                 query: $query,
-                sleep: 1000000, // 1 second to avoid rate limiting
+                sleep: $this->sleep,
             );
 
             $data = json_decode($response->getBody()->getContents(), true);
@@ -1442,9 +1449,9 @@ class FacebookGraphApi extends BearerTokenClient
 
                 $response = $this->performRequest(
                     method: 'GET',
-                    endpoint: 'v25.0/me/accounts',
+                    endpoint: 'me/accounts',
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
 

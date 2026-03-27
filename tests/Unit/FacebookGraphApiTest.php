@@ -100,7 +100,7 @@ class FacebookGraphApiTest extends TestCase
             longLivedClientAccesstoken: $this->longLivedClientAccessToken
         );
 
-        $this->assertEquals('https://graph.facebook.com/', $client->getBaseUrl());
+        $this->assertEquals('https://graph.facebook.com/v25.0/', $client->getBaseUrl());
         $this->assertEquals($this->userId, $client->getUserId());
         $this->assertEquals($this->appId, $client->getAppId());
         $this->assertEquals($this->pageId, $client->getPageId());
