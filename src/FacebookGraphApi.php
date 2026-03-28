@@ -410,10 +410,14 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getBatch(array $relativeUrls, TokenSample $tokenSample = TokenSample::USER): array
     {
-        $batch = array_map(function ($url) {
+        $this->setSampleBasedToken($tokenSample);
+        $token = $this->getTokenFromSample($tokenSample);
+
+        $batch = array_map(function ($url) use ($token) {
+            $separator = str_contains($url, '?') ? '&' : '?';
             return [
                 'method' => 'GET',
-                'relative_url' => ltrim((string) $url, '/'),
+                'relative_url' => ltrim((string) $url, '/') . $separator . 'access_token=' . $token,
             ];
         }, $relativeUrls);
 
@@ -573,19 +577,30 @@ class FacebookGraphApi extends BearerTokenClient
                     $this->getLongLivedUserAccessToken()
                 );
                 $this->setLongLivedClientAccesstoken($tokenResponse['access_token']);
-            }
         }
+    }
 
-        $token = match ($tokenSample) {
-            TokenSample::USER => $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
-            TokenSample::APP => $this->getAppAccessToken(),
-            TokenSample::PAGE => $this->getLongLivedPageAccesstoken() ?: $this->getPageAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
-            TokenSample::CLIENT => $this->getLongLivedClientAccesstoken() ?: $this->getClientAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken(),
-        };
+        $token = $this->getTokenFromSample($tokenSample);
 
         if ($token) {
             $this->setToken($token);
         }
+    }
+
+    /**
+     * Get the token string for a given sample.
+     *
+     * @param TokenSample $tokenSample
+     * @return string
+     */
+    public function getTokenFromSample(TokenSample $tokenSample): string
+    {
+        return match ($tokenSample) {
+            TokenSample::USER => (string) ($this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken()),
+            TokenSample::APP => (string) $this->getAppAccessToken(),
+            TokenSample::PAGE => (string) ($this->getLongLivedPageAccesstoken() ?: $this->getPageAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken()),
+            TokenSample::CLIENT => (string) ($this->getLongLivedClientAccesstoken() ?: $this->getClientAccesstoken() ?: $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken()),
+        };
     }
 
     /**
