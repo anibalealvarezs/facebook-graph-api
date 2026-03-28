@@ -557,13 +557,14 @@ class FacebookGraphApi extends BearerTokenClient
                     $this->getUserId(),
                     $this->getLongLivedUserAccessToken(),
                 );
+                $targetPageId = trim((string) $this->getPageId());
                 $page = array_filter(
                     $tokenResponse['data'],
-                    fn ($page) => (string) $page['id'] === (string) $this->getPageId()
+                    fn ($page) => trim((string) ($page['id'] ?? '')) === $targetPageId
                 );
                 if (empty($page)) {
                     $available = array_map(fn($p) => "{$p['name']} ({$p['id']})", $tokenResponse['data']);
-                    throw new Exception('Page not found. Available pages: ' . implode(', ', $available));
+                    throw new Exception("Page ID '{$targetPageId}' not found in Meta account. Available pages: " . implode(', ', $available));
                 }
                 $page = array_values($page);
                 $this->setLongLivedPageAccesstoken($page[0]['access_token']);
