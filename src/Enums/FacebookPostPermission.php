@@ -18,7 +18,7 @@ enum FacebookPostPermission: string
 
     public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
-        $basic = 'post_reactions_by_type_total,post_media_view,post_media_view_unique';
+        $basic = 'post_reactions_by_type_total,post_media_view';
         return match ($set) {
             MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
             MetricSet::CUSTOM => '',
