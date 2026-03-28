@@ -408,15 +408,7 @@ class FacebookGraphApi extends BearerTokenClient
      * @throws GuzzleException
      * @throws Exception
      */
-    /**
-     * Perform a batch request to Facebook Graph API.
-     * Supports up to 50 requests in a single call.
-     *
-     * @param array $relativeUrls Array of relative URLs
-     * @return array
-     * @throws GuzzleException
-     */
-    public function getBatch(array $relativeUrls): array
+    public function getBatch(array $relativeUrls, TokenSample $tokenSample = TokenSample::USER): array
     {
         $batch = array_map(function ($url) {
             return [
@@ -433,6 +425,7 @@ class FacebookGraphApi extends BearerTokenClient
             method: 'POST',
             endpoint: '',
             form_params: $query,
+            tokenSample: $tokenSample,
         );
 
         return json_decode($response->getBody()->getContents(), true);
