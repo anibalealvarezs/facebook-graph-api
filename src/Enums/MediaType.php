@@ -18,8 +18,8 @@ enum MediaType: string
             self::IMAGE,
             self::VIDEO,
             self::REEL,
-            self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,views,impressions',
-            default => 'comments,ig_reels_avg_watch_time,ig_reels_video_view_total_time,likes,reach,saved,shares,total_interactions,views,impressions',
+            self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,views',
+            default => 'comments,ig_reels_avg_watch_time,ig_reels_video_view_total_time,likes,reach,saved,shares,total_interactions,views',
         };
         return match ($set) {
             MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
