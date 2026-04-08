@@ -36,9 +36,11 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 
 class FacebookGraphApi extends BearerTokenClient
 {
+    protected ?LoggerInterface $logger = null;
     protected string $appId;
     protected string $appSecret;
     protected ?string $pageId;
@@ -142,6 +144,12 @@ class FacebookGraphApi extends BearerTokenClient
 
         $this->setResponseErrorDetector('error');
         $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
+    }
+
+    public function setLogger(LoggerInterface $logger): self
+    {
+        $this->logger = $logger;
+        return $this;
     }
 
     public function getAppId(): string
@@ -456,10 +464,13 @@ class FacebookGraphApi extends BearerTokenClient
         mixed $onFailure = null,
         TokenSample $tokenSample = TokenSample::USER,
     ): mixed {
-
         $this->setSampleBasedToken($tokenSample);
 
-        return parent::performRequest(
+        if ($this->logger) {
+            $this->logger->debug("FB SDK Request: $method " . ($baseUrl ?: $this->getBaseUrl()) . $endpoint . " - Query: " . json_encode($query));
+        }
+
+        $result = parent::performRequest(
             method: $method,
             endpoint: $endpoint,
             query: $query,
@@ -479,6 +490,14 @@ class FacebookGraphApi extends BearerTokenClient
             ignoreAuth: $ignoreAuth,
             onFailure: $onFailure,
         );
+
+        if ($this->logger && $result instanceof \Psr\Http\Message\ResponseInterface) {
+            $body = $result->getBody()->getContents();
+            $result->getBody()->rewind();
+            $this->logger->debug("FB SDK Response: " . substr($body, 0, 1000));
+        }
+
+        return $result;
     }
 
     /**
@@ -1694,50 +1713,76 @@ class FacebookGraphApi extends BearerTokenClient
         MetricSet $metricSet = MetricSet::BASIC,
         array $customMetrics = [],
     ): array {
-        $this->setPageId($pageId);
+        $metricsToTry = !empty($customMetrics) ? $customMetrics : explode(',', (string)$this->resolveMetrics($metricSet, $customMetrics, PagePermission::PAGES_SHOW_LIST->insightsFields($metricSet)));
 
-        $metrics = $this->resolveMetrics($metricSet, $customMetrics, PagePermission::PAGES_SHOW_LIST->insightsFields($metricSet));
+        try {
+            $res = $this->executePageInsightsRequest($pageId, $since, $until, $metricsToTry);
+            if ($res && !empty($res['data'])) {
+                return $res;
+            }
+            $this->logWarning("First attempt for Page $pageId returned EMPTY data. Switching to incremental search.");
+        } catch (Exception $e) {
+            if (!$this->isMetricError($e)) throw $e;
+            $this->logWarning("First attempt for Page $pageId FAILED with error #100. Switching to incremental search.");
+        }
 
+        $results = ['data' => []];
+        foreach ($metricsToTry as $metric) {
+            try {
+                $resSingle = $this->executePageInsightsRequest($pageId, $since, $until, [$metric]);
+                if ($resSingle && !empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $this->logError("FB API: Metric '$metric' FAILED for Page $pageId: " . $eInner->getMessage());
+            }
+        }
+        return $results;
+    }
+
+    protected function executePageInsightsRequest(string $pageId, ?string $since, ?string $until, array $metrics): array
+    {
         $query = [
-            'metric' => $metrics,
+            'metric' => implode(',', $metrics),
             'period' => MetricPeriod::DAY->value,
             'fields' => 'name,period,values',
         ];
 
-        if ($since) {
-            $query['since'] = Carbon::parse($since)->format('Y-m-d');
-        }
-        if ($until) {
-            $query['until'] = Carbon::parse($until)->format('Y-m-d');
-        }
+        if ($since) $query['since'] = Carbon::parse($since)->format('Y-m-d');
+        if ($until) $query['until'] = Carbon::parse($until)->format('Y-m-d');
 
-        $insights = [];
-        $after = null;
+        $response = $this->performRequest(
+            method: 'GET',
+            endpoint: $pageId . "/insights",
+            query: $query,
+            sleep: $this->sleep,
+            tokenSample: TokenSample::PAGE,
+        );
 
-        try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
+        return json_decode($response->getBody()->getContents(), true);
+    }
 
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$pageId."/insights",
-                    query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
+    protected function isMetricError(Exception $e): bool
+    {
+        $msg = $e->getMessage();
+        return (stripos($msg, '(#100)') !== false && (stripos($msg, 'insights metric') !== false || stripos($msg, 'param is not valid') !== false));
+    }
 
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+    protected function logWarning(string $message): void
+    {
+        if ($this->logger) $this->logger->warning($message);
+        else error_log("FB SDK WARNING: $message");
+    }
 
-            return ['data' => $insights];
-        } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for account ID ".$pageId.": ".$e->getMessage());
-        }
+    protected function logError(string $message): void
+    {
+        if ($this->logger) $this->logger->error($message);
+        else error_log("FB SDK ERROR: $message");
+    }
+
+    protected function logInfo(string $message): void
+    {
+        if ($this->logger) $this->logger->info($message);
     }
 
     /**
@@ -1863,7 +1908,9 @@ class FacebookGraphApi extends BearerTokenClient
 
             return ['data' => $insights];
         } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for ad account ID ".$adAccountId.": ".$e->getMessage());
+            if (!$this->isMetricError($e)) throw $e;
+            $this->logWarning("Ad Account Insights for $adAccountId FAILED with error #100. Returning empty data to allow fallback.");
+            return ['data' => []];
         }
     }
 
@@ -2433,8 +2480,53 @@ class FacebookGraphApi extends BearerTokenClient
      */
     public function getInstagramAccountInsights(
         string $instagramAccountId,
-        string $since, // Max: 2 years ago
-        string $until, // Max: 30 days from $since
+        string $since,
+        string $until,
+        string $timezone = 'America/Caracas',
+        Metric|array|null $metrics = null,
+        ?MetricGroup $metricGroup = null,
+        ?MetricType $metricType = null,
+        ?MetricPeriod $metricPeriod = null,
+        ?MetricTimeframe $metricTimeframe = null,
+        MetricBreakdown|array|null $metricBreakdown = null,
+    ): array {
+        $metricsToTry = [];
+        if ($metrics) {
+            $metricsToTry = is_array($metrics) ? $metrics : [$metrics];
+        } elseif ($metricGroup) {
+            $metricsToTry = $metricGroup->getMetrics();
+        }
+
+        try {
+            return $this->executeInstagramAccountInsightsRequest(
+                $instagramAccountId, $since, $until, $timezone, $metrics, $metricGroup, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
+            );
+        } catch (Exception $e) {
+            if (!$this->isMetricError($e)) throw $e;
+            $this->logWarning("IG Account Insights for $instagramAccountId FAILED with error #100. Switching to incremental search.");
+        }
+
+        $results = ['data' => []];
+        foreach ($metricsToTry as $metric) {
+            try {
+                $resSingle = $this->executeInstagramAccountInsightsRequest(
+                    $instagramAccountId, $since, $until, $timezone, [$metric], null, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
+                );
+                if (!empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $mValue = $metric instanceof Metric ? $metric->value : (string) $metric;
+                $this->logError("IG API: Metric '$mValue' FAILED for Account $instagramAccountId: " . $eInner->getMessage());
+            }
+        }
+        return $results;
+    }
+
+    protected function executeInstagramAccountInsightsRequest(
+        string $instagramAccountId,
+        string $since,
+        string $until,
         string $timezone = 'America/Caracas',
         Metric|array|null $metrics = null,
         ?MetricGroup $metricGroup = null,
@@ -2447,153 +2539,36 @@ class FacebookGraphApi extends BearerTokenClient
             throw new InvalidArgumentException('Either `metricGroup` or `metric` must be provided.');
         }
 
-        if ($metricType && !$this->isValidMetricType($metricType, $metrics ?? $metricGroup)) {
-            throw new InvalidArgumentException('Invalid metric type provided for ' . ($metrics ? 'metric' : 'metric group') . '.');
-        }
-
-        if ($metricPeriod && !$this->isValidMetricPeriod($metricPeriod, $metrics ?? $metricGroup)) {
-            throw new InvalidArgumentException('Invalid metric period provided for ' . ($metrics ? 'metric' : 'metric group') . '.');
-        }
-
-        if ($metricTimeframe && !$this->isValidMetricTimeframe($metricTimeframe, $metrics ?? $metricGroup)) {
-            throw new InvalidArgumentException('Invalid metric timeframe provided for ' . ($metrics ? 'metric' : 'metric group') . '.');
-        }
-
-        if ($metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, $metrics ?? $metricGroup)) {
-            throw new InvalidArgumentException('Invalid metric breakdown provided for ' . ($metrics ? 'metric' : 'metric group') . '.');
-        }
-
         $query = [
             'fields' => 'name,period,total_value,values,title',
+            'since' => $since,
+            'until' => $until,
         ];
 
         if ($metrics) {
-            if (!is_array($metrics)) {
-                $metrics = [$metrics];
-            }
-            $metricsArray = [];
-            foreach ($metrics as $metric) {
-                $metricsArray[] = $metric instanceof Metric ? $metric->value : $metric;
-            }
-            $query['metric'] = implode(',', $metricsArray);
-            ;
+            $metricsArray = is_array($metrics) ? $metrics : [$metrics];
+            $query['metric'] = implode(',', array_map(fn($m) => $m instanceof Metric ? $m->value : $m, $metricsArray));
         } elseif ($metricGroup) {
-            $query['metric'] = implode(',', array_map(fn ($e) => $e->value, $metricGroup->getMetrics()));
+            $query['metric'] = implode(',', array_map(fn($e) => $e->value, $metricGroup->getMetrics()));
         }
 
-        if ($metricType) {
-            $query['metric_type'] = $metricType->value;
-        } else {
-            if ($metrics) {
-                if ($allowedMetricTypes = $metrics[0]->allowedMetricTypes()) {
-                    $query['metric_type'] = $allowedMetricTypes[0]->value;
-                }
-            } elseif ($metricGroup) {
-                if ($allowedMetricTypes = $metricGroup->getMetrics()[0]->allowedMetricTypes()) {
-                    $query['metric_type'] = $allowedMetricTypes[0]->value;
-                }
-            }
+        if ($metricType) $query['metric_type'] = $metricType->value;
+        if ($metricPeriod) $query['period'] = $metricPeriod->value;
+        if ($timezone) $query['timezone'] = $timezone;
+        if ($metricBreakdown) $query['breakdown'] = is_array($metricBreakdown) ? implode(',', array_map(fn($b) => $b->value, $metricBreakdown)) : $metricBreakdown->value;
+
+        foreach (['metric_timeframe', 'timeframe'] as $key) {
+             if ($metricTimeframe) $query[$key] = $metricTimeframe->value;
         }
 
-        if ($metricPeriod) {
-            $query['period'] = $metricPeriod->value;
-        } else {
-            if ($metrics) {
-                if ($allowedPeriods = $metrics[0]->allowedPeriods()) {
-                    $query['period'] = $allowedPeriods[0]->value;
-                }
-            } elseif ($metricGroup) {
-                if ($allowedPeriods = $metricGroup->getMetrics()[0]->allowedPeriods()) {
-                    $query['period'] = $allowedPeriods[0]->value;
-                }
-            }
-        }
+        $response = $this->performRequest(
+            method: 'GET',
+            endpoint: $instagramAccountId . "/insights",
+            query: $query,
+            sleep: $this->sleep,
+        );
 
-        if ($metricTimeframe) {
-            $query['timeframe'] = $metricTimeframe->value;
-        } else {
-            if ($metrics) {
-                if ($allowedTimeframes = $metrics[0]->allowedTimeframes()) {
-                    $query['timeframe'] = $allowedTimeframes[0]->value;
-                }
-            } elseif ($metricGroup) {
-                if ($allowedTimeframes = $metricGroup->getMetrics()[0]->allowedTimeframes()) {
-                    $query['timeframe'] = $allowedTimeframes[0]->value;
-                }
-            }
-        }
-
-        if ($metricBreakdown) {
-            $query['breakdown'] = is_array($metricBreakdown) ?
-                implode(',', array_map(function ($b) {
-                    return $b->value;
-                }, $metricBreakdown)) :
-                $metricBreakdown->value;
-        } else {
-            if ($metrics) {
-                $allowedBreakdowns = [];
-                foreach ($metrics as $metric) {
-                    foreach ($metric->allowedBreakdowns() as $breakdown) {
-                        foreach ($breakdown as $b) {
-                            $allowedBreakdowns[] = $b instanceof MetricBreakdown ? $b->value : $b;
-                        }
-                    }
-                }
-                $allowedBreakdowns = array_unique($allowedBreakdowns);
-                if ($allowedBreakdowns) {
-                    $query['breakdown'] = implode(',', $allowedBreakdowns);
-                }
-            } elseif ($metricGroup) {
-                $allowedBreakdowns = [];
-                foreach ($metricGroup->getMetrics()[0]->allowedBreakdowns() as $breakdown) {
-                    if (is_array($breakdown)) {
-                        foreach ($breakdown as $b) {
-                            $allowedBreakdowns[] = $b instanceof MetricBreakdown ? $b->value : $b;
-                        }
-                    } else {
-                        $allowedBreakdowns[] = $breakdown instanceof MetricBreakdown ? $breakdown->value : $breakdown;
-                    }
-                }
-                $allowedBreakdowns = array_unique($allowedBreakdowns);
-                if ($allowedBreakdowns) {
-                    $query['breakdown'] = implode(',', $allowedBreakdowns);
-                }
-            }
-        }
-
-        if ($since) {
-            $query['since'] = Carbon::parse($since, $timezone)->timestamp;
-        }
-
-        if ($until) {
-            $query['until'] = Carbon::parse($until, $timezone)->timestamp;
-        }
-
-        $insights = [];
-        $after = null;
-
-        try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
-
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$instagramAccountId."/insights",
-                    query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
-
-            return ['data' => $insights];
-        } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for account ID ".$instagramAccountId.": ".$e->getMessage());
-        }
+        return json_decode($response->getBody()->getContents(), true);
     }
 
     /**
