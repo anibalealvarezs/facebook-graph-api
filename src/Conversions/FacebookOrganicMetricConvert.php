@@ -73,23 +73,59 @@ class FacebookOrganicMetricConvert
         $periodValue = is_object($period) && isset($period->value) ? $period->value : (string) $period;
 
         foreach ($rows as $row) {
-            $config = [
-                'channel' => 'facebook_organic',
-                'period' => $periodValue,
-                'fallback_platform_id' => $channeledAccountId,
-                'date_field' => 'date',
-                'context' => [
-                    'account' => $accountName,
-                    'channeledAccount' => $channeledAccountId,
-                    'page' => $pageUrl,
-                ],
-                'metrics' => ['total_value.value' => $row['name'] ?? 'unknown'],
-                'include_nulls' => true,
-            ];
-
             $row['date'] = $date;
-            $rowMetrics = UniversalMetricConverter::convert([$row], $config, $logger);
-            foreach ($rowMetrics as $m) $collection->add($m);
+            
+            // 1. Handle standard total value
+            if (isset($row['total_value']['value'])) {
+                $config = [
+                    'channel' => 'facebook_organic',
+                    'period' => $periodValue,
+                    'fallback_platform_id' => $channeledAccountId,
+                    'date_field' => 'date',
+                    'context' => [
+                        'account' => $accountName,
+                        'channeledAccount' => $channeledAccountId,
+                        'page' => $pageUrl,
+                    ],
+                    'metrics' => ['total_value.value' => $row['name'] ?? 'unknown'],
+                ];
+                $rowMetrics = UniversalMetricConverter::convert([$row], $config, $logger);
+                foreach ($rowMetrics as $m) $collection->add($m);
+            }
+
+            // 2. Handle breakdowns
+            if (isset($row['total_value']['breakdowns'])) {
+                foreach ($row['total_value']['breakdowns'] as $breakdown) {
+                    $dimKeys = $breakdown['dimension_keys'] ?? [];
+                    foreach ($breakdown['results'] ?? [] as $result) {
+                        $dimValues = $result['dimension_values'] ?? [];
+                        $dimensions = [];
+                        foreach ($dimKeys as $idx => $key) {
+                            $dimensions[] = ['dimensionKey' => $key, 'dimensionValue' => $dimValues[$idx] ?? 'unknown'];
+                        }
+                        
+                        $metricRow = array_merge($row, [
+                            'breakdown_value' => $result['value'] ?? 0,
+                            'dimensions' => $dimensions
+                        ]);
+                        
+                        $rowMetrics = UniversalMetricConverter::convert([$metricRow], [
+                            'channel' => 'facebook_organic',
+                            'period' => $periodValue,
+                            'fallback_platform_id' => $channeledAccountId,
+                            'date_field' => 'date',
+                            'metrics' => ['breakdown_value' => ($row['name'] ?? 'unknown')],
+                            'dimensions' => $dimensions,
+                            'context' => [
+                                'account' => $accountName,
+                                'channeledAccount' => $channeledAccountId,
+                                'page' => $pageUrl,
+                            ],
+                        ], $logger);
+                        foreach ($rowMetrics as $m) $collection->add($m);
+                    }
+                }
+            }
         }
 
         return $collection;
