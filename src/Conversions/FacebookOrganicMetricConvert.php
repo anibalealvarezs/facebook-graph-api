@@ -75,23 +75,22 @@ class FacebookOrganicMetricConvert
         foreach ($rows as $row) {
             $row['date'] = $date;
             
-            // 1. Handle standard total value
-            if (isset($row['total_value']['value'])) {
-                $config = [
-                    'channel' => 'facebook_organic',
-                    'period' => $periodValue,
-                    'fallback_platform_id' => $channeledAccountId,
-                    'date_field' => 'date',
-                    'context' => [
-                        'account' => $accountName,
-                        'channeledAccount' => $channeledAccountId,
-                        'page' => $pageUrl,
-                    ],
-                    'metrics' => ['total_value.value' => $row['name'] ?? 'unknown'],
-                ];
-                $rowMetrics = UniversalMetricConverter::convert([$row], $config, $logger);
-                foreach ($rowMetrics as $m) $collection->add($m);
-            }
+            // 1. Handle standard total value or nulls
+            $config = [
+                'channel' => 'facebook_organic',
+                'period' => $periodValue,
+                'fallback_platform_id' => $channeledAccountId,
+                'date_field' => 'date',
+                'context' => [
+                    'account' => $accountName,
+                    'channeledAccount' => $channeledAccountId,
+                    'page' => $pageUrl,
+                ],
+                'metrics' => ['total_value.value' => $row['name'] ?? 'unknown'],
+                'include_nulls' => true,
+            ];
+            $rowMetrics = UniversalMetricConverter::convert([$row], $config, $logger);
+            foreach ($rowMetrics as $m) $collection->add($m);
 
             // 2. Handle breakdowns
             if (isset($row['total_value']['breakdowns'])) {
