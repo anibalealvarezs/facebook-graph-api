@@ -2,11 +2,18 @@
     "name": "anibalealvarezs/facebook-graph-api",
     "description": "Comprehensive Facebook Graph API client for data extraction, supporting Ads, Pages, and Instagram metrics.",
     "license": "MIT",
-    "keywords": ["facebook-api", "graph-api", "instagram-api", "facebook-ads", "metrics", "php"],
+    "keywords": [
+        "facebook-api",
+        "graph-api",
+        "instagram-api",
+        "facebook-ads",
+        "metrics",
+        "php"
+    ],
     "homepage": "https://github.com/anibalealvarezs/facebook-graph-api",
     "authors": [
         {
-            "name": "Aníbal Álvarez",
+            "name": "An\u00edbal \u00c1lvarez",
             "email": "anibalealvarezs@gmail.com"
         }
     ],
@@ -20,13 +27,13 @@
         "symfony/yaml": "^5.4 || ^6.0 || ^7.0",
         "nesbot/carbon": "^2.61 || ^3.0",
         "anibalealvarezs/api-client-skeleton": "dev-main",
-        "anibalealvarezs/api-driver-core": "dev-main",
         "monolog/monolog": "^2.0 || ^3.0",
         "psr/log": "^1.0 || ^2.0 || ^3.0"
     },
     "repositories": [
         {
-            "type": "composer", "url": "https://satis.anibalalvarez.com/"
+            "type": "composer",
+            "url": "https://satis.anibalalvarez.com/"
         }
     ],
     "autoload": {
