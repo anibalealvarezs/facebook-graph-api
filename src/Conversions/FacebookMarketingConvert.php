@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Anibalealvarezs\FacebookGraphApi\Conversions;
 
-use Anibalealvarezs\ApiSkeleton\Conversions\UniversalEntityConverter;
+use Anibalealvarezs\ApiDriverCore\Conversions\UniversalEntityConverter;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**

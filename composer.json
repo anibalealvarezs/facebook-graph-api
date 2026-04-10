@@ -20,6 +20,7 @@
         "symfony/yaml": "^5.4 || ^6.0 || ^7.0",
         "nesbot/carbon": "^2.61 || ^3.0",
         "anibalealvarezs/api-client-skeleton": "dev-main",
+        "anibalealvarezs/api-driver-core": "dev-main",
         "monolog/monolog": "^2.0 || ^3.0",
         "psr/log": "^1.0 || ^2.0 || ^3.0"
     },

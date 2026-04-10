@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Anibalealvarezs\FacebookGraphApi\Conversions;
 
-use Anibalealvarezs\ApiSkeleton\Conversions\UniversalMetricConverter;
+use Anibalealvarezs\ApiDriverCore\Conversions\UniversalMetricConverter;
 use Anibalealvarezs\FacebookGraphApi\Enums\AdAccountPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\AdPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\AdsetPermission;
