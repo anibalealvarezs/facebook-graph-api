@@ -8,13 +8,11 @@ use Symfony\Component\Yaml\Yaml;
 
 $configFile = getenv('CONFIG_FILE') ?: __DIR__ . '/../config/config.yaml';
 
-if (!file_exists($configFile)) {
-    echo "⚠️  Config file not found: $configFile\n";
-    echo "👉  Please copy config_example.yaml to config.yaml and fill in your credentials.\n";
-    exit(1);
+if (file_exists($configFile)) {
+    $GLOBALS['app_config'] = Yaml::parseFile($configFile);
+} else {
+    $GLOBALS['app_config'] = [];
 }
-
-$GLOBALS['app_config'] = Yaml::parseFile($configFile);
 
 function app_config(string $key = null, $default = null)
 {
