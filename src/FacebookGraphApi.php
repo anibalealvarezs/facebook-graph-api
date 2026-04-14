@@ -40,7 +40,6 @@ use Psr\Log\LoggerInterface;
 
 class FacebookGraphApi extends BearerTokenClient
 {
-    protected ?LoggerInterface $logger = null;
     protected string $appId;
     protected string $appSecret;
     protected ?string $pageId;
@@ -73,6 +72,11 @@ class FacebookGraphApi extends BearerTokenClient
      * @param string|null $longLivedClientAccesstoken
      * @param Client|null $guzzleClient
      * @param FacebookGraphAuth|null $auth
+     * @param string $tokenPath
+     * @param string $tokenIdentifier
+     * @param string $apiVersion
+     * @param int $sleep
+     * @param LoggerInterface|null $logger
      * @throws Exception
      */
     public function __construct(
@@ -94,7 +98,9 @@ class FacebookGraphApi extends BearerTokenClient
         string $tokenIdentifier = "",
         string $apiVersion = 'v25.0',
         int $sleep = 200000,
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger;
         parent::__construct(
             baseUrl: 'https://graph.facebook.com/',
             token: 'placeholder',
@@ -103,6 +109,7 @@ class FacebookGraphApi extends BearerTokenClient
                 'name' => 'access_token',
             ],
             guzzleClient: $guzzleClient,
+            logger: $logger,
         );
 
         if (!$userId) {
@@ -144,12 +151,6 @@ class FacebookGraphApi extends BearerTokenClient
 
         $this->setResponseErrorDetector('error');
         $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
-    }
-
-    public function setLogger(LoggerInterface $logger): self
-    {
-        $this->logger = $logger;
-        return $this;
     }
 
     public function getAppId(): string
@@ -394,26 +395,9 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
-     * @param string $method
-     * @param string $endpoint
-     * @param array $query
-     * @param array|string $body
-     * @param array $form_params
-     * @param string $baseUrl
-     * @param array $headers
-     * @param array $additionalHeaders
-     * @param CookieJar|null $cookies
-     * @param bool $verify
-     * @param bool $allowNewToken
-     * @param string $pathToSave
-     * @param bool|null $stream
-     * @param array|null $errorMessageNesting
-     * @param int $sleep
-     * @param array $customErrors
-     * @param bool $ignoreAuth
+     * @param array $relativeUrls
      * @param TokenSample $tokenSample
-     * @return mixed
-     * @throws GuzzleException
+     * @return array
      * @throws Exception
      */
     public function getBatch(array $relativeUrls, TokenSample $tokenSample = TokenSample::USER): array
