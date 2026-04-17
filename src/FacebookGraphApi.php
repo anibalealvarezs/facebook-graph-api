@@ -150,6 +150,13 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $this->setResponseErrorDetector('error');
+        $this->setRateLimitDetector([
+            '(#4)',
+            '(#17)',
+            'Application request limit reached',
+            'Rate limit reached',
+            'Too many requests'
+        ]);
         $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
     }
 
