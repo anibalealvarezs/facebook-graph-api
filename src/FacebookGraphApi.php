@@ -563,22 +563,48 @@ class FacebookGraphApi extends BearerTokenClient
                         $this->setLongLivedUserAccessToken($userToken);
                     }
                 }
-                $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedPageAccesstoken(
-                    $this->getUserId(),
-                    $this->getLongLivedUserAccessToken(),
-                );
-                $targetPageId = trim((string) $this->getPageId());
-                $page = array_filter(
-                    $tokenResponse['data'],
-                    fn ($page) => trim((string) ($page['id'] ?? '')) === $targetPageId
-                );
-                if (empty($page)) {
-                    $available = array_map(fn($p) => "{$p['name']} ({$p['id']})", $tokenResponse['data']);
-                    throw new Exception("Page ID '{$targetPageId}' not found in Meta account. Available pages: " . implode(', ', $available));
-                }
-                $page = array_values($page);
-                $this->setLongLivedPageAccesstoken($page[0]['access_token']);
+                $targetPageId = trim((string)$this->getPageId());
+                $allPages = [];
+                $after = null;
+                $auth = new FacebookGraphAuth($guzzleClient);
+                
+                do {
+                    $endpoint = $this->getUserId() . '/accounts';
+                    $query = [
+                        'access_token' => $this->getLongLivedUserAccessToken(),
+                        'limit' => 100
+                    ];
+                    if ($after) {
+                        $query['after'] = $after;
+                    }
+
+                    $response = $auth->performRequest(
+                        method: 'GET',
+                        endpoint: $endpoint,
+                        query: $query
+                    );
+                    $tokenResponse = json_decode($response->getBody()->getContents(), true);
+                    
+                    $allPages = array_merge($allPages, $tokenResponse['data'] ?? []);
+                    $after = $tokenResponse['paging']['cursors']['after'] ?? null;
+                    
+                    // Check if target page is in current batch
+                    $pageMatch = array_filter(
+                        $tokenResponse['data'] ?? [],
+                        fn ($p) => trim((string) ($p['id'] ?? '')) === $targetPageId
+                    );
+                    
+                    if (!empty($pageMatch)) {
+                        $pageMatch = array_values($pageMatch);
+                        $this->setLongLivedPageAccesstoken($pageMatch[0]['access_token']);
+                        return; // Found it!
+                    }
+                } while ($after && !empty($tokenResponse['data']));
+
+                $available = array_map(fn($p) => "{$p['name']} ({$p['id']})", $allPages);
+                throw new Exception("Page ID '{$targetPageId}' not found in Meta account. Available pages: " . implode(', ', $available));
             }
+        }
         } elseif ($tokenSample === TokenSample::CLIENT) {
             if (!$this->getLongLivedClientAccesstoken() || ($this->getLongLivedClientAccesstoken() === 'placeholder')) {
                 $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedClientAccesstoken(
