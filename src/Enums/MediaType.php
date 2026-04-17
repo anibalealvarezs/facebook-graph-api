@@ -14,15 +14,16 @@ enum MediaType: string
 
     public function insightsFields(MetricSet $set = MetricSet::BASIC): string
     {
-        $basic = match ($this) {
+        $metrics = match ($this) {
+            self::REEL => 'comments,likes,plays,reach,saved,shares,total_interactions,views,ig_reels_avg_watch_time,ig_reels_video_view_total_time',
+            self::VIDEO => 'comments,likes,reach,saved,shares,total_interactions,views,impressions',
             self::IMAGE,
-            self::VIDEO,
-            self::REEL,
-            self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,views',
-            default => 'comments,ig_reels_avg_watch_time,ig_reels_video_view_total_time,likes,reach,saved,shares,total_interactions,views',
+            self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,impressions',
+            default => 'comments,likes,reach,saved,shares,total_interactions,impressions',
         };
+
         return match ($set) {
-            MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $basic,
+            MetricSet::BASIC, MetricSet::KEY, MetricSet::FULL => $metrics,
             MetricSet::CUSTOM => '',
         };
     }
