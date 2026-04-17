@@ -604,7 +604,6 @@ class FacebookGraphApi extends BearerTokenClient
                 $available = array_map(fn($p) => "{$p['name']} ({$p['id']})", $allPages);
                 throw new Exception("Page ID '{$targetPageId}' not found in Meta account. Available pages: " . implode(', ', $available));
             }
-        }
         } elseif ($tokenSample === TokenSample::CLIENT) {
             if (!$this->getLongLivedClientAccesstoken() || ($this->getLongLivedClientAccesstoken() === 'placeholder')) {
                 $tokenResponse = (new FacebookGraphAuth($guzzleClient))->getLongLivedClientAccesstoken(
@@ -614,8 +613,8 @@ class FacebookGraphApi extends BearerTokenClient
                     $this->getLongLivedUserAccessToken()
                 );
                 $this->setLongLivedClientAccesstoken($tokenResponse['access_token']);
+            }
         }
-    }
 
         $token = $this->getTokenFromSample($tokenSample);
 
