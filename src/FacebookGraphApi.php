@@ -1822,31 +1822,63 @@ class FacebookGraphApi extends BearerTokenClient
         MetricSet $metricSet = MetricSet::BASIC,
         array $customMetrics = [],
     ): array {
+        $insights = [];
+        $this->getFacebookPageInsightsAndProcess(
+            callback: function ($data) use (&$insights) {
+                $insights = array_merge($insights, $data);
+            },
+            pageId: $pageId,
+            since: $since,
+            until: $until,
+            metricSet: $metricSet,
+            customMetrics: $customMetrics
+        );
+        return ['data' => $insights];
+    }
+
+    public function getFacebookPageInsightsAndProcess(
+        callable $callback,
+        string $pageId,
+        ?string $since = null,
+        ?string $until = null,
+        MetricSet $metricSet = MetricSet::BASIC,
+        array $customMetrics = [],
+    ): void {
         $metricsToTry = !empty($customMetrics) ? $customMetrics : explode(',', (string)$this->resolveMetrics($metricSet, $customMetrics, PagePermission::PAGES_SHOW_LIST->insightsFields($metricSet)));
 
         try {
-            $res = $this->executePageInsightsRequest($pageId, $since, $until, $metricsToTry);
-            if ($res && !empty($res['data'])) {
-                return $res;
-            }
-            $this->logWarning("First attempt for Page $pageId returned EMPTY data. Switching to incremental search.");
+            $this->executePageInsightsRequestAndProcess($callback, $pageId, $since, $until, $metricsToTry);
         } catch (Exception $e) {
             if (!$this->isMetricError($e)) throw $e;
             $this->logWarning("First attempt for Page $pageId FAILED with error #100. Switching to incremental search.");
-        }
-
-        $results = ['data' => []];
-        foreach ($metricsToTry as $metric) {
-            try {
-                $resSingle = $this->executePageInsightsRequest($pageId, $since, $until, [$metric]);
-                if ($resSingle && !empty($resSingle['data'])) {
-                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+            
+            foreach ($metricsToTry as $metric) {
+                try {
+                    $this->executePageInsightsRequestAndProcess($callback, $pageId, $since, $until, [$metric]);
+                } catch (Exception $eInner) {
+                    $this->logError("FB API: Metric '$metric' FAILED for Page $pageId: " . $eInner->getMessage());
                 }
-            } catch (Exception $eInner) {
-                $this->logError("FB API: Metric '$metric' FAILED for Page $pageId: " . $eInner->getMessage());
             }
         }
-        return $results;
+    }
+
+    protected function executePageInsightsRequestAndProcess(callable $callback, string $pageId, ?string $since, ?string $until, array $metrics): void
+    {
+        $query = [
+            'metric' => implode(',', $metrics),
+            'period' => MetricPeriod::DAY->value,
+            'fields' => 'name,period,values',
+        ];
+
+        if ($since) $query['since'] = Carbon::parse($since)->format('Y-m-d');
+        if ($until) $query['until'] = Carbon::parse($until)->format('Y-m-d');
+
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $pageId . "/insights",
+            query: $query,
+            tokenSample: TokenSample::PAGE,
+        );
     }
 
     protected function executePageInsightsRequest(string $pageId, ?string $since, ?string $until, array $metrics): array
@@ -2565,6 +2597,38 @@ class FacebookGraphApi extends BearerTokenClient
         ?MetricTimeframe $metricTimeframe = null,
         \BackedEnum|array|null $metricBreakdown = null,
     ): array {
+        $insights = [];
+        $this->getInstagramAccountInsightsAndProcess(
+            callback: function ($data) use (&$insights) {
+                $insights = array_merge($insights, $data);
+            },
+            instagramAccountId: $instagramAccountId,
+            since: $since,
+            until: $until,
+            timezone: $timezone,
+            metrics: $metrics,
+            metricGroup: $metricGroup,
+            metricType: $metricType,
+            metricPeriod: $metricPeriod,
+            metricTimeframe: $metricTimeframe,
+            metricBreakdown: $metricBreakdown
+        );
+        return ['data' => $insights];
+    }
+
+    public function getInstagramAccountInsightsAndProcess(
+        callable $callback,
+        string $instagramAccountId,
+        string $since,
+        string $until,
+        string $timezone = 'America/Caracas',
+        \BackedEnum|array|null $metrics = null,
+        ?MetricGroup $metricGroup = null,
+        ?MetricType $metricType = null,
+        ?MetricPeriod $metricPeriod = null,
+        ?MetricTimeframe $metricTimeframe = null,
+        \BackedEnum|array|null $metricBreakdown = null,
+    ): void {
         $metricsToTry = [];
         if ($metrics) {
             $metricsToTry = is_array($metrics) ? $metrics : [$metrics];
@@ -2590,9 +2654,10 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         try {
-            return $this->executeInstagramAccountInsightsRequest(
-                $instagramAccountId, $since, $until, $timezone, $metrics, $metricGroup, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
+            $this->executeInstagramAccountInsightsRequestAndProcess(
+                $callback, $instagramAccountId, $since, $until, $timezone, $metrics, $metricGroup, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
             );
+            return;
         } catch (Exception $e) {
             if (!$this->isMetricError($e)) {
                 throw new Exception("Failed to retrieve insights for account ID $instagramAccountId: " . $e->getMessage());
@@ -2600,21 +2665,16 @@ class FacebookGraphApi extends BearerTokenClient
             $this->logWarning("IG Account Insights for $instagramAccountId FAILED with error #100. Switching to incremental search.");
         }
 
-        $results = ['data' => []];
         foreach ($metricsToTry as $metric) {
             try {
-                $resSingle = $this->executeInstagramAccountInsightsRequest(
-                    $instagramAccountId, $since, $until, $timezone, [$metric], null, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
+                $this->executeInstagramAccountInsightsRequestAndProcess(
+                    $callback, $instagramAccountId, $since, $until, $timezone, [$metric], null, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
                 );
-                if (!empty($resSingle['data'])) {
-                    $results['data'] = array_merge($results['data'], $resSingle['data']);
-                }
             } catch (Exception $eInner) {
                 $mValue = $metric instanceof InstagramAccountMetric ? $metric->value : (string) $metric;
                 $this->logError("IG API: Metric '$mValue' FAILED for Account $instagramAccountId: " . $eInner->getMessage());
             }
         }
-        return $results;
     }
 
     protected function executeInstagramAccountInsightsRequest(
@@ -2629,6 +2689,38 @@ class FacebookGraphApi extends BearerTokenClient
         ?MetricTimeframe $metricTimeframe = null,
         \BackedEnum|array|null $metricBreakdown = null,
     ): array {
+        $insights = [];
+        $this->executeInstagramAccountInsightsRequestAndProcess(
+            callback: function ($data) use (&$insights) {
+                $insights = array_merge($insights, $data);
+            },
+            instagramAccountId: $instagramAccountId,
+            since: $since,
+            until: $until,
+            timezone: $timezone,
+            metrics: $metrics,
+            metricGroup: $metricGroup,
+            metricType: $metricType,
+            metricPeriod: $metricPeriod,
+            metricTimeframe: $metricTimeframe,
+            metricBreakdown: $metricBreakdown
+        );
+        return ['data' => $insights];
+    }
+
+    protected function executeInstagramAccountInsightsRequestAndProcess(
+        callable $callback,
+        string $instagramAccountId,
+        string $since,
+        string $until,
+        string $timezone = 'America/Caracas',
+        \BackedEnum|array|null $metrics = null,
+        ?MetricGroup $metricGroup = null,
+        ?MetricType $metricType = null,
+        ?MetricPeriod $metricPeriod = null,
+        ?MetricTimeframe $metricTimeframe = null,
+        \BackedEnum|array|null $metricBreakdown = null,
+    ): void {
         if (!$metricGroup && !$metrics) {
             throw new InvalidArgumentException('Either `metricGroup` or `metric` must be provided.');
         }
@@ -2657,14 +2749,11 @@ class FacebookGraphApi extends BearerTokenClient
 
         if ($timezone) $query['timezone'] = $timezone;
 
-        $response = $this->performRequest(
-            method: 'GET',
+        $this->fetchAllAndProcess(
+            callback: $callback,
             endpoint: $instagramAccountId . "/insights",
             query: $query,
-            sleep: $this->sleep,
         );
-
-        return json_decode($response->getBody()->getContents(), true);
     }
 
     /**
