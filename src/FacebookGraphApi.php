@@ -1906,7 +1906,11 @@ class FacebookGraphApi extends BearerTokenClient
     protected function isMetricError(Exception $e): bool
     {
         $msg = $e->getMessage();
-        return (stripos($msg, '(#100)') !== false && (stripos($msg, 'insights metric') !== false || stripos($msg, 'param is not valid') !== false));
+        return (stripos($msg, '(#100)') !== false && (
+            stripos($msg, 'insights metric') !== false || 
+            stripos($msg, 'param is not valid') !== false ||
+            stripos($msg, 'must be one of the following values') !== false
+        ));
     }
 
     protected function logWarning(string $message): void
