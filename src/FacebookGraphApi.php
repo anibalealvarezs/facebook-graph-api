@@ -1688,40 +1688,63 @@ class FacebookGraphApi extends BearerTokenClient
         MetricSet $metricSet = MetricSet::BASIC,
         array $customMetrics = [],
     ): array {
-        $metrics = $this->resolveMetrics($metricSet, $customMetrics, $mediaType->insightsFields($metricSet));
+        $metricsToTry = !empty($customMetrics) ? $customMetrics : explode(',', (string)$this->resolveMetrics($metricSet, $customMetrics, $mediaType->insightsFields($metricSet)));
+        $limit = min($limit, 100);
 
+        try {
+            $res = $this->executeMediaInsightsRequest($mediaId, $metricsToTry, $limit);
+            if ($res && !empty($res['data'])) {
+                return $res;
+            }
+        } catch (Exception $e) {
+            if (!$this->isMetricError($e)) throw $e;
+            $this->logWarning("First attempt for IG Media $mediaId FAILED with error #100. Switching to incremental search.");
+        }
+
+        $results = ['data' => []];
+        foreach ($metricsToTry as $metric) {
+            try {
+                $resSingle = $this->executeMediaInsightsRequest($mediaId, [$metric], $limit);
+                if ($resSingle && !empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $this->logWarning("IG API: Metric '$metric' FAILED for Media $mediaId: " . $eInner->getMessage());
+            }
+        }
+
+        return $results;
+    }
+
+    protected function executeMediaInsightsRequest(string $mediaId, array $metrics, int $limit = 100): array
+    {
         $query = [
-            'metric' => $metrics,
-            'limit' => min($limit, 100),
+            'metric' => implode(',', $metrics),
+            'limit' => $limit,
             'period' => MetricPeriod::LIFETIME->value
         ];
 
         $insights = [];
         $after = null;
 
-        try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
+        do {
+            if ($after) {
+                $query['after'] = $after;
+            }
 
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: $mediaId."/insights",
-                    query: $query,
-                    sleep: $this->sleep,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: $mediaId."/insights",
+                query: $query,
+                sleep: $this->sleep,
+            );
+            $data = json_decode($response->getBody()->getContents(), true);
 
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $insights = array_merge($insights, $data['data'] ?? []);
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data']) > 0);
 
-            return ['data' => $insights];
-        } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for media ID ".$mediaId.": ".$e->getMessage());
-        }
+        return ['data' => $insights];
     }
 
     /**
