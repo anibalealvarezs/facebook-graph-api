@@ -530,7 +530,7 @@ class FacebookGraphApi extends BearerTokenClient
      * @throws GuzzleException
      * @throws Exception
      */
-    private function setSampleBasedToken(TokenSample $tokenSample): void
+    public function setSampleBasedToken(TokenSample $tokenSample): void
     {
         $guzzleClient = $this->guzzleClient;
 
