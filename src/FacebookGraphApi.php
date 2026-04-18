@@ -719,9 +719,33 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         ?string $fields = null,
     ): array {
-        // Merge fields from provided permissions
-        $fieldsString = $fields;
+        $pages = [];
+        $this->getMyPagesAndProcess(
+            callback: function ($data) use (&$pages) {
+                $pages = array_merge($pages, $data);
+            },
+            permissions: $permissions,
+            limit: $limit,
+            fields: $fields,
+        );
+        return ['data' => $pages];
+    }
 
+    /**
+     * @param callable $callback
+     * @param PagePermission[] $permissions
+     * @param int $limit
+     * @param string|null $fields
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getMyPagesAndProcess(
+        callable $callback,
+        array $permissions = [],
+        int $limit = 100,
+        ?string $fields = null,
+    ): void {
+        $fieldsString = $fields;
         if (!$fieldsString) {
             $permissionFields = [];
             foreach ($permissions as $permission) {
@@ -729,39 +753,14 @@ class FacebookGraphApi extends BearerTokenClient
                     $permissionFields[] = $permission->fields();
                 }
             }
-            // Use default fields if no permissions are provided
             $fieldsString = !empty($permissionFields) ? implode(',', array_unique(explode(',', implode(',', array_filter($permissionFields))))) : 'id,name,access_token';
         }
 
-        $query = [
-            'limit' => min($limit, 100),
-            'fields' => $fieldsString,
-        ];
-
-        $pages = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: 'me/accounts',
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $pages = [...$pages, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $pages];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: 'me/accounts',
+            query: ['limit' => min($limit, 100), 'fields' => $fieldsString],
+        );
     }
 
     /**
@@ -780,9 +779,36 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         ?string $fields = null,
     ): array {
-        // Merge fields from provided permissions
-        $fieldsString = $fields;
+        $pages = [];
+        $this->getPagesAndProcess(
+            callback: function ($data) use (&$pages) {
+                $pages = array_merge($pages, $data);
+            },
+            userId: $userId,
+            permissions: $permissions,
+            limit: $limit,
+            fields: $fields,
+        );
+        return ['data' => $pages];
+    }
 
+    /**
+     * @param callable $callback
+     * @param string $userId
+     * @param array $permissions
+     * @param int $limit
+     * @param string|null $fields
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getPagesAndProcess(
+        callable $callback,
+        string $userId,
+        array $permissions = [],
+        int $limit = 100,
+        ?string $fields = null,
+    ): void {
+        $fieldsString = $fields;
         if (!$fieldsString) {
             $permissionFields = [];
             foreach ($permissions as $permission) {
@@ -790,39 +816,14 @@ class FacebookGraphApi extends BearerTokenClient
                     $permissionFields[] = $permission->fields();
                 }
             }
-            // Use default fields if no permissions are provided
             $fieldsString = !empty($permissionFields) ? implode(',', array_unique(explode(',', implode(',', array_filter($permissionFields))))) : 'id,name,access_token';
         }
 
-        $query = [
-            'limit' => min($limit, 100),
-            'fields' => $fieldsString,
-        ];
-
-        $pages = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: "{$userId}/accounts",
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $pages = [...$pages, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $pages];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: "{$userId}/accounts",
+            query: ['limit' => min($limit, 100), 'fields' => $fieldsString],
+        );
     }
 
     /**
@@ -883,35 +884,34 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         ?string $fields = null,
     ): array {
-        $query = [
-            'limit' => min($limit, 100),
-            'fields' => $fields ?: AdAccountPermission::DEFAULT->fields(),
-        ];
-
         $accounts = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: 'me/adaccounts',
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $accounts = [...$accounts, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
+        $this->getMyAdAccountsAndProcess(
+            callback: function ($data) use (&$accounts) {
+                $accounts = array_merge($accounts, $data);
+            },
+            limit: $limit,
+            fields: $fields,
+        );
         return ['data' => $accounts];
+    }
+
+    /**
+     * @param callable $callback
+     * @param int $limit
+     * @param string|null $fields
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getMyAdAccountsAndProcess(
+        callable $callback,
+        int $limit = 100,
+        ?string $fields = null,
+    ): void {
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: 'me/adaccounts',
+            query: ['limit' => min($limit, 100), 'fields' => $fields ?: AdAccountPermission::DEFAULT->fields()],
+        );
     }
 
     /**
@@ -928,35 +928,37 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         ?string $fields = null,
     ): array {
-        $query = [
-            'limit' => min($limit, 100),
-            'fields' => $fields ?: AdAccountPermission::DEFAULT->fields(),
-        ];
-
         $accounts = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: "{$userId}/adaccounts",
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $accounts = [...$accounts, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
+        $this->getAdAccountsAndProcess(
+            callback: function ($data) use (&$accounts) {
+                $accounts = array_merge($accounts, $data);
+            },
+            userId: $userId,
+            limit: $limit,
+            fields: $fields,
+        );
         return ['data' => $accounts];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $userId
+     * @param int $limit
+     * @param string|null $fields
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getAdAccountsAndProcess(
+        callable $callback,
+        string $userId,
+        int $limit = 100,
+        ?string $fields = null,
+    ): void {
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: "{$userId}/adaccounts",
+            query: ['limit' => min($limit, 100), 'fields' => $fields ?: AdAccountPermission::DEFAULT->fields()],
+        );
     }
 
     /**
@@ -1209,7 +1211,56 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 10, // Max is 100, but it's limited to 10 by default due to Facebook API limitations
         array $additionalParams = [],
     ): array {
+        $posts = [];
+        $this->getFacebookPostsAndProcess(
+            callback: function ($data) use (&$posts) {
+                $posts = array_merge($posts, $data);
+            },
+            pageId: $pageId,
+            postFields: $postFields,
+            includeAttachments: $includeAttachments,
+            includeComments: $includeComments,
+            includeReactions: $includeReactions,
+            includeDynamicPosts: $includeDynamicPosts,
+            includeSharedPosts: $includeSharedPosts,
+            includeSponsorTags: $includeSponsorTags,
+            includeTo: $includeTo,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $posts];
+    }
 
+    /**
+     * @param callable $callback
+     * @param string $pageId
+     * @param string|array|null $postFields
+     * @param bool $includeAttachments
+     * @param bool $includeComments
+     * @param bool $includeReactions
+     * @param bool $includeDynamicPosts
+     * @param bool $includeSharedPosts
+     * @param bool $includeSponsorTags
+     * @param bool $includeTo
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getFacebookPostsAndProcess(
+        callable $callback,
+        string $pageId,
+        string|array|null $postFields = null,
+        bool $includeAttachments = false,
+        bool $includeComments = false,
+        bool $includeReactions = false,
+        bool $includeDynamicPosts = false,
+        bool $includeSharedPosts = false,
+        bool $includeSponsorTags = false,
+        bool $includeTo = false,
+        int $limit = 10,
+        array $additionalParams = [],
+    ): void {
         $fieldsString = null;
         if ($postFields) {
             $fieldsString = is_array($postFields) ?
@@ -1241,31 +1292,12 @@ class FacebookGraphApi extends BearerTokenClient
             $query = array_merge($query, $additionalParams);
         }
 
-        $posts = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: $pageId.'/posts',
-                query: $query,
-                sleep: $this->sleep,
-                tokenSample: TokenSample::PAGE,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $posts = [...$posts, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $posts];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $pageId.'/posts',
+            query: $query,
+            tokenSample: TokenSample::PAGE,
+        );
     }
 
     /**
@@ -1285,15 +1317,40 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         array $additionalParams = [],
     ): array {
+        $campaigns = [];
+        $this->getCampaignsAndProcess(
+            callback: function ($data) use (&$campaigns) {
+                $campaigns = array_merge($campaigns, $data);
+            },
+            adAccountId: $adAccountId,
+            campaignFields: $campaignFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $campaigns];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|array|null $campaignFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getCampaignsAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $campaignFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
         $query = [
             'fields' => $campaignFields ?
                 (
                     is_array($campaignFields) ?
-                    implode(',', array_map(fn ($field) => (
-                        $field instanceof CampaignField ?
-                        $field->value :
-                        $field
-                    ), $campaignFields)) :
+                    implode(',', array_map(fn ($field) => ($field instanceof CampaignField ? $field->value : $field), $campaignFields)) :
                     $campaignFields
                 ) :
                 CampaignField::toCommaSeparatedList(),
@@ -1304,31 +1361,11 @@ class FacebookGraphApi extends BearerTokenClient
             $query = array_merge($query, $additionalParams);
         }
 
-        $campaigns = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: $this->formatAdAccountId($adAccountId) . '/campaigns',
-                query: $query,
-                sleep: $this->sleep,
-                tokenSample: TokenSample::USER
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $campaigns = [...$campaigns, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $campaigns];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/campaigns',
+            query: $query,
+        );
     }
 
     /**
@@ -1348,15 +1385,40 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         array $additionalParams = [],
     ): array {
+        $ads = [];
+        $this->getAdsAndProcess(
+            callback: function ($data) use (&$ads) {
+                $ads = array_merge($ads, $data);
+            },
+            adAccountId: $adAccountId,
+            adFields: $adFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $ads];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|array|null $adFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getAdsAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $adFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
         $query = [
             'fields' => $adFields ?
                 (
                     is_array($adFields) ?
-                    implode(',', array_map(fn ($field) => (
-                        $field instanceof AdField ?
-                        $field->value :
-                        $field
-                    ), $adFields)) :
+                    implode(',', array_map(fn ($field) => ($field instanceof AdField ? $field->value : $field), $adFields)) :
                     $adFields
                 ) :
                 AdField::toCommaSeparatedList(),
@@ -1367,30 +1429,11 @@ class FacebookGraphApi extends BearerTokenClient
             $query = array_merge($query, $additionalParams);
         }
 
-        $ads = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: $this->formatAdAccountId($adAccountId) . '/ads',
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $ads = [...$ads, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $ads];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/ads',
+            query: $query,
+        );
     }
 
     /**
@@ -1410,15 +1453,40 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         array $additionalParams = [],
     ): array {
+        $adsets = [];
+        $this->getAdsetsAndProcess(
+            callback: function ($data) use (&$adsets) {
+                $adsets = array_merge($adsets, $data);
+            },
+            adAccountId: $adAccountId,
+            adsetFields: $adsetFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $adsets];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|array|null $adsetFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getAdsetsAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $adsetFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
         $query = [
             'fields' => $adsetFields ?
                 (
                     is_array($adsetFields) ?
-                    implode(',', array_map(fn ($field) => (
-                        $field instanceof AdsetField ?
-                        $field->value :
-                        $field
-                    ), $adsetFields)) :
+                    implode(',', array_map(fn ($field) => ($field instanceof AdsetField ? $field->value : $field), $adsetFields)) :
                     $adsetFields
                 ) :
                 AdsetField::toCommaSeparatedList(),
@@ -1429,30 +1497,11 @@ class FacebookGraphApi extends BearerTokenClient
             $query = array_merge($query, $additionalParams);
         }
 
-        $adsets = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: $this->formatAdAccountId($adAccountId) . '/adsets',
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $adsets = [...$adsets, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $adsets];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/adsets',
+            query: $query,
+        );
     }
 
     /**
@@ -1472,15 +1521,40 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         array $additionalParams = [],
     ): array {
+        $creatives = [];
+        $this->getCreativesAndProcess(
+            callback: function ($data) use (&$creatives) {
+                $creatives = array_merge($creatives, $data);
+            },
+            adAccountId: $adAccountId,
+            creatriveFields: $creatriveFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $creatives];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|array|null $creatriveFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getCreativesAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $creatriveFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
         $query = [
             'fields' => $creatriveFields ?
                 (
                     is_array($creatriveFields) ?
-                    implode(',', array_map(fn ($field) => (
-                        $field instanceof CreativeField ?
-                        $field->value :
-                        $field
-                    ), $creatriveFields)) :
+                    implode(',', array_map(fn ($field) => ($field instanceof CreativeField ? $field->value : $field), $creatriveFields)) :
                     $creatriveFields
                 ) :
                 CreativeField::toCommaSeparatedList(),
@@ -1491,30 +1565,11 @@ class FacebookGraphApi extends BearerTokenClient
             $query = array_merge($query, $additionalParams);
         }
 
-        $creatives = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: $this->formatAdAccountId($adAccountId) . '/adcreatives',
-                query: $query,
-                sleep: $this->sleep,
-            );
-
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $creatives = [...$creatives, ...$data['data']];
-
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
-        return ['data' => $creatives];
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/adcreatives',
+            query: $query,
+        );
     }
 
     /**
@@ -1541,56 +1596,34 @@ class FacebookGraphApi extends BearerTokenClient
             $permissions
         )));
 
-        $query = [
-            'fields' => implode(',', $fields),
-            'limit' => min($limit, 100)
-        ];
-
         $pages = [];
         $instagramAccounts = [];
-        $after = null;
 
         try {
-            $prevAfter = null;
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                try {
-                    $response = $this->performRequest(
-                        method: 'GET',
-                        endpoint: 'me/accounts',
-                        query: array_merge($query, ['limit' => 50]),
-                        sleep: $this->sleep,
-                    );
-                } catch (Exception $e) {
-                    if (empty($pages)) break;
-                    throw $e;
-                }
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                foreach ($data['data'] ?? [] as $page) {
-                    $pages[] = [
-                        'page_id' => $page['id'],
-                        'page_name' => $page['name'],
-                        'is_published' => $page['is_published'] ?? true,
-                        'restrictions' => $page['restrictions'] ?? [],
-                        'business' => $page['business'] ?? null,
-                        'created_by' => $page['created_by'] ?? null,
-                        'instagram_business_account' => $page['instagram_business_account']['id'] ?? null
-                    ];
-                    if (isset($page['instagram_business_account']['id'])) {
-                        $instagramAccounts[] = [
+            $this->fetchAllAndProcess(
+                callback: function ($data) use (&$pages, &$instagramAccounts) {
+                    foreach ($data as $page) {
+                        $pages[] = [
                             'page_id' => $page['id'],
                             'page_name' => $page['name'],
-                            'instagram_id' => $page['instagram_business_account']['id']
+                            'is_published' => $page['is_published'] ?? true,
+                            'restrictions' => $page['restrictions'] ?? [],
+                            'business' => $page['business'] ?? null,
+                            'created_by' => $page['created_by'] ?? null,
+                            'instagram_business_account' => $page['instagram_business_account']['id'] ?? null
                         ];
+                        if (isset($page['instagram_business_account']['id'])) {
+                            $instagramAccounts[] = [
+                                'page_id' => $page['id'],
+                                'page_name' => $page['name'],
+                                'instagram_id' => $page['instagram_business_account']['id']
+                            ];
+                        }
                     }
-                }
-
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+                },
+                endpoint: 'me/accounts',
+                query: ['fields' => implode(',', $fields), 'limit' => 50],
+            );
 
             if (empty($pages)) {
                 throw new Exception('No Pages found. Verify `pages_show_list` and `business_management` permissions, and user roles.');
@@ -1626,15 +1659,40 @@ class FacebookGraphApi extends BearerTokenClient
         int $limit = 100,
         array $additionalParams = [],
     ): array {
+        $media = [];
+        $this->getInstagramMediaAndProcess(
+            callback: function ($data) use (&$media) {
+                $media = array_merge($media, $data);
+            },
+            igUserId: $igUserId,
+            mediaFields: $mediaFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $media];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $igUserId
+     * @param string|array|null $mediaFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getInstagramMediaAndProcess(
+        callable $callback,
+        string $igUserId,
+        string|array|null $mediaFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
         $query = [
             'fields' => $mediaFields ?
                 (
                     is_array($mediaFields) ?
-                    implode(',', array_map(fn ($field) => (
-                        $field instanceof InstagramMediaField ?
-                        $field->value :
-                        $field
-                    ), $mediaFields)) :
+                    implode(',', array_map(fn ($field) => ($field instanceof InstagramMediaField ? $field->value : $field), $mediaFields)) :
                     $mediaFields
                 ) :
                 InstagramMediaField::toCommaSeparatedList(),
@@ -1645,32 +1703,11 @@ class FacebookGraphApi extends BearerTokenClient
             $query = array_merge($query, $additionalParams);
         }
 
-        $media = [];
-        $after = null;
-
-        $prevAfter = null;
-        try {
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: $igUserId."/media",
-                    query: $query,
-                    sleep: $this->sleep,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $media = array_merge($media, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
-
-            return ['data' => $media];
-        } catch (Exception $e) {
-            throw new Exception("Failed to retrieve media for Instagram ID ".$igUserId.": ".$e->getMessage());
-        }
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $igUserId."/media",
+            query: $query,
+        );
     }
 
     /**
@@ -1755,25 +1792,13 @@ class FacebookGraphApi extends BearerTokenClient
         ];
 
         $insights = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: $mediaId."/insights",
-                query: $query,
-                sleep: $this->sleep,
-            );
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $insights = array_merge($insights, $data['data'] ?? []);
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
+        $this->fetchAllAndProcess(
+            callback: function ($data) use (&$insights) {
+                $insights = array_merge($insights, $data);
+            },
+            endpoint: $mediaId."/insights",
+            query: $query,
+        );
 
         return ['data' => $insights];
     }
@@ -1921,26 +1946,14 @@ class FacebookGraphApi extends BearerTokenClient
         ];
 
         $insights = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: "".$postId."/insights",
-                query: $query,
-                sleep: $this->sleep,
-                tokenSample: TokenSample::PAGE,
-            );
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $insights = array_merge($insights, $data['data'] ?? []);
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
+        $this->fetchAllAndProcess(
+            callback: function ($data) use (&$insights) {
+                $insights = array_merge($insights, $data);
+            },
+            endpoint: "".$postId."/insights",
+            query: $query,
+            tokenSample: TokenSample::PAGE,
+        );
 
         return ['data' => $insights];
     }
@@ -2096,28 +2109,33 @@ class FacebookGraphApi extends BearerTokenClient
     protected function executeMarketingInsightsRequest(string $adAccountId, array $query): array
     {
         $insights = [];
-        $after = null;
-
-        $prevAfter = null;
-        do {
-            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                break;
-            }
-
-            $response = $this->performRequest(
-                method: 'GET',
-                endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
-                query: $query,
-                sleep: $this->sleep,
-                tokenSample: TokenSample::USER,
-            );
-            $data = json_decode($response->getBody()->getContents(), true);
-
-            $insights = array_merge($insights, $data['data'] ?? []);
-            $after = $data['paging']['cursors']['after'] ?? null;
-        } while ($after && count($data['data']) > 0);
-
+        $this->executeMarketingInsightsRequestAndProcess(
+            callback: function ($data) use (&$insights) {
+                $insights = array_merge($insights, $data);
+            },
+            adAccountId: $adAccountId,
+            query: $query,
+        );
         return ['data' => $insights];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param array $query
+     * @return void
+     * @throws GuzzleException
+     */
+    protected function executeMarketingInsightsRequestAndProcess(
+        callable $callback,
+        string $adAccountId,
+        array $query
+    ): void {
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/insights',
+            query: $query,
+        );
     }
 
     protected function isMarketingMetricError(Exception $e): bool
@@ -2267,27 +2285,14 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $insights = [];
-        $after = null;
-
         try {
-            $prevAfter = null;
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
-                    query: $query,
-                    sleep: $this->sleep,
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $this->fetchAllAndProcess(
+                callback: function ($data) use (&$insights) {
+                    $insights = array_merge($insights, $data);
+                },
+                endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
+                query: $query,
+            );
 
             return ['data' => $insights];
         } catch (Exception $e) {
@@ -2339,28 +2344,14 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $insights = [];
-        $after = null;
-
         try {
-            $prevAfter = null;
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$campaignId."/insights",
-                    query: $query,
-                    sleep: $this->sleep,
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $this->fetchAllAndProcess(
+                callback: function ($data) use (&$insights) {
+                    $insights = array_merge($insights, $data);
+                },
+                endpoint: "".$campaignId."/insights",
+                query: $query,
+            );
 
             return ['data' => $insights];
         } catch (Exception $e) {
@@ -2411,28 +2402,14 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $insights = [];
-        $after = null;
-
         try {
-            $prevAfter = null;
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$adId."/insights",
-                    query: $query,
-                    sleep: $this->sleep,
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $this->fetchAllAndProcess(
+                callback: function ($data) use (&$insights) {
+                    $insights = array_merge($insights, $data);
+                },
+                endpoint: "".$adId."/insights",
+                query: $query,
+            );
 
             return ['data' => $insights];
         } catch (Exception $e) {
@@ -2483,28 +2460,14 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $insights = [];
-        $after = null;
-
         try {
-            $prevAfter = null;
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$adsetId."/insights",
-                    query: $query,
-                    sleep: $this->sleep,
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $this->fetchAllAndProcess(
+                callback: function ($data) use (&$insights) {
+                    $insights = array_merge($insights, $data);
+                },
+                endpoint: "".$adsetId."/insights",
+                query: $query,
+            );
 
             return ['data' => $insights];
         } catch (Exception $e) {
@@ -2555,28 +2518,14 @@ class FacebookGraphApi extends BearerTokenClient
         }
 
         $insights = [];
-        $after = null;
-
         try {
-            $prevAfter = null;
-            do {
-                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
-                    break;
-                }
-
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$creativeId."/insights",
-                    query: $query,
-                    sleep: $this->sleep,
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $this->fetchAllAndProcess(
+                callback: function ($data) use (&$insights) {
+                    $insights = array_merge($insights, $data);
+                },
+                endpoint: "".$creativeId."/insights",
+                query: $query,
+            );
 
             return ['data' => $insights];
         } catch (Exception $e) {
@@ -2700,7 +2649,7 @@ class FacebookGraphApi extends BearerTokenClient
         if ($metricBreakdown) $query['breakdown'] = is_array($metricBreakdown) ? implode(',', array_map(fn($b) => $b->value, $metricBreakdown)) : $metricBreakdown->value;
 
         foreach (['metric_timeframe', 'timeframe'] as $key) {
-             if ($metricTimeframe) $query[$key] = $metricTimeframe->value;
+            if ($metricTimeframe) $query[$key] = $metricTimeframe->value;
         }
 
         $query['since'] = Carbon::parse($since, $timezone)->timestamp;
@@ -2874,10 +2823,10 @@ class FacebookGraphApi extends BearerTokenClient
 
         foreach ($metrics as $metric) {
             if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedPeriods')) {
-                 $allowed = $metric->allowedPeriods();
-                 if (!in_array($metricPeriod, $allowed)) {
-                     return false;
-                 }
+                $allowed = $metric->allowedPeriods();
+                if (!in_array($metricPeriod, $allowed)) {
+                    return false;
+                }
             }
         }
 
@@ -2897,10 +2846,10 @@ class FacebookGraphApi extends BearerTokenClient
 
         foreach ($metrics as $metric) {
             if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedTimeframes')) {
-                 $allowed = $metric->allowedTimeframes();
-                 if (!in_array($metricTimeframe, $allowed)) {
-                     return false;
-                 }
+                $allowed = $metric->allowedTimeframes();
+                if (!in_array($metricTimeframe, $allowed)) {
+                    return false;
+                }
             }
         }
 
@@ -3010,6 +2959,45 @@ class FacebookGraphApi extends BearerTokenClient
             }
         }
         return false;
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $endpoint
+     * @param array $query
+     * @param TokenSample $tokenSample
+     * @return void
+     * @throws GuzzleException
+     */
+    protected function fetchAllAndProcess(
+        callable $callback,
+        string $endpoint,
+        array $query = [],
+        TokenSample $tokenSample = TokenSample::USER
+    ): void {
+        $after = null;
+        $prevAfter = null;
+        do {
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
+            }
+
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: $endpoint,
+                query: $query,
+                sleep: $this->sleep,
+                tokenSample: $tokenSample,
+            );
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            if (!empty($data['data'])) {
+                $callback($data['data']);
+            }
+
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data'] ?? []) > 0);
     }
 
     protected function formatAdAccountId(string $accountId): string
