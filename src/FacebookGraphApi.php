@@ -2594,12 +2594,12 @@ class FacebookGraphApi extends BearerTokenClient
      * @param string $since
      * @param string $until
      * @param string $timezone
-     * @param Metric|Metric[]|null $metrics
+     * @param \BackedEnum|array|null $metrics
      * @param MetricGroup|null $metricGroup
      * @param MetricType|null $metricType
      * @param MetricPeriod|null $metricPeriod
      * @param MetricTimeframe|null $metricTimeframe
-     * @param MetricBreakdown|MetricBreakdown[]|null $metricBreakdown
+     * @param \BackedEnum|array|null $metricBreakdown
      * @return array Insights data.
      * @throws GuzzleException
      * @throws Exception
@@ -2847,21 +2847,15 @@ class FacebookGraphApi extends BearerTokenClient
      */
     protected function isValidMetricType(MetricType $metricType, \BackedEnum|MetricGroup|array $data): bool
     {
-        if ($data instanceof \BackedEnum) {
-             if (method_exists($data, 'allowedMetricTypes')) {
-                return in_array($metricType, $data->allowedMetricTypes());
-             }
-             return true;
-        }
+        $metrics = ($data instanceof \BackedEnum) ? [$data] : (($data instanceof MetricGroup) ? $data->getMetrics() : (is_array($data) ? $data : [$data]));
 
-        if ($data instanceof MetricGroup) {
-            $metric = $data->getMetrics()[0];
-        } else {
-            $metric = $data[0];
-        }
-
-        if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedMetricTypes')) {
-            return in_array($metricType, $metric->allowedMetricTypes());
+        foreach ($metrics as $metric) {
+            if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedMetricTypes')) {
+                $allowed = $metric->allowedMetricTypes();
+                if (!in_array($metricType, $allowed)) {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -2876,21 +2870,15 @@ class FacebookGraphApi extends BearerTokenClient
      */
     protected function isValidMetricPeriod(MetricPeriod $metricPeriod, \BackedEnum|MetricGroup|array $data): bool
     {
-        if ($data instanceof \BackedEnum) {
-             if (method_exists($data, 'allowedPeriods')) {
-                 return in_array($metricPeriod, $data->allowedPeriods());
-             }
-             return true;
-        }
+        $metrics = ($data instanceof \BackedEnum) ? [$data] : (($data instanceof MetricGroup) ? $data->getMetrics() : (is_array($data) ? $data : [$data]));
 
-        if ($data instanceof MetricGroup) {
-            $metric = $data->getMetrics()[0];
-        } else {
-            $metric = $data[0];
-        }
-
-        if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedPeriods')) {
-            return in_array($metricPeriod, $metric->allowedPeriods());
+        foreach ($metrics as $metric) {
+            if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedPeriods')) {
+                 $allowed = $metric->allowedPeriods();
+                 if (!in_array($metricPeriod, $allowed)) {
+                     return false;
+                 }
+            }
         }
 
         return true;
@@ -2905,21 +2893,15 @@ class FacebookGraphApi extends BearerTokenClient
      */
     protected function isValidMetricTimeframe(MetricTimeframe $metricTimeframe, \BackedEnum|MetricGroup|array $data): bool
     {
-        if ($data instanceof \BackedEnum) {
-             if (method_exists($data, 'allowedTimeframes')) {
-                 return in_array($metricTimeframe, $data->allowedTimeframes());
-             }
-             return true;
-        }
+        $metrics = ($data instanceof \BackedEnum) ? [$data] : (($data instanceof MetricGroup) ? $data->getMetrics() : (is_array($data) ? $data : [$data]));
 
-        if ($data instanceof MetricGroup) {
-            $metric = $data->getMetrics()[0];
-        } else {
-            $metric = $data[0];
-        }
-
-        if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedTimeframes')) {
-            return in_array($metricTimeframe, $metric->allowedTimeframes());
+        foreach ($metrics as $metric) {
+            if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedTimeframes')) {
+                 $allowed = $metric->allowedTimeframes();
+                 if (!in_array($metricTimeframe, $allowed)) {
+                     return false;
+                 }
+            }
         }
 
         return true;
