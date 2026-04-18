@@ -16,9 +16,14 @@ use Anibalealvarezs\FacebookGraphApi\Enums\InstagramMediaField;
 use Anibalealvarezs\FacebookGraphApi\Enums\MediaProductType;
 use Anibalealvarezs\FacebookGraphApi\Enums\MediaType;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
-use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
-use Anibalealvarezs\FacebookGraphApi\Enums\Metric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\Metric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\InstagramAccountMetric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\InstagramMediaMetric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\FacebookPageMetric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\FacebookPostMetric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\MarketingMetric;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
 use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
@@ -582,21 +587,28 @@ class FacebookGraphApi extends BearerTokenClient
                 $auth = $this->auth ?: new FacebookGraphAuth($guzzleClient);
                 $userId = ($this->getUserId() && $this->getUserId() !== 'system') ? $this->getUserId() : 'me';
                 
+                $prevAfter = null;
+                $query = [
+                    'access_token' => $userToken,
+                    'limit' => 100
+                ];
                 do {
-                    $endpoint = $userId . '/accounts';
-                    $query = [
-                        'access_token' => $userToken,
-                        'limit' => 100
-                    ];
-                    if ($after) {
-                        $query['after'] = $after;
+                    if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                        break;
                     }
 
-                    $response = $auth->performRequest(
-                        method: 'GET',
-                        endpoint: $endpoint,
-                        query: $query
-                    );
+                    $endpoint = $userId . '/accounts';
+
+                    try {
+                        $response = $auth->performRequest(
+                            method: 'GET',
+                            endpoint: $endpoint,
+                            query: $query
+                        );
+                    } catch (Exception $e) {
+                        if (empty($allPages)) throw $e;
+                        break;
+                    }
                     $tokenResponse = json_decode($response->getBody()->getContents(), true);
                     
                     $allPages = array_merge($allPages, $tokenResponse['data'] ?? []);
@@ -729,9 +741,10 @@ class FacebookGraphApi extends BearerTokenClient
         $pages = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -789,9 +802,10 @@ class FacebookGraphApi extends BearerTokenClient
         $pages = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -877,9 +891,10 @@ class FacebookGraphApi extends BearerTokenClient
         $accounts = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -921,9 +936,10 @@ class FacebookGraphApi extends BearerTokenClient
         $accounts = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1228,9 +1244,10 @@ class FacebookGraphApi extends BearerTokenClient
         $posts = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1290,9 +1307,10 @@ class FacebookGraphApi extends BearerTokenClient
         $campaigns = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1352,9 +1370,10 @@ class FacebookGraphApi extends BearerTokenClient
         $ads = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1413,9 +1432,10 @@ class FacebookGraphApi extends BearerTokenClient
         $adsets = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1474,9 +1494,10 @@ class FacebookGraphApi extends BearerTokenClient
         $creatives = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1530,17 +1551,23 @@ class FacebookGraphApi extends BearerTokenClient
         $after = null;
 
         try {
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: 'me/accounts',
-                    query: $query,
-                    sleep: $this->sleep,
-                );
+                try {
+                    $response = $this->performRequest(
+                        method: 'GET',
+                        endpoint: 'me/accounts',
+                        query: array_merge($query, ['limit' => 50]),
+                        sleep: $this->sleep,
+                    );
+                } catch (Exception $e) {
+                    if (empty($pages)) break;
+                    throw $e;
+                }
                 $data = json_decode($response->getBody()->getContents(), true);
 
                 foreach ($data['data'] ?? [] as $page) {
@@ -1621,10 +1648,11 @@ class FacebookGraphApi extends BearerTokenClient
         $media = [];
         $after = null;
 
+        $prevAfter = null;
         try {
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 $response = $this->performRequest(
@@ -1697,7 +1725,9 @@ class FacebookGraphApi extends BearerTokenClient
                 return $res;
             }
         } catch (Exception $e) {
-            if (!$this->isMetricError($e)) throw $e;
+            if (!$this->isMetricError($e)) {
+                throw new Exception("Failed to retrieve insights for media ID $mediaId: " . $e->getMessage());
+            }
             $this->logWarning("First attempt for IG Media $mediaId FAILED with error #100. Switching to incremental search.");
         }
 
@@ -1727,9 +1757,10 @@ class FacebookGraphApi extends BearerTokenClient
         $insights = [];
         $after = null;
 
+        $prevAfter = null;
         do {
-            if ($after) {
-                $query['after'] = $after;
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
             }
 
             $response = $this->performRequest(
@@ -1858,6 +1889,30 @@ class FacebookGraphApi extends BearerTokenClient
 
         $metrics = $this->resolveMetrics($metricSet, $customMetrics, FacebookPostPermission::DEFAULT->insightsFields($metricSet));
 
+        try {
+            return $this->executePostInsightsRequest($postId, $metrics, $limit);
+        } catch (Exception $e) {
+            if (!$this->isMetricError($e)) throw $e;
+            $this->logWarning("First attempt for Post $postId FAILED with error #100. Switching to incremental search.");
+        }
+
+        $metricsArray = explode(',', $metrics);
+        $results = ['data' => []];
+        foreach ($metricsArray as $metric) {
+            try {
+                $resSingle = $this->executePostInsightsRequest($postId, $metric, $limit);
+                if ($resSingle && !empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $this->logError("FB API: Metric '$metric' FAILED for Post $postId: " . $eInner->getMessage());
+            }
+        }
+        return $results;
+    }
+
+    protected function executePostInsightsRequest(string $postId, string $metrics, int $limit = 100): array
+    {
         $query = [
             'metric' => $metrics,
             'period' => MetricPeriod::LIFETIME->value,
@@ -1868,30 +1923,26 @@ class FacebookGraphApi extends BearerTokenClient
         $insights = [];
         $after = null;
 
-        try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
+        $prevAfter = null;
+        do {
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
+            }
 
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: "".$postId."/insights",
-                    query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::PAGE,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: "".$postId."/insights",
+                query: $query,
+                sleep: $this->sleep,
+                tokenSample: TokenSample::PAGE,
+            );
+            $data = json_decode($response->getBody()->getContents(), true);
 
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $insights = array_merge($insights, $data['data'] ?? []);
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data']) > 0);
 
-            return ['data' => $insights];
-        } catch (Exception $e) {
-            throw new Exception("Failed to retrieve insights for media ID ".$postId.": ".$e->getMessage());
-        }
+        return ['data' => $insights];
     }
 
     /**
@@ -1933,38 +1984,30 @@ class FacebookGraphApi extends BearerTokenClient
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
-
-        $insights = [];
-        $after = null;
 
         try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
-
-                // Get valid metrics from enum
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
-                    query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
-
-            return ['data' => $insights];
+            return $this->executeMarketingInsightsRequest($adAccountId, $query);
         } catch (Exception $e) {
-            if (!$this->isMetricError($e)) throw $e;
-            $this->logWarning("Ad Account Insights for $adAccountId FAILED with error #100. Returning empty data to allow fallback.");
-            return ['data' => []];
+            if (!$this->isMarketingMetricError($e)) throw $e;
+            $this->logWarning("First attempt for Ad Account $adAccountId FAILED. Switching to incremental search.");
         }
+
+        $metricsArray = explode(',', $metrics);
+        $results = ['data' => []];
+        foreach ($metricsArray as $metric) {
+            try {
+                $query['fields'] = $metric;
+                $resSingle = $this->executeMarketingInsightsRequest($adAccountId, $query);
+                if ($resSingle && !empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $this->logError("Marketing API: Metric '$metric' FAILED for $adAccountId: " . $eInner->getMessage());
+            }
+        }
+        return $results;
     }
 
     /**
@@ -2023,35 +2066,64 @@ class FacebookGraphApi extends BearerTokenClient
         } elseif ($metricBreakdown === null) {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
 
+        try {
+            return $this->executeMarketingInsightsRequest($adAccountId, $query);
+        } catch (Exception $e) {
+            if (!$this->isMarketingMetricError($e)) throw $e;
+            $this->logWarning("First attempt for Campaign Insights of $adAccountId FAILED. Switching to incremental search.");
+        }
+
+        $metricsArray = explode(',', $metrics);
+        $results = ['data' => []];
+        foreach ($metricsArray as $metric) {
+            if ($metric === 'campaign_id') continue;
+            try {
+                $query['fields'] = $metric . ',campaign_id';
+                $resSingle = $this->executeMarketingInsightsRequest($adAccountId, $query);
+                if ($resSingle && !empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $this->logError("Marketing API: Metric '$metric' FAILED for $adAccountId: " . $eInner->getMessage());
+            }
+        }
+        return $results;
+    }
+
+    protected function executeMarketingInsightsRequest(string $adAccountId, array $query): array
+    {
         $insights = [];
         $after = null;
 
-        try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
+        $prevAfter = null;
+        do {
+            if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                break;
+            }
 
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
-                    query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
+                query: $query,
+                sleep: $this->sleep,
+                tokenSample: TokenSample::USER,
+            );
+            $data = json_decode($response->getBody()->getContents(), true);
 
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
+            $insights = array_merge($insights, $data['data'] ?? []);
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data']) > 0);
 
-            return ['data' => $insights];
-        } catch (Exception $e) {
-            throw new Exception("Failed to retrieve campaign insights from Ad Account ".$adAccountId.": ".$e->getMessage());
-        }
+        return ['data' => $insights];
+    }
+
+    protected function isMarketingMetricError(Exception $e): bool
+    {
+        $msg = $e->getMessage();
+        return (stripos($msg, '(#100)') !== false && (stripos($msg, 'is not a valid') !== false || stripos($msg, 'not valid') !== false));
     }
 
     /**
@@ -2109,35 +2181,31 @@ class FacebookGraphApi extends BearerTokenClient
         } elseif ($metricBreakdown === null) {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
-
-        $insights = [];
-        $after = null;
 
         try {
-            do {
-                if ($after) {
-                    $query['after'] = $after;
-                }
-
-                $response = $this->performRequest(
-                    method: 'GET',
-                    endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
-                    query: $query,
-                    sleep: 1000000,
-                    tokenSample: TokenSample::USER,
-                );
-                $data = json_decode($response->getBody()->getContents(), true);
-
-                $insights = array_merge($insights, $data['data'] ?? []);
-                $after = $data['paging']['cursors']['after'] ?? null;
-            } while ($after && count($data['data']) > 0);
-
-            return ['data' => $insights];
+            return $this->executeMarketingInsightsRequest($adAccountId, $query);
         } catch (Exception $e) {
-            throw new Exception("Failed to retrieve adset insights from Ad Account ".$adAccountId.": ".$e->getMessage());
+            if (!$this->isMarketingMetricError($e)) throw $e;
+            $this->logWarning("First attempt for Ad Set Insights of $adAccountId FAILED. Switching to incremental search.");
         }
+
+        $metricsArray = explode(',', $metrics);
+        $results = ['data' => []];
+        foreach ($metricsArray as $metric) {
+            if (in_array($metric, ['adset_id', 'campaign_id'])) continue;
+            try {
+                $query['fields'] = $metric . ',adset_id,campaign_id';
+                $resSingle = $this->executeMarketingInsightsRequest($adAccountId, $query);
+                if ($resSingle && !empty($resSingle['data'])) {
+                    $results['data'] = array_merge($results['data'], $resSingle['data']);
+                }
+            } catch (Exception $eInner) {
+                $this->logError("Marketing API: Metric '$metric' FAILED for AdSet insights in $adAccountId: " . $eInner->getMessage());
+            }
+        }
+        return $results;
     }
 
     /**
@@ -2195,23 +2263,24 @@ class FacebookGraphApi extends BearerTokenClient
         } elseif ($metricBreakdown === null) {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
         $after = null;
 
         try {
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 $response = $this->performRequest(
                     method: 'GET',
                     endpoint: '' . $this->formatAdAccountId($adAccountId) . '/insights',
                     query: $query,
-                    sleep: 1000000,
+                    sleep: $this->sleep,
                     tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -2266,16 +2335,17 @@ class FacebookGraphApi extends BearerTokenClient
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
         $after = null;
 
         try {
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 // Get valid metrics from enum
@@ -2283,7 +2353,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "".$campaignId."/insights",
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                     tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -2337,16 +2407,17 @@ class FacebookGraphApi extends BearerTokenClient
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
         $after = null;
 
         try {
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 // Get valid metrics from enum
@@ -2354,7 +2425,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "".$adId."/insights",
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                     tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -2408,16 +2479,17 @@ class FacebookGraphApi extends BearerTokenClient
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
         $after = null;
 
         try {
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 // Get valid metrics from enum
@@ -2425,7 +2497,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "".$adsetId."/insights",
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                     tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -2479,16 +2551,17 @@ class FacebookGraphApi extends BearerTokenClient
         } else {
             $query['breakdowns'] = implode(',', array_map(function ($b) {
                 return $b->value;
-            }, Metric::FOLLOWER_DEMOGRAPHICS->allowedBreakdowns()[0]));
+            }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
         }
 
         $insights = [];
         $after = null;
 
         try {
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 // Get valid metrics from enum
@@ -2496,7 +2569,7 @@ class FacebookGraphApi extends BearerTokenClient
                     method: 'GET',
                     endpoint: "".$creativeId."/insights",
                     query: $query,
-                    sleep: 1000000, // 1 second to avoid rate limiting
+                    sleep: $this->sleep,
                     tokenSample: TokenSample::USER,
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
@@ -2536,12 +2609,12 @@ class FacebookGraphApi extends BearerTokenClient
         string $since,
         string $until,
         string $timezone = 'America/Caracas',
-        Metric|array|null $metrics = null,
+        \BackedEnum|array|null $metrics = null,
         ?MetricGroup $metricGroup = null,
         ?MetricType $metricType = null,
         ?MetricPeriod $metricPeriod = null,
         ?MetricTimeframe $metricTimeframe = null,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        \BackedEnum|array|null $metricBreakdown = null,
     ): array {
         $metricsToTry = [];
         if ($metrics) {
@@ -2550,12 +2623,31 @@ class FacebookGraphApi extends BearerTokenClient
             $metricsToTry = $metricGroup->getMetrics();
         }
 
+        if (!$metricGroup && !$metrics) {
+            throw new InvalidArgumentException('Either `metricGroup` or `metric` must be provided.');
+        }
+
+        if ($metrics && $metricType && !$this->isValidMetricType($metricType, $metrics)) {
+            throw new InvalidArgumentException('Invalid metric type provided for metric.');
+        }
+        if ($metrics && $metricPeriod && !$this->isValidMetricPeriod($metricPeriod, $metrics)) {
+            throw new InvalidArgumentException('Invalid metric period provided for metric.');
+        }
+        if ($metrics && $metricTimeframe && !$this->isValidMetricTimeframe($metricTimeframe, $metrics)) {
+            throw new InvalidArgumentException('Invalid metric timeframe provided for metric.');
+        }
+        if ($metrics && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, $metrics)) {
+            throw new InvalidArgumentException('Invalid metric breakdown provided for metric.');
+        }
+
         try {
             return $this->executeInstagramAccountInsightsRequest(
                 $instagramAccountId, $since, $until, $timezone, $metrics, $metricGroup, $metricType, $metricPeriod, $metricTimeframe, $metricBreakdown
             );
         } catch (Exception $e) {
-            if (!$this->isMetricError($e)) throw $e;
+            if (!$this->isMetricError($e)) {
+                throw new Exception("Failed to retrieve insights for account ID $instagramAccountId: " . $e->getMessage());
+            }
             $this->logWarning("IG Account Insights for $instagramAccountId FAILED with error #100. Switching to incremental search.");
         }
 
@@ -2569,7 +2661,7 @@ class FacebookGraphApi extends BearerTokenClient
                     $results['data'] = array_merge($results['data'], $resSingle['data']);
                 }
             } catch (Exception $eInner) {
-                $mValue = $metric instanceof Metric ? $metric->value : (string) $metric;
+                $mValue = $metric instanceof InstagramAccountMetric ? $metric->value : (string) $metric;
                 $this->logError("IG API: Metric '$mValue' FAILED for Account $instagramAccountId: " . $eInner->getMessage());
             }
         }
@@ -2581,12 +2673,12 @@ class FacebookGraphApi extends BearerTokenClient
         string $since,
         string $until,
         string $timezone = 'America/Caracas',
-        Metric|array|null $metrics = null,
+        \BackedEnum|array|null $metrics = null,
         ?MetricGroup $metricGroup = null,
         ?MetricType $metricType = null,
         ?MetricPeriod $metricPeriod = null,
         ?MetricTimeframe $metricTimeframe = null,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        \BackedEnum|array|null $metricBreakdown = null,
     ): array {
         if (!$metricGroup && !$metrics) {
             throw new InvalidArgumentException('Either `metricGroup` or `metric` must be provided.');
@@ -2594,25 +2686,27 @@ class FacebookGraphApi extends BearerTokenClient
 
         $query = [
             'fields' => 'name,period,total_value,values,title',
-            'since' => $since,
-            'until' => $until,
         ];
 
         if ($metrics) {
             $metricsArray = is_array($metrics) ? $metrics : [$metrics];
-            $query['metric'] = implode(',', array_map(fn($m) => $m instanceof Metric ? $m->value : $m, $metricsArray));
+            $query['metric'] = implode(',', array_map(fn($m) => $m instanceof \BackedEnum ? $m->value : $m, $metricsArray));
         } elseif ($metricGroup) {
             $query['metric'] = implode(',', array_map(fn($e) => $e->value, $metricGroup->getMetrics()));
         }
 
         if ($metricType) $query['metric_type'] = $metricType->value;
         if ($metricPeriod) $query['period'] = $metricPeriod->value;
-        if ($timezone) $query['timezone'] = $timezone;
         if ($metricBreakdown) $query['breakdown'] = is_array($metricBreakdown) ? implode(',', array_map(fn($b) => $b->value, $metricBreakdown)) : $metricBreakdown->value;
 
         foreach (['metric_timeframe', 'timeframe'] as $key) {
              if ($metricTimeframe) $query[$key] = $metricTimeframe->value;
         }
+
+        $query['since'] = Carbon::parse($since, $timezone)->timestamp;
+        $query['until'] = Carbon::parse($until, $timezone)->timestamp;
+
+        if ($timezone) $query['timezone'] = $timezone;
 
         $response = $this->performRequest(
             method: 'GET',
@@ -2643,11 +2737,11 @@ class FacebookGraphApi extends BearerTokenClient
         int $option = 1,
     ): array {
         $metrics = match($option) {
-            1 => [Metric::REACH, Metric::VIEWS],
-            2 => [Metric::FOLLOWS_AND_UNFOLLOWS],
-            3 => [Metric::COMMENTS, Metric::LIKES, Metric::SAVES, Metric::SHARES, Metric::TOTAL_INTERACTIONS],
-            4 => [Metric::PROFILE_LINK_TAPS],
-            default => [Metric::WEBSITE_CLICKS, Metric::PROFILE_VIEWS, Metric::ACCOUNTS_ENGAGED, Metric::REPLIES, Metric::CONTENT_VIEWS],
+            1 => [InstagramAccountMetric::REACH, InstagramAccountMetric::VIEWS],
+            2 => [InstagramAccountMetric::FOLLOWS_AND_UNFOLLOWS],
+            3 => [InstagramAccountMetric::COMMENTS, InstagramAccountMetric::LIKES, InstagramAccountMetric::SAVES, InstagramAccountMetric::SHARES, InstagramAccountMetric::TOTAL_INTERACTIONS],
+            4 => [InstagramAccountMetric::PROFILE_LINK_TAPS],
+            default => [InstagramAccountMetric::WEBSITE_CLICKS, InstagramAccountMetric::PROFILE_VIEWS, InstagramAccountMetric::ACCOUNTS_ENGAGED, InstagramAccountMetric::REPLIES, InstagramAccountMetric::CONTENT_VIEWS],
         };
 
         $metricBreakdown = match($option) {
@@ -2692,11 +2786,11 @@ class FacebookGraphApi extends BearerTokenClient
         string $since,
         string $until,
         string $timezone = 'America/Caracas',
-        Metric|array|null $metrics = null,
+        InstagramAccountMetric|array|null $metrics = null,
         ?MetricGroup $metricGroup = null,
-        MetricBreakdown|array|null $metricBreakdown = null,
+        InstagramAccountMetric|array|null $metricBreakdown = null,
     ): array {
-        if (!$metricGroup && empty(array_intersect($metrics, [Metric::FOLLOWER_DEMOGRAPHICS, Metric::REACHED_AUDIENCE_DEMOGRAPHICS, Metric::ENGAGED_AUDIENCE_DEMOGRAPHICS]))) {
+        if (!$metricGroup && empty(array_intersect($metrics, [InstagramAccountMetric::FOLLOWER_DEMOGRAPHICS, InstagramAccountMetric::REACHED_AUDIENCE_DEMOGRAPHICS, InstagramAccountMetric::ENGAGED_AUDIENCE_DEMOGRAPHICS]))) {
             throw new Exception("Invalid metrics or metricGroup provided.");
         }
 
@@ -2737,7 +2831,7 @@ class FacebookGraphApi extends BearerTokenClient
             since: $since,
             until: Carbon::parse($since)->addDay()->format('Y-m-d'),
             timezone: $timezone,
-            metrics: $metricGroup ? null : Metric::REACH,
+            metrics: $metricGroup ? null : InstagramAccountMetric::REACH,
             metricGroup: $metricGroup,
             metricType: MetricType::TIME_SERIES,
             metricPeriod: MetricPeriod::LIFETIME,
@@ -2751,10 +2845,13 @@ class FacebookGraphApi extends BearerTokenClient
      * @param Metric|MetricGroup|Metric[] $data
      * @return bool
      */
-    protected function isValidMetricType(MetricType $metricType, Metric|MetricGroup|array $data): bool
+    protected function isValidMetricType(MetricType $metricType, \BackedEnum|MetricGroup|array $data): bool
     {
-        if ($data instanceof Metric) {
-            return in_array($metricType, $data->allowedMetricTypes());
+        if ($data instanceof \BackedEnum) {
+             if (method_exists($data, 'allowedMetricTypes')) {
+                return in_array($metricType, $data->allowedMetricTypes());
+             }
+             return true;
         }
 
         if ($data instanceof MetricGroup) {
@@ -2763,7 +2860,11 @@ class FacebookGraphApi extends BearerTokenClient
             $metric = $data[0];
         }
 
-        return in_array($metricType, $metric->allowedMetricTypes());
+        if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedMetricTypes')) {
+            return in_array($metricType, $metric->allowedMetricTypes());
+        }
+
+        return true;
     }
 
     /**
@@ -2773,10 +2874,13 @@ class FacebookGraphApi extends BearerTokenClient
      * @param Metric|MetricGroup|Metric[] $data
      * @return bool
      */
-    protected function isValidMetricPeriod(MetricPeriod $metricPeriod, Metric|MetricGroup|array $data): bool
+    protected function isValidMetricPeriod(MetricPeriod $metricPeriod, \BackedEnum|MetricGroup|array $data): bool
     {
-        if ($data instanceof Metric) {
-            return in_array($metricPeriod, $data->allowedPeriods());
+        if ($data instanceof \BackedEnum) {
+             if (method_exists($data, 'allowedPeriods')) {
+                 return in_array($metricPeriod, $data->allowedPeriods());
+             }
+             return true;
         }
 
         if ($data instanceof MetricGroup) {
@@ -2785,7 +2889,11 @@ class FacebookGraphApi extends BearerTokenClient
             $metric = $data[0];
         }
 
-        return in_array($metricPeriod, $metric->allowedPeriods());
+        if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedPeriods')) {
+            return in_array($metricPeriod, $metric->allowedPeriods());
+        }
+
+        return true;
     }
 
     /**
@@ -2795,10 +2903,13 @@ class FacebookGraphApi extends BearerTokenClient
      * @param Metric|MetricGroup|Metric[] $data
      * @return bool
      */
-    protected function isValidMetricTimeframe(MetricTimeframe $metricTimeframe, Metric|MetricGroup|array $data): bool
+    protected function isValidMetricTimeframe(MetricTimeframe $metricTimeframe, \BackedEnum|MetricGroup|array $data): bool
     {
-        if ($data instanceof Metric) {
-            return in_array($metricTimeframe, $data->allowedTimeframes());
+        if ($data instanceof \BackedEnum) {
+             if (method_exists($data, 'allowedTimeframes')) {
+                 return in_array($metricTimeframe, $data->allowedTimeframes());
+             }
+             return true;
         }
 
         if ($data instanceof MetricGroup) {
@@ -2807,7 +2918,11 @@ class FacebookGraphApi extends BearerTokenClient
             $metric = $data[0];
         }
 
-        return in_array($metricTimeframe, $metric->allowedMetricTimeframes());
+        if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedTimeframes')) {
+            return in_array($metricTimeframe, $metric->allowedTimeframes());
+        }
+
+        return true;
     }
 
     /**
@@ -2830,7 +2945,7 @@ class FacebookGraphApi extends BearerTokenClient
                 return $defaultFields;
             }
             return implode(',', array_unique(array_map(function ($m) {
-                return $m instanceof Metric ? $m->value : $m;
+                return $m instanceof \BackedEnum ? $m->value : $m;
             }, $customMetrics)));
         }
         return $defaultFields;
@@ -2859,19 +2974,42 @@ class FacebookGraphApi extends BearerTokenClient
         return $metricBreakdown->value;
     }
 
-    protected function isValidMetricBreakdown(MetricBreakdown|string|array $metricBreakdown, Metric|MetricGroup|array $data): bool
+    /**
+     * Updates the query with the current pagination cursor and guards against infinite loops.
+     *
+     * @param array $query The request query array to update.
+     * @param string|null $after The current 'after' cursor.
+     * @param string|null $prevAfter The previous 'after' cursor.
+     * @return bool False if an infinite loop is detected (current cursor same as previous), true otherwise.
+     */
+    protected function updatePaginationQuery(array &$query, ?string $after, ?string &$prevAfter): bool
+    {
+        if (!$after) {
+            return true;
+        }
+        if ($after === $prevAfter) {
+            return false;
+        }
+        $prevAfter = $after;
+        $query['after'] = $after;
+        return true;
+    }
+
+    protected function isValidMetricBreakdown(MetricBreakdown|string|array $metricBreakdown, \BackedEnum|MetricGroup|array $data): bool
     {
         if (is_string($metricBreakdown)) {
-            return true; // We assume custom strings are valid or let the API decide
+            return true;
         }
         $provided = is_array($metricBreakdown) ? $metricBreakdown : [$metricBreakdown];
         $allowedCombinations = [];
-        if ($data instanceof Metric) {
+        if ($data instanceof \BackedEnum) {
             $data = [$data];
         }
         foreach ($data as $item) {
-            if ($item instanceof Metric) {
-                $allowedCombinations[] = $item->allowedBreakdowns();
+            if ($item instanceof \BackedEnum) {
+                if (method_exists($item, 'allowedBreakdowns')) {
+                    $allowedCombinations[] = $item->allowedBreakdowns();
+                }
             } else {
                 $metric = Metric::tryFrom(trim($item));
                 if ($metric) {

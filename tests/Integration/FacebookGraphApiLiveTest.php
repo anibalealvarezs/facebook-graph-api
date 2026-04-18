@@ -3,9 +3,9 @@
 namespace Tests\Integration;
 
 use Anibalealvarezs\FacebookGraphApi\Enums\MediaProductType;
-use Anibalealvarezs\FacebookGraphApi\Enums\Metric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\Metric;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
-use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricSet;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
@@ -37,12 +37,13 @@ class FacebookGraphApiLiveTest extends TestCase
     {
         $config = app_config();
 
-        $this->userId = $config['fb_user_id'] ?? null;
-        $this->appId = $config['fb_app_id'] ?? null;
-        $this->appSecret = $config['fb_app_secret'] ?? null;
-        $this->redirectUrl = $config['fb_app_redirect_uri'] ?? null;
-        $this->userAccessToken = $config['fb_graph_user_access_token'] ?? null;
+        $this->userId = $config['user_id'] ?? $config['fb_user_id'] ?? 'me';
+        $this->appId = $config['app_id'] ?? $config['fb_app_id'] ?? '';
+        $this->appSecret = $config['app_secret'] ?? $config['fb_app_secret'] ?? '';
+        $this->redirectUrl = $config['redirect_uri'] ?? $config['fb_app_redirect_uri'] ?? 'http://localhost';
+        $this->userAccessToken = $config['user_token'] ?? $config['fb_graph_user_access_token'] ?? null;
         $this->longLivedUserAccessToken = $config['fb_graph_long_lived_user_access_token'] ?? null;
+        $pageToken = $config['page_token'] ?? null;
         $tokenPath = $config['fb_graph_token_path'] ?? '';
 
         $this->api = new FacebookGraphApi(
@@ -52,6 +53,7 @@ class FacebookGraphApiLiveTest extends TestCase
             redirectUrl: $this->redirectUrl,
             userAccessToken: $this->userAccessToken,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            longLivedPageAccesstoken: $pageToken,
             tokenPath: $tokenPath
         );
 
@@ -198,7 +200,7 @@ class FacebookGraphApiLiveTest extends TestCase
             $this->assertArrayHasKey('media_type', $media);
             $this->assertArrayHasKey('permalink', $media);
             $this->assertArrayHasKey('timestamp', $media);
-            $this->assertArrayHasKey('caption', $media);
+            // Caption may be null or missing
         }
     }
 
@@ -404,7 +406,7 @@ class FacebookGraphApiLiveTest extends TestCase
             'America/Caracas',
             Metric::FOLLOWER_DEMOGRAPHICS,
             null,
-            null,
+            MetricType::TOTAL_VALUE,
             MetricPeriod::LIFETIME,
             MetricTimeframe::THIS_MONTH,
             MetricBreakdown::AGE

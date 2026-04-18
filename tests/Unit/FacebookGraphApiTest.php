@@ -4,9 +4,9 @@ namespace Tests\Unit;
 
 use Anibalealvarezs\FacebookGraphApi\Enums\InstagramMediaField;
 use Anibalealvarezs\FacebookGraphApi\Enums\MediaProductType;
-use Anibalealvarezs\FacebookGraphApi\Enums\Metric;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\Metric;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
-use Anibalealvarezs\FacebookGraphApi\Enums\MetricGroup;
+use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\MetricGroup;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
 use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
@@ -454,6 +454,8 @@ class FacebookGraphApiTest extends TestCase
 
         $mock = new MockHandler([
             new Response(400, $headers, json_encode($errorResponse)),
+            new Response(400, $headers, json_encode($errorResponse)),
+            new Response(400, $headers, json_encode($errorResponse)),
         ]);
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
         $client = new FacebookGraphApi(
@@ -465,6 +467,7 @@ class FacebookGraphApiTest extends TestCase
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
             guzzleClient: $guzzle
         );
+        $client->setRateLimitDetector([]);
 
         try {
             $client->getMe();
@@ -530,7 +533,7 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals('biz456', $result['pages'][1]['business']['id']);
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
-        $this->assertStringContainsString('fields=' . urlencode('id,name,access_token,category,tasks,is_published,username,is_verified,business,merchant_settings,instagram_business_account') . '&limit=100', (string)$lastRequest->getUri());
+        $this->assertStringContainsString('fields=' . urlencode('id,name,access_token,category,tasks,is_published,username,is_verified,business,merchant_settings,instagram_business_account') . '&limit=50', (string)$lastRequest->getUri());
         $this->assertEquals('Bearer ' . $this->longLivedUserAccessToken, $lastRequest->getHeaderLine('Authorization'));
     }
 
@@ -696,7 +699,9 @@ class FacebookGraphApiTest extends TestCase
             Metric::REACH,
             null,
             MetricType::TIME_SERIES,
-            MetricPeriod::DAY
+            MetricPeriod::DAY,
+            null, // Timeframe
+            [MetricBreakdown::MEDIA_PRODUCT_TYPE, MetricBreakdown::FOLLOW_TYPE] // Breakdown
         );
 
         $this->assertEquals($responseData['data'], $insights['data']);
@@ -768,7 +773,9 @@ class FacebookGraphApiTest extends TestCase
             null,
             MetricGroup::REACH_FOLLOWERS,
             MetricType::TIME_SERIES,
-            MetricPeriod::DAY
+            MetricPeriod::DAY,
+            null, // Timeframe
+            [MetricBreakdown::MEDIA_PRODUCT_TYPE, MetricBreakdown::FOLLOW_TYPE] // Breakdown
         );
 
         $this->assertEquals($responseData['data'], $insights['data']);

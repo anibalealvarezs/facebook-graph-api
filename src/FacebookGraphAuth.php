@@ -10,9 +10,10 @@ class FacebookGraphAuth extends NoAuthClient
 {
     public function __construct(
         ?Client $guzzleClient = null,
+        string $apiVersion = 'v25.0',
     ) {
         parent::__construct(
-            baseUrl: 'https://graph.facebook.com/',
+            baseUrl: "https://graph.facebook.com/{$apiVersion}/",
             guzzleClient: $guzzleClient,
         );
         $this->setResponseErrorDetector('error');

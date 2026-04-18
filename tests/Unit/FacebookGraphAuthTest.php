@@ -55,7 +55,7 @@ class FacebookGraphAuthTest extends TestCase
     {
         $client = new FacebookGraphAuth();
 
-        $this->assertEquals('https://graph.facebook.com/', $client->getBaseUrl());
+        $this->assertEquals('https://graph.facebook.com/v25.0/', $client->getBaseUrl());
         $this->assertInstanceOf(GuzzleClient::class, $client->getGuzzleClient());
     }
 
@@ -79,7 +79,7 @@ class FacebookGraphAuthTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/oauth/access_token?' .
+            'https://graph.facebook.com/v25.0/oauth/access_token?' .
             'grant_type=fb_exchange_token&client_id=' . $this->clientId .
             '&client_secret=' . $this->clientSecret . '&fb_exchange_token=' . $this->userAccessToken,
             (string)$lastRequest->getUri()
@@ -106,7 +106,7 @@ class FacebookGraphAuthTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/oauth/access_token?' .
+            'https://graph.facebook.com/v25.0/oauth/access_token?' .
             'grant_type=client_credentials&client_id=' . $this->clientId .
             '&client_secret=' . $this->clientSecret,
             (string)$lastRequest->getUri()
@@ -133,7 +133,7 @@ class FacebookGraphAuthTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         $this->assertEquals('GET', $lastRequest->getMethod());
         $this->assertEquals(
-            'https://graph.facebook.com/' . $this->userId . '/accounts?access_token=' . $this->longLivedUserAccessToken,
+            'https://graph.facebook.com/v25.0/' . $this->userId . '/accounts?access_token=' . $this->longLivedUserAccessToken,
             (string)$lastRequest->getUri()
         );
     }

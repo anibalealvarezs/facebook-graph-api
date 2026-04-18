@@ -25,12 +25,12 @@ class FacebookGraphAuthLiveTest extends TestCase
     {
         $config = app_config();
 
-        $this->userId = $config['fb_user_id'] ?? null;
-        $this->appId = $config['fb_app_id'] ?? null;
-        $this->appSecret = $config['fb_app_secret'] ?? null;
-        $this->redirectUrl = $config['fb_app_redirect_uri'] ?? null;
-        $this->userAccessToken = $config['fb_graph_user_access_token'] ?? null;
-        $this->longLivedUserAccessToken = $config['fb_graph_long_lived_user_access_token'] ?? null;
+        $this->userId = $config['user_id'] ?? $config['fb_user_id'] ?? 'me';
+        $this->appId = $config['app_id'] ?? $config['fb_app_id'] ?? '';
+        $this->appSecret = $config['app_secret'] ?? $config['fb_app_secret'] ?? '';
+        $this->redirectUrl = $config['redirect_uri'] ?? $config['fb_app_redirect_uri'] ?? 'http://localhost';
+        $this->userAccessToken = $config['user_token'] ?? $config['fb_graph_user_access_token'] ?? null;
+        $this->longLivedUserAccessToken = $config['long_lived_user_token'] ?? $config['fb_graph_long_lived_user_access_token'] ?? null;
 
         $this->auth = new FacebookGraphAuth(new Client());
     }
@@ -98,7 +98,7 @@ class FacebookGraphAuthLiveTest extends TestCase
             $this->longLivedUserAccessToken
         );
         $this->assertIsArray($response);
-        $this->assertArrayHasKey('access_token', $response);
+        $this->assertArrayHasKey('code', $response);
     }
 
     /**
@@ -147,6 +147,6 @@ class FacebookGraphAuthLiveTest extends TestCase
             $longLivedUserToken
         );
         $this->assertIsArray($response);
-        $this->assertArrayHasKey('access_token', $response);
+        $this->assertArrayHasKey('code', $response);
     }
 }

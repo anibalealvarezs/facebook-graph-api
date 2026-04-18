@@ -1,6 +1,11 @@
 <?php
 
-namespace Anibalealvarezs\FacebookGraphApi\Enums;
+namespace Anibalealvarezs\FacebookGraphApi\Enums\Metrics;
+
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
+use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
 
 /**
  * @see https://developers.facebook.com/docs/instagram-api/reference/ig-media/insights/ (Media Insights)
@@ -15,12 +20,12 @@ enum Metric: string
     case LIKES = 'likes';
     case COMMENTS = 'comments';
     case SHARES = 'shares';
-    case SAVES = 'saves';
+    case SAVES = 'saved';
     case REPLIES = 'replies';
     case PROFILE_LINK_TAPS = 'profile_links_taps';
     case VIEWS = 'views';
     case CONTENT_VIEWS = 'content_views';
-    case PROFILE_VIEWS = 'profile_views';
+    case PROFILE_VIEWS = 'profile_visits';
     case ENGAGED_AUDIENCE_DEMOGRAPHICS = 'engaged_audience_demographics';
     case REACHED_AUDIENCE_DEMOGRAPHICS = 'reached_audience_demographics';
     case FOLLOWER_DEMOGRAPHICS = 'follower_demographics';
