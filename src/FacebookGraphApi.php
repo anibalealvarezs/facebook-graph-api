@@ -571,15 +571,21 @@ class FacebookGraphApi extends BearerTokenClient
                         $this->setLongLivedUserAccessToken($userToken);
                     }
                 }
+                $userToken = $this->getLongLivedUserAccessToken() ?: $this->getUserAccessToken();
+                if (!$userToken || $userToken === 'placeholder') {
+                    throw new Exception("Missing or invalid user access token for page token resolution.");
+                }
+
                 $targetPageId = trim((string)$this->getPageId());
                 $allPages = [];
                 $after = null;
-                $auth = new FacebookGraphAuth($guzzleClient);
+                $auth = $this->auth ?: new FacebookGraphAuth($guzzleClient);
+                $userId = ($this->getUserId() && $this->getUserId() !== 'system') ? $this->getUserId() : 'me';
                 
                 do {
-                    $endpoint = $this->getUserId() . '/accounts';
+                    $endpoint = $userId . '/accounts';
                     $query = [
-                        'access_token' => $this->getLongLivedUserAccessToken(),
+                        'access_token' => $userToken,
                         'limit' => 100
                     ];
                     if ($after) {
