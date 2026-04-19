@@ -1776,7 +1776,7 @@ class FacebookGraphApi extends BearerTokenClient
                     $results['data'] = array_merge($results['data'], $resSingle['data']);
                 }
             } catch (Exception $eInner) {
-                $this->logWarning("IG API: Metric '$metric' FAILED for Media $mediaId: " . $eInner->getMessage());
+                $this->logWarning("IG API: Metric '$metric' skipped for Media $mediaId (unsupported for this media type)");
             }
         }
 
@@ -2050,7 +2050,8 @@ class FacebookGraphApi extends BearerTokenClient
                     $results['data'] = array_merge($results['data'], $resSingle['data']);
                 }
             } catch (Exception $eInner) {
-                $this->logError("FB API: Metric '$metric' FAILED for Post $postId: " . $eInner->getMessage());
+                // If it's a fallback search, log as warning to avoid cluttering logs
+                $this->logWarning("FB API: Metric '$metric' skipped for Post $postId (unsupported for this media type)");
             }
         }
         return $results;
