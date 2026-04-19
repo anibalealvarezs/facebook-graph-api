@@ -170,7 +170,10 @@ class FacebookGraphApi extends BearerTokenClient
             '"code":32',
             '"code":613'
         ]);
-        $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
+        $this->setErrorMessageParser(fn ($data) => isset($data['error']) ? 
+            (($data['error']['message'] ?? 'Unknown Error') . " (Type: " . ($data['error']['type'] ?? 'N/A') . ", Code: " . ($data['error']['code'] ?? 'N/A') . ")") : 
+            json_encode($data)
+        );
     }
 
     public function getAppId(): string
@@ -599,16 +602,28 @@ class FacebookGraphApi extends BearerTokenClient
 
                     $endpoint = $userId . '/accounts';
 
-                    try {
-                        $response = $auth->performRequest(
-                            method: 'GET',
-                            endpoint: $endpoint,
-                            query: $query
-                        );
-                    } catch (Exception $e) {
-                        if (empty($allPages)) throw $e;
-                        break;
+                    $retries = 3;
+                    $response = null;
+                    while ($retries > 0) {
+                        try {
+                            $response = $auth->performRequest(
+                                method: 'GET',
+                                endpoint: $endpoint,
+                                query: $query
+                            );
+                            break;
+                        } catch (Exception $e) {
+                            $retries--;
+                            if ($retries === 0) {
+                                if (empty($allPages)) {
+                                    throw new Exception("Failed to resolve page tokens for user '{$userId}' after multiple attempts: " . $e->getMessage(), 0, $e);
+                                }
+                                break;
+                            }
+                            usleep(500000); // Wait 0.5s before retry
+                        }
                     }
+                    if (!$response) break;
                     $tokenResponse = json_decode($response->getBody()->getContents(), true);
                     
                     $allPages = array_merge($allPages, $tokenResponse['data'] ?? []);
