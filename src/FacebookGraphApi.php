@@ -1955,9 +1955,21 @@ class FacebookGraphApi extends BearerTokenClient
         } catch (Exception $e) {
             if (!$this->isMetricError($e)) throw $e;
             $this->logWarning("First attempt for Post $postId FAILED with error #100. Switching to incremental search.");
+            
+            // Try to extract allowed metrics from error message
+            $msg = $e->getMessage();
+            if (stripos($msg, 'must be one of the following values:') !== false) {
+                $parts = explode('must be one of the following values:', $msg);
+                if (isset($parts[1])) {
+                    $allowedMetricsStr = trim($parts[1]);
+                    if ($allowedMetricsStr) {
+                        $metrics = $allowedMetricsStr;
+                    }
+                }
+            }
         }
 
-        $metricsArray = explode(',', $metrics);
+        $metricsArray = array_map('trim', explode(',', $metrics));
         $results = ['data' => []];
         foreach ($metricsArray as $metric) {
             try {
