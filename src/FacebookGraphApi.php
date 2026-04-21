@@ -2387,7 +2387,7 @@ class FacebookGraphApi extends BearerTokenClient
     ): array {
         $metrics = $this->resolveMetrics($metricSet, $customMetrics, AdPermission::DEFAULT->insightsFields($metricSet));
         if ($metricSet !== MetricSet::CUSTOM) {
-             $metrics .= ',ad_id,adset_id,campaign_id';
+             $metrics .= ',ad_id,adset_id,campaign_id,ad_name,adset_name,campaign_name,creative';
         }
 
         if ($metricSet !== MetricSet::CUSTOM && $metricBreakdown && !$this->isValidMetricBreakdown($metricBreakdown, explode(',', $metrics))) {
