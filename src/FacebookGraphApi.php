@@ -508,6 +508,44 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * @param callable $callback
+     * @param string $endpoint
+     * @param array $query
+     * @param TokenSample $tokenSample
+     * @return void
+     * @throws GuzzleException
+     */
+    protected function fetchAllAndProcess(
+        callable $callback,
+        string $endpoint,
+        array $query = [],
+        TokenSample $tokenSample = TokenSample::USER
+    ): void {
+        $after = null;
+        do {
+            if ($after) {
+                $query['after'] = $after;
+            }
+
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: $endpoint,
+                query: $query,
+                sleep: $this->sleep,
+                tokenSample: $tokenSample,
+            );
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            if (!empty($data['data'])) {
+                $callback($data['data']);
+            }
+
+            $after = $data['paging']['cursors']['after'] ?? null;
+        } while ($after && count($data['data'] ?? []) > 0);
+    }
+
+    /**
      * @param Exception $exception
      * @param mixed $onFailure
      * @return mixed
@@ -1384,6 +1422,65 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * @param string $adAccountId
+     * @param string|CampaignField[]|string[]|null $campaignFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getCampaignsAll(
+        string $adAccountId,
+        string|array|null $campaignFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): array {
+        $campaigns = [];
+        $this->getCampaignsAllAndProcess(
+            callback: function ($data) use (&$campaigns) {
+                $campaigns = array_merge($campaigns, $data);
+            },
+            adAccountId: $adAccountId,
+            campaignFields: $campaignFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $campaigns];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|CampaignField[]|string[]|null $campaignFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getCampaignsAllAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $campaignFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
+        $query = [
+            'fields' => $campaignFields ? (is_array($campaignFields) ? implode(',', array_map(fn ($field) => ($field instanceof CampaignField ? $field->value : $field), $campaignFields)) : $campaignFields) : CampaignField::toCommaSeparatedList(),
+            'limit' => min($limit, 100),
+        ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
+
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/campaigns',
+            query: $query,
+        );
+    }
+
+    /**
      * Get individual ads for a specific ad account.
      *
      * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/ads/
@@ -1437,6 +1534,65 @@ class FacebookGraphApi extends BearerTokenClient
                     $adFields
                 ) :
                 AdField::toCommaSeparatedList(),
+            'limit' => min($limit, 100),
+        ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
+
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/ads',
+            query: $query,
+        );
+    }
+
+    /**
+     * @param string $adAccountId
+     * @param string|AdField[]|string[]|null $adFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getAdsAll(
+        string $adAccountId,
+        string|array|null $adFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): array {
+        $ads = [];
+        $this->getAdsAllAndProcess(
+            callback: function ($data) use (&$ads) {
+                $ads = array_merge($ads, $data);
+            },
+            adAccountId: $adAccountId,
+            adFields: $adFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $ads];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|AdField[]|string[]|null $adFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getAdsAllAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $adFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
+        $query = [
+            'fields' => $adFields ? (is_array($adFields) ? implode(',', array_map(fn ($field) => ($field instanceof AdField ? $field->value : $field), $adFields)) : $adFields) : AdField::toCommaSeparatedList(),
             'limit' => min($limit, 100),
         ];
 
@@ -1520,6 +1676,111 @@ class FacebookGraphApi extends BearerTokenClient
     }
 
     /**
+     * @param string $adAccountId
+     * @param string|AdsetField[]|string[]|null $adsetFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getAdsetsAll(
+        string $adAccountId,
+        string|array|null $adsetFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): array {
+        $adsets = [];
+        $this->getAdsetsAllAndProcess(
+            callback: function ($data) use (&$adsets) {
+                $adsets = array_merge($adsets, $data);
+            },
+            adAccountId: $adAccountId,
+            adsetFields: $adsetFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $adsets];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|AdsetField[]|string[]|null $adsetFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getAdsetsAllAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $adsetFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
+        $query = [
+            'fields' => $adsetFields ? (is_array($adsetFields) ? implode(',', array_map(fn ($field) => ($field instanceof AdsetField ? $field->value : $field), $adsetFields)) : $adsetFields) : AdsetField::toCommaSeparatedList(),
+            'limit' => min($limit, 100),
+        ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
+
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/adsets',
+            query: $query,
+        );
+    }
+
+    /**
+     * @param string $objectId
+     * @param array $params
+     * @param int $limit
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getInsightsAll(
+        string $objectId,
+        array $params = [],
+        int $limit = 100,
+    ): array {
+        $data = [];
+        $this->getInsightsAllAndProcess(
+            callback: function ($items) use (&$data) {
+                $data = array_merge($data, $items);
+            },
+            objectId: $objectId,
+            params: $params,
+            limit: $limit,
+        );
+        return ['data' => $data];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $objectId
+     * @param array $params
+     * @param int $limit
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getInsightsAllAndProcess(
+        callable $callback,
+        string $objectId,
+        array $params = [],
+        int $limit = 100,
+    ): void {
+        $params['limit'] = min($limit, 100);
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $objectId . '/insights',
+            query: $params,
+        );
+    }
+
+    /**
      * Get ad creatives for a specific ad account.
      *
      * @see https://developers.facebook.com/docs/marketing-api/reference/ad-account/adcreatives/
@@ -1573,6 +1834,65 @@ class FacebookGraphApi extends BearerTokenClient
                     $creatriveFields
                 ) :
                 CreativeField::toCommaSeparatedList(),
+            'limit' => min($limit, 100),
+        ];
+
+        if (!empty($additionalParams)) {
+            $query = array_merge($query, $additionalParams);
+        }
+
+        $this->fetchAllAndProcess(
+            callback: $callback,
+            endpoint: $this->formatAdAccountId($adAccountId) . '/adcreatives',
+            query: $query,
+        );
+    }
+
+    /**
+     * @param string $adAccountId
+     * @param string|CreativeField[]|string[]|null $creatriveFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return array
+     * @throws GuzzleException
+     */
+    public function getCreativesAll(
+        string $adAccountId,
+        string|array|null $creatriveFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): array {
+        $creatives = [];
+        $this->getCreativesAllAndProcess(
+            callback: function ($data) use (&$creatives) {
+                $creatives = array_merge($creatives, $data);
+            },
+            adAccountId: $adAccountId,
+            creatriveFields: $creatriveFields,
+            limit: $limit,
+            additionalParams: $additionalParams,
+        );
+        return ['data' => $creatives];
+    }
+
+    /**
+     * @param callable $callback
+     * @param string $adAccountId
+     * @param string|CreativeField[]|string[]|null $creatriveFields
+     * @param int $limit
+     * @param array $additionalParams
+     * @return void
+     * @throws GuzzleException
+     */
+    public function getCreativesAllAndProcess(
+        callable $callback,
+        string $adAccountId,
+        string|array|null $creatriveFields = null,
+        int $limit = 100,
+        array $additionalParams = [],
+    ): void {
+        $query = [
+            'fields' => $creatriveFields ? (is_array($creatriveFields) ? implode(',', array_map(fn ($field) => ($field instanceof CreativeField ? $field->value : $field), $creatriveFields)) : $creatriveFields) : CreativeField::toCommaSeparatedList(),
             'limit' => min($limit, 100),
         ];
 
@@ -2827,6 +3147,41 @@ class FacebookGraphApi extends BearerTokenClient
     ): void {
         if (!$metricGroup && !$metrics) {
             throw new InvalidArgumentException('Either `metricGroup` or `metric` must be provided.');
+        }
+
+        $metricsArray = is_array($metrics) ? $metrics : ($metrics ? [$metrics] : $metricGroup->getMetrics());
+        foreach ($metricsArray as $m) {
+            if ($m instanceof Metric) {
+                if ($metricType && !empty($m->allowedMetricTypes()) && !in_array($metricType, $m->allowedMetricTypes())) {
+                    throw new InvalidArgumentException("Invalid metric type provided for metric.");
+                }
+                if ($metricPeriod && !empty($m->allowedPeriods()) && !in_array($metricPeriod, $m->allowedPeriods())) {
+                    throw new InvalidArgumentException("Invalid metric period provided for metric.");
+                }
+                if ($metricTimeframe && !in_array($metricTimeframe, $m->allowedTimeframes())) {
+                    throw new InvalidArgumentException("Invalid metric timeframe provided for metric.");
+                }
+                if ($metricBreakdown) {
+                    $breakdowns = is_array($metricBreakdown) ? $metricBreakdown : [$metricBreakdown];
+                    $allowed = $m->allowedBreakdowns();
+                    if (!empty($allowed)) {
+                        $found = false;
+                        $breakdownValues = array_map(fn($b) => $b->value, $breakdowns);
+                        foreach ($allowed as $allowedGroup) {
+                            $allowedGroupValues = array_map(fn($b) => $b->value, $allowedGroup);
+                            if (count(array_diff($breakdownValues, $allowedGroupValues)) === 0 && count(array_diff($allowedGroupValues, $breakdownValues)) === 0) {
+                                $found = true;
+                                break;
+                            }
+                        }
+                        if (!$found) {
+                            throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
+                        }
+                    } elseif (!empty($breakdowns)) {
+                        throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
+                    }
+                }
+            }
         }
 
         $query = [
