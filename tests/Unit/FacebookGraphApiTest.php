@@ -3,6 +3,7 @@
     namespace Tests\Unit;
 
     use Anibalealvarezs\FacebookGraphApi\Enums\InstagramMediaField;
+    use Anibalealvarezs\FacebookGraphApi\Enums\MediaProductType;
     use Anibalealvarezs\FacebookGraphApi\Enums\MediaType;
     use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\Metric;
     use Anibalealvarezs\FacebookGraphApi\Enums\MetricBreakdown;
@@ -1748,6 +1749,47 @@
             $this->assertStringNotContainsString('post_video_views', (string)$lastRequest->getUri());
             $this->assertStringNotContainsString('post_video_avg_time_watched', (string)$lastRequest->getUri());
         }
+
+            /**
+             * @throws GuzzleException
+             * @throws Exception
+             */
+            public function testGetFacebookPostInsightsPrefiltersUnsupportedReelVideoMetrics(): void
+            {
+                $responseData = [
+                    'data' => [
+                        ['name' => 'post_impressions', 'period' => 'lifetime', 'values' => [['value' => 321]]],
+                        ['name' => 'post_video_avg_time_watched', 'period' => 'lifetime', 'values' => [['value' => 12]]],
+                    ],
+                ];
+                $mock = new MockHandler([
+                    new Response(200, [], json_encode($responseData)),
+                ]);
+                $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+                $client = new FacebookGraphApi(
+                    userId: $this->userId,
+                    appId: $this->appId,
+                    appSecret: $this->appSecret,
+                    redirectUrl: $this->redirectUrl,
+                    pageId: $this->pageId,
+                    longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                    longLivedPageAccesstoken: $this->longLivedPageAccessToken,
+                    guzzleClient: $guzzle
+                );
+
+                $insights = $client->getFacebookPostInsights(
+                    postId: '18323796109170297',
+                    metricSet: MetricSet::CUSTOM,
+                    customMetrics: ['post_clicks', 'post_video_views', 'post_video_avg_time_watched', 'post_impressions'],
+                    postData: ['media_product_type' => 'REELS', 'media_type' => 'VIDEO']
+                );
+
+                $this->assertEquals($responseData['data'], $insights['data']);
+                $lastRequest = $mock->getLastRequest();
+                $this->assertStringContainsString(urlencode('post_video_avg_time_watched,post_impressions'), (string)$lastRequest->getUri());
+                $this->assertStringNotContainsString('post_clicks', (string)$lastRequest->getUri());
+                $this->assertStringNotContainsString('post_video_views', (string)$lastRequest->getUri());
+            }
 
         /**
          * @throws GuzzleException

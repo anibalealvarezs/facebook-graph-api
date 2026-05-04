@@ -13,7 +13,7 @@
         private const array EXCLUSION_MATRIX = [
             'feed_static'  => ['clicks', 'video_views', 'reel_watch_time'],
             'feed_video'   => ['clicks', 'reel_watch_time'],
-            'reel'         => ['clicks'],
+            'reel'         => ['clicks', 'video_views'],
             'story_static' => ['video_views', 'reel_watch_time'],
             'story_video'  => ['reel_watch_time'],
             'ad_static'    => ['clicks', 'video_views', 'reel_watch_time'],
