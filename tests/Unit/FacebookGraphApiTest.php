@@ -360,6 +360,7 @@ class FacebookGraphApiTest extends TestCase
             redirectUrl: $this->redirectUrl,
             pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            longLivedPageAccesstoken: 'page_token_test',
             guzzleClient: $guzzle
         );
 
@@ -412,6 +413,7 @@ class FacebookGraphApiTest extends TestCase
             redirectUrl: $this->redirectUrl,
             pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            longLivedPageAccesstoken: 'page_token_test',
             guzzleClient: $guzzle
         );
 
@@ -1597,7 +1599,14 @@ class FacebookGraphApiTest extends TestCase
                 ['name' => 'post_impressions', 'period' => 'lifetime', 'values' => [['value' => 123]]],
             ],
         ];
+        $accountsResponse = [
+            'data' => [
+                ['id' => $this->pageId, 'name' => 'Test Page', 'access_token' => 'resolved_page_token'],
+            ],
+            'paging' => ['cursors' => ['after' => null]],
+        ];
         $mock = new MockHandler([
+            new Response(200, [], json_encode($accountsResponse)),
             new Response(200, [], json_encode($responseData)),
         ]);
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
@@ -1637,7 +1646,14 @@ class FacebookGraphApiTest extends TestCase
                 ['name' => 'post_impressions', 'period' => 'lifetime', 'values' => [['value' => 123]]],
             ],
         ];
+        $accountsResponse = [
+            'data' => [
+                ['id' => $this->pageId, 'name' => 'Test Page', 'access_token' => 'resolved_page_token'],
+            ],
+            'paging' => ['cursors' => ['after' => null]],
+        ];
         $mock = new MockHandler([
+            new Response(200, [], json_encode($accountsResponse)),
             new Response(200, [], json_encode($responseData)),
         ]);
         $guzzle = $this->createMockedGuzzleClient(mock: $mock);
