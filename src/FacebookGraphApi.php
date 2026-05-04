@@ -20,14 +20,12 @@
     use Anibalealvarezs\FacebookGraphApi\Enums\MetricPeriod;
     use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\Metric;
     use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\InstagramAccountMetric;
-    use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\InstagramMediaMetric;
-    use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\FacebookPageMetric;
-    use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\FacebookPostMetric;
     use Anibalealvarezs\FacebookGraphApi\Enums\Metrics\MarketingMetric;
     use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
     use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
     use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
     use Anibalealvarezs\FacebookGraphApi\Support\FacebookErrorClassifier;
+    use Anibalealvarezs\FacebookGraphApi\Support\FacebookInsightMetricGuard;
     use Anibalealvarezs\FacebookGraphApi\Enums\FacebookPostField;
     use Anibalealvarezs\FacebookGraphApi\Enums\FacebookPostPermission;
     use Anibalealvarezs\FacebookGraphApi\Enums\TokenSample;
@@ -673,8 +671,20 @@
                         }
                     } while ($after && !empty($tokenResponse['data']));
 
-                    $available = array_map(fn($p) => "{$p['name']} ({$p['id']})", $allPages);
-                    throw new Exception("Page ID '{$targetPageId}' not found in Meta account. Available pages: ".implode(', ', $available));
+                    $available = array_values(array_filter(array_map(
+                        static function ($page) {
+                            $pageId = trim((string)($page['id'] ?? ''));
+                            $pageName = trim((string)($page['name'] ?? 'Unknown page'));
+
+                            if ($pageId === '' && $pageName === '') {
+                                return null;
+                            }
+
+                            return sprintf('%s (%s)', $pageName !== '' ? $pageName : 'Unknown page', $pageId !== '' ? $pageId : 'unknown');
+                        },
+                        $allPages
+                    )));
+                    throw new Exception("Page ID '{$targetPageId}' not found in Meta account. Available pages: ".implode(', ', $available ?: ['[no page data returned]']));
                 }
             } elseif ($tokenSample === TokenSample::CLIENT) {
                 if (!$this->getLongLivedClientAccesstoken() || ($this->getLongLivedClientAccesstoken() === 'placeholder')) {
@@ -2126,8 +2136,11 @@
          * @param string $mediaId The Instagram media ID.
          * @param MediaType|MediaProductType $mediaType
          * @param int $limit
+         * @param MetricSet $metricSet
+         * @param array $customMetrics
+         * @param array<string, mixed>|null $mediaData
          * @return array Insights data.
-         * @throws GuzzleException
+         * @throws Exception
          */
         public function getInstagramMediaInsights(
             string                     $mediaId,
@@ -2135,9 +2148,21 @@
             int                        $limit = 100,
             MetricSet                  $metricSet = MetricSet::BASIC,
             array                      $customMetrics = [],
+            ?array                     $mediaData = null,
         ): array
         {
-            $metricsToTry = !empty($customMetrics) ? $customMetrics : explode(',', (string)$this->resolveMetrics($metricSet, $customMetrics, $mediaType->insightsFields($metricSet)));
+            $metricsToTry = !empty($customMetrics) ? $customMetrics : explode(',', $this->resolveMetrics($metricSet, $customMetrics, $mediaType->insightsFields($metricSet)));
+            $assetData = $mediaData ?? [];
+            if ($mediaType instanceof MediaType && empty($assetData['media_type'])) {
+                $assetData['media_type'] = $mediaType->value;
+            }
+            if ($mediaType instanceof MediaProductType && empty($assetData['media_product_type'])) {
+                $assetData['media_product_type'] = $mediaType->value;
+            }
+            $metricsToTry = $this->filterInstagramMediaMetricsForAsset($metricsToTry, $assetData, $mediaId);
+            if ($metricsToTry === []) {
+                return ['data' => []];
+            }
             $limit = min($limit, 100);
 
             try {
@@ -2463,48 +2488,57 @@
          */
         protected function filterFacebookPostMetricsForAsset(array $metrics, ?array $postData, string $postId): array
         {
-            if (empty($postData)) {
-                return $metrics;
-            }
-
-            $mediaType = strtoupper(trim((string)($postData['media_type'] ?? $postData['type'] ?? '')));
-            $mediaProductType = strtoupper(trim((string)($postData['media_product_type'] ?? '')));
-
-            // IG feed/static posts often reject navigation/video-derived metrics in a batched request.
-            $isInstagramFeedStatic = $mediaProductType === 'FEED' && in_array($mediaType, ['IMAGE', 'CAROUSEL_ALBUM'], true);
-
-            $unsupported = [];
-            if ($isInstagramFeedStatic) {
-                $unsupported = array_merge($unsupported, [
-                    'post_clicks',
-                    'post_video_views',
-                    'post_video_avg_time_watched',
-                ]);
-            }
-
-            if ($mediaProductType !== 'REELS') {
-                $unsupported[] = 'post_video_avg_time_watched';
-            }
-
-            if (!in_array($mediaType, ['VIDEO', 'REEL'], true)) {
-                $unsupported[] = 'post_video_views';
-            }
-
-            $unsupported = array_values(array_unique($unsupported));
+            $unsupported = FacebookInsightMetricGuard::resolveUnsupportedMetrics($postData);
             if ($unsupported === []) {
-                return $metrics;
+                return array_values(array_unique(array_filter(array_map('trim', $metrics))));
             }
 
             $filtered = [];
             foreach ($metrics as $metric) {
+                $metric = trim((string)$metric);
+                if ($metric === '') {
+                    continue;
+                }
                 if (in_array($metric, $unsupported, true)) {
+                    $mediaType = strtoupper(trim((string)($postData['media_type'] ?? $postData['type'] ?? 'unknown')));
+                    $mediaProductType = strtoupper(trim((string)($postData['media_product_type'] ?? 'unknown')));
                     $this->logInfo("FB API: Metric '$metric' prefiltered for Post $postId (media_type={$mediaType}, media_product_type={$mediaProductType}).");
                     continue;
                 }
                 $filtered[] = $metric;
             }
 
-            return $filtered;
+            return array_values(array_unique($filtered));
+        }
+
+        /**
+         * @param array<int, string> $metrics
+         * @param array<string, mixed>|null $mediaData
+         * @return array<int, string>
+         */
+        protected function filterInstagramMediaMetricsForAsset(array $metrics, ?array $mediaData, string $mediaId): array
+        {
+            $unsupported = FacebookInsightMetricGuard::resolveUnsupportedMetrics($mediaData);
+            if ($unsupported === []) {
+                return array_values(array_unique(array_filter(array_map('trim', $metrics))));
+            }
+
+            $mediaType = strtoupper(trim((string)($mediaData['media_type'] ?? $mediaData['type'] ?? 'unknown')));
+            $mediaProductType = strtoupper(trim((string)($mediaData['media_product_type'] ?? 'unknown')));
+            $filtered = [];
+            foreach ($metrics as $metric) {
+                $metric = trim((string)$metric);
+                if ($metric === '') {
+                    continue;
+                }
+                if (in_array($metric, $unsupported, true)) {
+                    $this->logInfo("IG API: Metric '$metric' prefiltered for Media $mediaId (media_type={$mediaType}, media_product_type={$mediaProductType}).");
+                    continue;
+                }
+                $filtered[] = $metric;
+            }
+
+            return array_values(array_unique($filtered));
         }
 
         protected function executePostInsightsRequest(string $postId, string $metrics, int $limit = 100): array
