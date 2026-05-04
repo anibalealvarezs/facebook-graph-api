@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
+use Anibalealvarezs\FacebookGraphApi\Support\FacebookErrorClassifier;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
 use Exception;
 use Faker\Factory as Faker;
@@ -57,6 +58,20 @@ class FacebookGraphAuthTest extends TestCase
 
         $this->assertEquals('https://graph.facebook.com/v25.0/', $client->getBaseUrl());
         $this->assertInstanceOf(GuzzleClient::class, $client->getGuzzleClient());
+        $this->assertIsCallable($client->getRateLimitDetector());
+    }
+
+    public function testSemanticRateLimitDetectorMatchesOauthExceptionCode2(): void
+    {
+        $payload = [
+            'error' => [
+                'message' => 'An unexpected error has occurred. Please retry your request later.',
+                'type' => 'OAuthException',
+                'code' => 2,
+            ],
+        ];
+
+        $this->assertTrue(FacebookErrorClassifier::isRetryable($payload));
     }
 
     /**

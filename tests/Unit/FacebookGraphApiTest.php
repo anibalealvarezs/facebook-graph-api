@@ -20,6 +20,7 @@ use Anibalealvarezs\FacebookGraphApi\Enums\AdPermission;
 use Anibalealvarezs\FacebookGraphApi\Enums\CreativePermission;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
+use Anibalealvarezs\FacebookGraphApi\Support\FacebookErrorClassifier;
 use Anibalealvarezs\FacebookGraphApi\Exceptions\FacebookRateLimitException;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\AuthenticationException;
 use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
@@ -116,6 +117,21 @@ class FacebookGraphApiTest extends TestCase
         $this->assertEquals($this->longLivedClientAccessToken, $client->getLongLivedClientAccesstoken());
         $this->assertEquals(['location' => 'query', 'name' => 'access_token'], $client->getAuthSettings());
         $this->assertInstanceOf(GuzzleClient::class, $client->getGuzzleClient());
+        $this->assertIsCallable($client->getRateLimitDetector());
+    }
+
+    public function testSemanticRateLimitDetectorMatchesTransientFlag(): void
+    {
+        $payload = [
+            'error' => [
+                'message' => 'Server temporarily unavailable.',
+                'type' => 'OAuthException',
+                'code' => 999,
+                'is_transient' => true,
+            ],
+        ];
+
+        $this->assertTrue(FacebookErrorClassifier::isRetryable($payload));
     }
 
     /**
@@ -214,6 +230,7 @@ class FacebookGraphApiTest extends TestCase
             redirectUrl: $this->redirectUrl,
             pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            longLivedPageAccesstoken: $this->longLivedPageAccessToken,
             guzzleClient: $guzzle
         );
 
@@ -253,6 +270,7 @@ class FacebookGraphApiTest extends TestCase
             redirectUrl: $this->redirectUrl,
             pageId: $this->pageId,
             longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            longLivedPageAccesstoken: $this->longLivedPageAccessToken,
             guzzleClient: $guzzle
         );
 
@@ -1566,5 +1584,81 @@ class FacebookGraphApiTest extends TestCase
         $this->expectException(AuthenticationException::class);
 
         $client->getCampaignsAllAndProcess(adAccountId: '123', callback: function ($data) {});
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetFacebookPostInsightsPrefiltersUnsupportedFeedImageMetrics(): void
+    {
+        $responseData = [
+            'data' => [
+                ['name' => 'post_impressions', 'period' => 'lifetime', 'values' => [['value' => 123]]],
+            ],
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $insights = $client->getFacebookPostInsights(
+            postId: '18109517104697778',
+            metricSet: MetricSet::CUSTOM,
+            customMetrics: ['post_clicks', 'post_video_views', 'post_video_avg_time_watched', 'post_impressions'],
+            postData: ['media_product_type' => 'FEED', 'media_type' => 'IMAGE']
+        );
+
+        $this->assertEquals($responseData['data'], $insights['data']);
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('metric=post_impressions', (string)$lastRequest->getUri());
+        $this->assertStringNotContainsString('post_clicks', (string)$lastRequest->getUri());
+        $this->assertStringNotContainsString('post_video_views', (string)$lastRequest->getUri());
+        $this->assertStringNotContainsString('post_video_avg_time_watched', (string)$lastRequest->getUri());
+    }
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function testGetFacebookPostInsightsWithoutPostDataKeepsMetricsList(): void
+    {
+        $responseData = [
+            'data' => [
+                ['name' => 'post_impressions', 'period' => 'lifetime', 'values' => [['value' => 123]]],
+            ],
+        ];
+        $mock = new MockHandler([
+            new Response(200, [], json_encode($responseData)),
+        ]);
+        $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+        $client = new FacebookGraphApi(
+            userId: $this->userId,
+            appId: $this->appId,
+            appSecret: $this->appSecret,
+            redirectUrl: $this->redirectUrl,
+            pageId: $this->pageId,
+            longLivedUserAccessToken: $this->longLivedUserAccessToken,
+            guzzleClient: $guzzle
+        );
+
+        $client->getFacebookPostInsights(
+            postId: '18109517104697778',
+            metricSet: MetricSet::CUSTOM,
+            customMetrics: ['post_clicks', 'post_impressions'],
+            postData: null
+        );
+
+        $lastRequest = $mock->getLastRequest();
+        $this->assertStringContainsString('metric=post_clicks%2Cpost_impressions', (string)$lastRequest->getUri());
     }
 }

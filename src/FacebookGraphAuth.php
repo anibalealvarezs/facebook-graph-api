@@ -3,6 +3,7 @@
 namespace Anibalealvarezs\FacebookGraphApi;
 
 use Anibalealvarezs\ApiSkeleton\Clients\NoAuthClient;
+use Anibalealvarezs\FacebookGraphApi\Support\FacebookErrorClassifier;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -17,21 +18,7 @@ class FacebookGraphAuth extends NoAuthClient
             guzzleClient: $guzzleClient,
         );
         $this->setResponseErrorDetector('error');
-        $this->setRateLimitDetector([
-            '(#4)',
-            '(#17)',
-            '(#32)',
-            '(#613)',
-            'Application request limit reached',
-            'Rate limit reached',
-            'Too many requests',
-            'is_transient":true',
-            'is_transient\":true',
-            '"code":4',
-            '"code":17',
-            '"code":32',
-            '"code":613'
-        ]);
+        $this->setRateLimitDetector([FacebookErrorClassifier::class, 'isRetryable']);
         $this->setErrorMessageParser(fn ($data) => $data['error']['message'] ?? json_encode($data));
     }
 

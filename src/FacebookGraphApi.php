@@ -27,6 +27,7 @@
     use Anibalealvarezs\FacebookGraphApi\Enums\MetricTimeframe;
     use Anibalealvarezs\FacebookGraphApi\Enums\MetricType;
     use Anibalealvarezs\FacebookGraphApi\Enums\PagePermission;
+    use Anibalealvarezs\FacebookGraphApi\Support\FacebookErrorClassifier;
     use Anibalealvarezs\FacebookGraphApi\Enums\FacebookPostField;
     use Anibalealvarezs\FacebookGraphApi\Enums\FacebookPostPermission;
     use Anibalealvarezs\FacebookGraphApi\Enums\TokenSample;
@@ -156,21 +157,7 @@
             }
 
             $this->setResponseErrorDetector('error');
-            $this->setRateLimitDetector([
-                '(#4)',
-                '(#17)',
-                '(#32)',
-                '(#613)',
-                'Application request limit reached',
-                'Rate limit reached',
-                'Too many requests',
-                'is_transient":true',
-                'is_transient\":true',
-                '"code":4',
-                '"code":17',
-                '"code":32',
-                '"code":613'
-            ]);
+            $this->setRateLimitDetector([FacebookErrorClassifier::class, 'isRetryable']);
             $this->setErrorMessageParser(fn($data) => isset($data['error']) ?
                 (($data['error']['message'] ?? 'Unknown Error')." (Type: ".($data['error']['type'] ?? 'N/A').", Code: ".($data['error']['code'] ?? 'N/A').")") :
                 json_encode($data)
@@ -2338,19 +2325,28 @@
          *
          * @param string $postId
          * @param int $limit
+         * @param MetricSet $metricSet
+         * @param array $customMetrics
+         * @param array|null $postData
          * @return array Insights data.
-         * @throws GuzzleException
          * @throws Exception
          */
         public function getFacebookPostInsights(
             string    $postId,
             int       $limit = 100,
             MetricSet $metricSet = MetricSet::BASIC,
-            array     $customMetrics = []
+            array     $customMetrics = [],
+            ?array    $postData = null,
         ): array
         {
 
             $metrics = $this->resolveMetrics($metricSet, $customMetrics, FacebookPostPermission::DEFAULT->insightsFields($metricSet));
+            $metricsToTry = array_values(array_filter(array_map('trim', explode(',', $metrics))));
+            $metricsToTry = $this->filterFacebookPostMetricsForAsset($metricsToTry, $postData, $postId);
+            if ($metricsToTry === []) {
+                return ['data' => []];
+            }
+            $metrics = implode(',', $metricsToTry);
 
             try {
                 return $this->executePostInsightsRequest($postId, $metrics, $limit);
@@ -2458,6 +2454,57 @@
             }
 
             return $results;
+        }
+
+        /**
+         * @param array<int, string> $metrics
+         * @param array<string, mixed>|null $postData
+         * @return array<int, string>
+         */
+        protected function filterFacebookPostMetricsForAsset(array $metrics, ?array $postData, string $postId): array
+        {
+            if (empty($postData)) {
+                return $metrics;
+            }
+
+            $mediaType = strtoupper(trim((string)($postData['media_type'] ?? $postData['type'] ?? '')));
+            $mediaProductType = strtoupper(trim((string)($postData['media_product_type'] ?? '')));
+
+            // IG feed/static posts often reject navigation/video-derived metrics in a batched request.
+            $isInstagramFeedStatic = $mediaProductType === 'FEED' && in_array($mediaType, ['IMAGE', 'CAROUSEL_ALBUM'], true);
+
+            $unsupported = [];
+            if ($isInstagramFeedStatic) {
+                $unsupported = array_merge($unsupported, [
+                    'post_clicks',
+                    'post_video_views',
+                    'post_video_avg_time_watched',
+                ]);
+            }
+
+            if ($mediaProductType !== 'REELS') {
+                $unsupported[] = 'post_video_avg_time_watched';
+            }
+
+            if (!in_array($mediaType, ['VIDEO', 'REEL'], true)) {
+                $unsupported[] = 'post_video_views';
+            }
+
+            $unsupported = array_values(array_unique($unsupported));
+            if ($unsupported === []) {
+                return $metrics;
+            }
+
+            $filtered = [];
+            foreach ($metrics as $metric) {
+                if (in_array($metric, $unsupported, true)) {
+                    $this->logInfo("FB API: Metric '$metric' prefiltered for Post $postId (media_type={$mediaType}, media_product_type={$mediaProductType}).");
+                    continue;
+                }
+                $filtered[] = $metric;
+            }
+
+            return $filtered;
         }
 
         protected function executePostInsightsRequest(string $postId, string $metrics, int $limit = 100): array
@@ -3237,36 +3284,38 @@
                 throw new InvalidArgumentException('Either `metricGroup` or `metric` must be provided.');
             }
 
-            $metricsArray = is_array($metrics) ? $metrics : ($metrics ? [$metrics] : $metricGroup->getMetrics());
-            foreach ($metricsArray as $m) {
-                if ($m instanceof Metric) {
-                    if ($metricType && !empty($m->allowedMetricTypes()) && !in_array($metricType, $m->allowedMetricTypes())) {
-                        throw new InvalidArgumentException("Invalid metric type provided for metric.");
-                    }
-                    if ($metricPeriod && !empty($m->allowedPeriods()) && !in_array($metricPeriod, $m->allowedPeriods())) {
-                        throw new InvalidArgumentException("Invalid metric period provided for metric.");
-                    }
-                    if ($metricTimeframe && !in_array($metricTimeframe, $m->allowedTimeframes())) {
-                        throw new InvalidArgumentException("Invalid metric timeframe provided for metric.");
-                    }
-                    if ($metricBreakdown) {
-                        $breakdowns = is_array($metricBreakdown) ? $metricBreakdown : [$metricBreakdown];
-                        $allowed = $m->allowedBreakdowns();
-                        if (!empty($allowed)) {
-                            $found = false;
-                            $breakdownValues = array_map(fn($b) => $b->value, $breakdowns);
-                            foreach ($allowed as $allowedGroup) {
-                                $allowedGroupValues = array_map(fn($b) => $b->value, $allowedGroup);
-                                if (count(array_diff($breakdownValues, $allowedGroupValues)) === 0 && count(array_diff($allowedGroupValues, $breakdownValues)) === 0) {
-                                    $found = true;
-                                    break;
+            if ($metrics) {
+                $metricsArray = is_array($metrics) ? $metrics : [$metrics];
+                foreach ($metricsArray as $m) {
+                    if ($m instanceof Metric) {
+                        if ($metricType && !empty($m->allowedMetricTypes()) && !in_array($metricType, $m->allowedMetricTypes())) {
+                            throw new InvalidArgumentException("Invalid metric type provided for metric.");
+                        }
+                        if ($metricPeriod && !empty($m->allowedPeriods()) && !in_array($metricPeriod, $m->allowedPeriods())) {
+                            throw new InvalidArgumentException("Invalid metric period provided for metric.");
+                        }
+                        if ($metricTimeframe && !in_array($metricTimeframe, $m->allowedTimeframes())) {
+                            throw new InvalidArgumentException("Invalid metric timeframe provided for metric.");
+                        }
+                        if ($metricBreakdown) {
+                            $breakdowns = is_array($metricBreakdown) ? $metricBreakdown : [$metricBreakdown];
+                            $allowed = $m->allowedBreakdowns();
+                            if (!empty($allowed)) {
+                                $found = false;
+                                $breakdownValues = array_map(fn($b) => $b->value, $breakdowns);
+                                foreach ($allowed as $allowedGroup) {
+                                    $allowedGroupValues = array_map(fn($b) => $b->value, $allowedGroup);
+                                    if (count(array_diff($breakdownValues, $allowedGroupValues)) === 0 && count(array_diff($allowedGroupValues, $breakdownValues)) === 0) {
+                                        $found = true;
+                                        break;
+                                    }
                                 }
-                            }
-                            if (!$found) {
+                                if (!$found) {
+                                    throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
+                                }
+                            } elseif (!empty($breakdowns)) {
                                 throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
                             }
-                        } elseif (!empty($breakdowns)) {
-                            throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
                         }
                     }
                 }
@@ -3274,6 +3323,8 @@
 
             $query = [
                 'fields' => 'name,period,total_value,values,title',
+                'since'  => $since,
+                'until'  => $until,
             ];
 
             if ($metrics) {
@@ -3285,16 +3336,12 @@
 
             if ($metricType) $query['metric_type'] = $metricType->value;
             if ($metricPeriod) $query['period'] = $metricPeriod->value;
+            if ($timezone) $query['timezone'] = $timezone;
             if ($metricBreakdown) $query['breakdown'] = is_array($metricBreakdown) ? implode(',', array_map(fn($b) => $b->value, $metricBreakdown)) : $metricBreakdown->value;
 
             foreach (['metric_timeframe', 'timeframe'] as $key) {
                 if ($metricTimeframe) $query[$key] = $metricTimeframe->value;
             }
-
-            $query['since'] = Carbon::parse($since, $timezone)->timestamp;
-            $query['until'] = Carbon::parse($until, $timezone)->timestamp;
-
-            if ($timezone) $query['timezone'] = $timezone;
 
             $this->fetchAllAndProcess(
                 callback: $callback,
