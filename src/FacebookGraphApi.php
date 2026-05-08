@@ -510,10 +510,10 @@
             TokenSample $tokenSample = TokenSample::USER
         ): void
         {
-            $after = null;
+            $prevAfter = null;
             do {
-                if ($after) {
-                    $query['after'] = $after;
+                if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
+                    break;
                 }
 
                 $response = $this->performRequest(
