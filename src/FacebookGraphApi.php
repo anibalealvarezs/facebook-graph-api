@@ -510,6 +510,7 @@
             TokenSample $tokenSample = TokenSample::USER
         ): void
         {
+            $after = null;
             $prevAfter = null;
             do {
                 if (!$this->updatePaginationQuery($query, $after, $prevAfter)) {
