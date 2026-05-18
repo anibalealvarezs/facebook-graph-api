@@ -60,6 +60,8 @@
         protected int $sleep = 1000000;
         protected ?FacebookGraphAuth $auth;
         protected array $storedTokens = [];
+        protected ?TokenSample $activeTokenSample = null;
+        protected bool $inParentPerformRequest = false;
 
         /**
          * @param string $userId
@@ -456,35 +458,52 @@
             array        $customErrors = [],
             bool         $ignoreAuth = false,
             mixed        $onFailure = null,
-            TokenSample  $tokenSample = TokenSample::USER,
+            ?TokenSample $tokenSample = null,
         ): mixed
         {
-            $this->setSampleBasedToken($tokenSample);
+            if ($tokenSample !== null) {
+                $resolvedTokenSample = $tokenSample;
+            } elseif ($this->inParentPerformRequest && $this->activeTokenSample !== null) {
+                $resolvedTokenSample = $this->activeTokenSample;
+            } else {
+                $resolvedTokenSample = TokenSample::USER;
+            }
+
+            $this->activeTokenSample = $resolvedTokenSample;
+
+            $this->setSampleBasedToken($resolvedTokenSample);
 
             if ($this->logger) {
                 $this->logger->debug("FB SDK Request: $method ".($baseUrl ?: $this->getBaseUrl()).$endpoint." - Query: ".json_encode($query));
             }
 
-            $result = parent::performRequest(
-                method: $method,
-                endpoint: $endpoint,
-                query: $query,
-                body: $body,
-                form_params: $form_params,
-                baseUrl: $baseUrl,
-                headers: $headers,
-                additionalHeaders: $additionalHeaders,
-                cookies: $cookies,
-                verify: $verify,
-                allowNewToken: $allowNewToken,
-                pathToSave: $pathToSave,
-                stream: $stream,
-                errorMessageNesting: $errorMessageNesting,
-                sleep: $sleep,
-                customErrors: $customErrors,
-                ignoreAuth: $ignoreAuth,
-                onFailure: $onFailure,
-            );
+            $wasInParent = $this->inParentPerformRequest;
+            $this->inParentPerformRequest = true;
+
+            try {
+                $result = parent::performRequest(
+                    method: $method,
+                    endpoint: $endpoint,
+                    query: $query,
+                    body: $body,
+                    form_params: $form_params,
+                    baseUrl: $baseUrl,
+                    headers: $headers,
+                    additionalHeaders: $additionalHeaders,
+                    cookies: $cookies,
+                    verify: $verify,
+                    allowNewToken: $allowNewToken,
+                    pathToSave: $pathToSave,
+                    stream: $stream,
+                    errorMessageNesting: $errorMessageNesting,
+                    sleep: $sleep,
+                    customErrors: $customErrors,
+                    ignoreAuth: $ignoreAuth,
+                    onFailure: $onFailure,
+                );
+            } finally {
+                $this->inParentPerformRequest = $wasInParent;
+            }
 
             if ($this->logger && $result instanceof \Psr\Http\Message\ResponseInterface) {
                 $body = $result->getBody()->getContents();

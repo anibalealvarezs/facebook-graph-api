@@ -19,6 +19,7 @@
     use Anibalealvarezs\FacebookGraphApi\Enums\AdsetPermission;
     use Anibalealvarezs\FacebookGraphApi\Enums\AdPermission;
     use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
+    use Anibalealvarezs\FacebookGraphApi\Enums\TokenSample;
     use Anibalealvarezs\FacebookGraphApi\FacebookGraphAuth;
     use Anibalealvarezs\FacebookGraphApi\Support\FacebookErrorClassifier;
     use Anibalealvarezs\FacebookGraphApi\Exceptions\FacebookRateLimitException;
@@ -1826,5 +1827,55 @@
 
             $lastRequest = $mock->getLastRequest();
             $this->assertStringContainsString('metric=post_clicks%2Cpost_impressions', (string)$lastRequest->getUri());
+        }
+
+        /**
+         * @throws GuzzleException
+         * @throws Exception
+         */
+        public function testTokenSamplePreservedOnRetry(): void
+        {
+            $errorResponse = [
+                'error' => [
+                    'message' => '(#4) Application request limit reached',
+                    'type'    => 'OAuthException',
+                    'code'    => 4,
+                ]
+            ];
+            $headers = [
+                'X-App-Usage' => '{"call_count": 92, "total_cputime": 5, "total_time": 10}'
+            ];
+            $responseData = ['id' => '123'];
+
+            $mock = new MockHandler([
+                new Response(400, $headers, json_encode($errorResponse)),
+                new Response(200, [], json_encode($responseData)),
+            ]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                longLivedPageAccesstoken: $this->longLivedPageAccessToken,
+                guzzleClient: $guzzle
+            );
+
+            // We make a request with TokenSample::PAGE
+            $response = $client->performRequest(
+                method: 'GET',
+                endpoint: 'me',
+                tokenSample: TokenSample::PAGE
+            );
+
+            // The result should succeed on the second try
+            $this->assertEquals($responseData, json_decode($response->getBody()->getContents(), true));
+
+            // Verify that the retried request used the Page Access Token
+            $lastRequest = $mock->getLastRequest();
+            $this->assertEquals('Bearer '.$this->longLivedPageAccessToken, $lastRequest->getHeaderLine('Authorization'));
         }
     }
