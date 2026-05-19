@@ -2393,6 +2393,20 @@
             }
             $metrics = implode(',', $metricsToTry);
 
+            $originalRequested = array_map('trim', explode(',', $metrics));
+
+            // Simple mapping table for FB -> IG/Reel metrics
+            $mapping = [
+                'post_impressions_unique'      => ['reach', 'impressions'],
+                'post_impressions'             => ['impressions', 'reach'],
+                'post_engagements'             => ['total_interactions', 'likes'],
+                'post_reactions_by_type_total' => ['likes', 'total_interactions'],
+                'post_media_view'              => ['views', 'plays'],
+                'post_video_views'             => ['video_views', 'plays'],
+                'post_video_avg_time_watched'  => ['ig_reels_avg_watch_time', 'video_avg_time_watched'],
+                'post_clicks'                  => ['navigation'],
+            ];
+
             try {
                 return $this->executePostInsightsRequest($postId, $metrics, $limit);
             } catch (Exception $e) {
@@ -2405,19 +2419,6 @@
                     $parts = explode('must be one of the following values:', $msg);
                     if (isset($parts[1])) {
                         $metaAllowed = array_map('trim', explode(',', (string)$parts[1]));
-                        $originalRequested = array_map('trim', explode(',', $metrics));
-
-                        // Simple mapping table for FB -> IG/Reel metrics
-                        $mapping = [
-                            'post_impressions_unique'      => ['reach', 'impressions'],
-                            'post_impressions'             => ['impressions', 'reach'],
-                            'post_engagements'             => ['total_interactions', 'likes'],
-                            'post_reactions_by_type_total' => ['likes', 'total_interactions'],
-                            'post_media_view'              => ['views', 'plays'],
-                            'post_video_views'             => ['video_views', 'plays'],
-                            'post_video_avg_time_watched'  => ['ig_reels_avg_watch_time', 'video_avg_time_watched'],
-                            'post_clicks'                  => ['navigation'],
-                        ];
 
                         $filteredMetrics = [];
                         foreach ($originalRequested as $req) {
@@ -2452,39 +2453,29 @@
             $metricsArray = array_map('trim', explode(',', $metrics));
             $results = ['data' => []];
 
-            // Inverse mapping for aliasing back results
-            $inverseMapping = [];
-            if (isset($filteredMetrics)) {
-                // We need to know which IG metric corresponds to which original FB metric
-                // This is simplified for the loop below
-            }
 
             foreach ($metricsArray as $metric) {
                 try {
                     $resSingle = $this->executePostInsightsRequest($postId, $metric, $limit);
                     if ($resSingle && !empty($resSingle['data'])) {
                         // If this was a fallback metric, alias it back to original name if needed
-                        if (isset($mapping)) {
-                            foreach ($mapping as $original => $candidates) {
-                                if (in_array($metric, $candidates) && in_array($original, $originalRequested)) {
-                                    foreach ($resSingle['data'] as &$item) {
-                                        if ($item['name'] === $metric) {
-                                            $item['name'] = $original;
-                                            $item['fallback_from'] = $metric;
-                                        }
+                        foreach ($mapping as $original => $candidates) {
+                            if (in_array($metric, $candidates) && in_array($original, $originalRequested)) {
+                                foreach ($resSingle['data'] as &$item) {
+                                    if ($item['name'] === $metric) {
+                                        $item['name'] = $original;
+                                        $item['fallback_from'] = $metric;
                                     }
-                                    break;
                                 }
+                                break;
                             }
                         }
                         // Handle prefix removal fallback mapping back
-                        if (isset($originalRequested)) {
-                            foreach ($originalRequested as $orig) {
-                                if (str_replace('post_', '', $orig) === $metric) {
-                                    foreach ($resSingle['data'] as &$item) {
-                                        if ($item['name'] === $metric) {
-                                            $item['name'] = $orig;
-                                        }
+                        foreach ($originalRequested as $orig) {
+                            if (str_replace('post_', '', $orig) === $metric) {
+                                foreach ($resSingle['data'] as &$item) {
+                                    if ($item['name'] === $metric) {
+                                        $item['name'] = $orig;
                                     }
                                 }
                             }
