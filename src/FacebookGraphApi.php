@@ -585,6 +585,31 @@
             return parent::handleException($exception, $onFailure);
         }
 
+        public function getNewToken(): ?string
+        {
+            $newToken = parent::getNewToken();
+
+            if ($newToken) {
+                // Determine which token was just refreshed based on the active sample
+                // and update the local properties so that setSampleBasedToken() doesn't
+                // overwrite it with the old expired token during the recursive retry.
+                if ($this->activeTokenSample === TokenSample::PAGE) {
+                    $this->setLongLivedPageAccesstoken($newToken);
+                    $this->setPageAccesstoken($newToken);
+                } elseif ($this->activeTokenSample === TokenSample::APP) {
+                    $this->setAppAccessToken($newToken);
+                } elseif ($this->activeTokenSample === TokenSample::CLIENT) {
+                    $this->setLongLivedClientAccesstoken($newToken);
+                    $this->setClientAccesstoken($newToken);
+                } else {
+                    $this->setLongLivedUserAccessToken($newToken);
+                    $this->setUserAccessToken($newToken);
+                }
+            }
+
+            return $newToken;
+        }
+
         /**
          * @throws GuzzleException
          * @throws Exception

@@ -1878,4 +1878,76 @@
             $lastRequest = $mock->getLastRequest();
             $this->assertEquals('Bearer '.$this->longLivedPageAccessToken, $lastRequest->getHeaderLine('Authorization'));
         }
+
+        /**
+         * @throws GuzzleException
+         */
+        public function testGetNewTokenMapsTokenToCorrectSample(): void
+        {
+            $mock = new MockHandler([]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+            
+            $callback = function() { return 'refreshed_token'; };
+
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                guzzleClient: $guzzle,
+                tokenRefresherCallback: $callback
+            );
+
+            $ref = new \ReflectionProperty($client, 'activeTokenSample');
+            $ref->setAccessible(true);
+            
+            // Test PAGE sample
+            $ref->setValue($client, TokenSample::PAGE);
+            $newToken = $client->getNewToken();
+            
+            $this->assertEquals('refreshed_token', $newToken);
+            $this->assertEquals('refreshed_token', $client->getLongLivedPageAccesstoken());
+            $this->assertEquals('refreshed_token', $client->getPageAccesstoken());
+            // Verify other samples remain unchanged
+            $this->assertEquals($this->longLivedUserAccessToken, $client->getLongLivedUserAccessToken());
+            $this->assertNull($client->getAppAccessToken());
+            $this->assertNull($client->getClientAccesstoken());
+
+            // Reset client state for next test
+            $client->setLongLivedPageAccesstoken(null);
+            $client->setPageAccesstoken(null);
+
+            // Test USER sample
+            $ref->setValue($client, TokenSample::USER);
+            $newToken2 = $client->getNewToken();
+            
+            $this->assertEquals('refreshed_token', $newToken2);
+            $this->assertEquals('refreshed_token', $client->getLongLivedUserAccessToken());
+            $this->assertEquals('refreshed_token', $client->getUserAccessToken());
+            // Verify other samples remain unchanged
+            $this->assertNull($client->getLongLivedPageAccesstoken());
+            $this->assertNull($client->getAppAccessToken());
+            $this->assertNull($client->getClientAccesstoken());
+            
+            // Test APP sample
+            $ref->setValue($client, TokenSample::APP);
+            $newToken3 = $client->getNewToken();
+            
+            $this->assertEquals('refreshed_token', $newToken3);
+            $this->assertEquals('refreshed_token', $client->getAppAccessToken());
+            $this->assertNull($client->getLongLivedPageAccesstoken());
+            $this->assertEquals('refreshed_token', $client->getLongLivedUserAccessToken()); // From previous step
+            $this->assertNull($client->getClientAccesstoken());
+            
+            // Test CLIENT sample
+            $ref->setValue($client, TokenSample::CLIENT);
+            $newToken4 = $client->getNewToken();
+            
+            $this->assertEquals('refreshed_token', $newToken4);
+            $this->assertEquals('refreshed_token', $client->getClientAccesstoken());
+            $this->assertEquals('refreshed_token', $client->getLongLivedClientAccesstoken());
+            $this->assertNull($client->getLongLivedPageAccesstoken());
+        }
     }
