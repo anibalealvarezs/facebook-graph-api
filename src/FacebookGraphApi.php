@@ -105,6 +105,8 @@
             string             $apiVersion = 'v25.0',
             int                $sleep = 200000,
             ?LoggerInterface   $logger = null,
+            /** @var callable|null */
+            $tokenRefresherCallback = null,
         )
         {
             $this->logger = $logger;
@@ -117,6 +119,7 @@
                 ],
                 guzzleClient: $guzzleClient,
                 logger: $logger,
+                tokenRefresherCallback: $tokenRefresherCallback,
             );
 
             if (!$userId) {
