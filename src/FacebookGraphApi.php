@@ -3728,4 +3728,46 @@
         {
             return str_starts_with($accountId, 'act_') ? $accountId : 'act_'.$accountId;
         }
+
+        /**
+         * @param string $pageId
+         * @return array
+         * @throws GuzzleException
+         */
+        public function getPageLeadgenForms(string $pageId): array
+        {
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: $pageId . '/leadgen_forms',
+                tokenSample: TokenSample::PAGE
+            );
+
+            return json_decode($response->getBody()->getContents(), true);
+        }
+
+        /**
+         * @param string $formId
+         * @param int $limit
+         * @param string|null $after
+         * @return array
+         * @throws GuzzleException
+         */
+        public function getFormLeads(string $formId, int $limit = 100, ?string $after = null): array
+        {
+            $query = [
+                'limit' => $limit,
+            ];
+            if ($after) {
+                $query['after'] = $after;
+            }
+
+            $response = $this->performRequest(
+                method: 'GET',
+                endpoint: $formId . '/leads',
+                query: $query,
+                tokenSample: TokenSample::PAGE
+            );
+
+            return json_decode($response->getBody()->getContents(), true);
+        }
     }
