@@ -1950,4 +1950,60 @@
             $this->assertEquals('refreshed_token', $client->getLongLivedClientAccesstoken());
             $this->assertNull($client->getLongLivedPageAccesstoken());
         }
+
+        /**
+         * @throws GuzzleException
+         */
+        public function testGetPageLeadgenFormsSuccess(): void
+        {
+            $responseData = ['data' => [['id' => 'form123', 'name' => 'Test Leadgen Form']]];
+            $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                longLivedPageAccesstoken: $this->longLivedPageAccessToken,
+                guzzleClient: $guzzle
+            );
+
+            $result = $client->getPageLeadgenForms('p123');
+
+            $this->assertEquals($responseData, $result);
+            $lastRequest = $mock->getLastRequest();
+            $this->assertEquals('GET', $lastRequest->getMethod());
+            $this->assertStringContainsString('v25.0/p123/leadgen_forms', (string)$lastRequest->getUri());
+        }
+
+        /**
+         * @throws GuzzleException
+         */
+        public function testGetFormLeadsSuccess(): void
+        {
+            $responseData = ['data' => [['id' => 'lead123', 'field_data' => []]]];
+            $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                longLivedPageAccesstoken: $this->longLivedPageAccessToken,
+                guzzleClient: $guzzle
+            );
+
+            $result = $client->getFormLeads('form123', 100, 'after_cursor_abc');
+
+            $this->assertEquals($responseData, $result);
+            $lastRequest = $mock->getLastRequest();
+            $this->assertEquals('GET', $lastRequest->getMethod());
+            $this->assertStringContainsString('v25.0/form123/leads', (string)$lastRequest->getUri());
+            $this->assertStringContainsString('limit=100', (string)$lastRequest->getUri());
+            $this->assertStringContainsString('after=after_cursor_abc', (string)$lastRequest->getUri());
+        }
     }
