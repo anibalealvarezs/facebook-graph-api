@@ -19,7 +19,6 @@ enum MediaType: string
             self::VIDEO => 'comments,likes,reach,saved,shares,total_interactions,views,reposts',
             self::IMAGE,
             self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,views,reposts',
-            default => 'comments,likes,reach,saved,shares,total_interactions,views,reposts',
         };
 
         return match ($set) {

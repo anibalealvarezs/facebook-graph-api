@@ -130,8 +130,7 @@ enum Metric: string
             self::OBJECTIVE_RESULTS,
             self::COST_PER_OBJECTIVE_RESULT,
             self::RESULTS,
-            self::RESULT_RATE => [],
-            default => []
+            self::RESULT_RATE => []
         };
     }
 
@@ -267,8 +266,7 @@ enum Metric: string
             self::OBJECTIVE_RESULTS,
             self::COST_PER_OBJECTIVE_RESULT,
             self::RESULTS,
-            self::RESULT_RATE => [],
-            default => [],
+            self::RESULT_RATE => []
         };
     }
 
@@ -388,8 +386,7 @@ enum Metric: string
             self::OBJECTIVE_RESULTS,
             self::COST_PER_OBJECTIVE_RESULT,
             self::RESULTS,
-            self::RESULT_RATE => MetricGroup::OTHERS,
-            default => MetricGroup::OTHERS,
+            self::RESULT_RATE => MetricGroup::OTHERS
         };
     }
 }

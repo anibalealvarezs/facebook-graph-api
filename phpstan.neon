@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - vendor
+    scanDirectories:
+        - vendor/anibalealvarezs/oauth-v1/src
+        - vendor/anibalealvarezs/api-client-skeleton/src

@@ -5,6 +5,7 @@
 /api-skeleton/
 /.phpunit.result.cache
 /*.log
-/phpstan.neon
 /.vscode/
 **/.php-cs-fixer.dist.php
+
+.copilot/composer-path-repositories.backup.json
