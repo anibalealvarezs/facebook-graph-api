@@ -3386,7 +3386,7 @@
                                 if (!$found) {
                                     throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
                                 }
-                            } elseif (!empty($breakdowns)) {
+                            } else {
                                 throw new InvalidArgumentException("Invalid metric breakdown provided for metric.");
                             }
                         }
@@ -3480,7 +3480,7 @@
          * @param string $since
          * @param string $until
          * @param string $timezone
-         * @param Metric|Metric[]|null $metrics
+         * @param InstagramAccountMetric|InstagramAccountMetric[]|null $metrics
          * @param MetricGroup|null $metricGroup
          * @param MetricBreakdown|MetricBreakdown[]|null $metricBreakdown
          * @return array Insights data.
@@ -3494,7 +3494,7 @@
             string                            $timezone = 'America/Caracas',
             InstagramAccountMetric|array|null $metrics = null,
             ?MetricGroup                      $metricGroup = null,
-            InstagramAccountMetric|array|null $metricBreakdown = null,
+            MetricBreakdown|array|null        $metricBreakdown = null,
         ): array
         {
             if (!$metricGroup && empty(array_intersect($metrics, [InstagramAccountMetric::FOLLOWER_DEMOGRAPHICS, InstagramAccountMetric::REACHED_AUDIENCE_DEMOGRAPHICS, InstagramAccountMetric::ENGAGED_AUDIENCE_DEMOGRAPHICS]))) {
@@ -3555,7 +3555,7 @@
          */
         protected function isValidMetricType(MetricType $metricType, \BackedEnum|MetricGroup|array $data): bool
         {
-            $metrics = ($data instanceof \BackedEnum) ? [$data] : (($data instanceof MetricGroup) ? $data->getMetrics() : (is_array($data) ? $data : [$data]));
+            $metrics = is_array($data) ? $data : (($data instanceof MetricGroup) ? $data->getMetrics() : [$data]);
 
             foreach ($metrics as $metric) {
                 if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedMetricTypes')) {
@@ -3578,7 +3578,7 @@
          */
         protected function isValidMetricPeriod(MetricPeriod $metricPeriod, \BackedEnum|MetricGroup|array $data): bool
         {
-            $metrics = ($data instanceof \BackedEnum) ? [$data] : (($data instanceof MetricGroup) ? $data->getMetrics() : (is_array($data) ? $data : [$data]));
+            $metrics = is_array($data) ? $data : (($data instanceof MetricGroup) ? $data->getMetrics() : [$data]);
 
             foreach ($metrics as $metric) {
                 if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedPeriods')) {
@@ -3601,7 +3601,7 @@
          */
         protected function isValidMetricTimeframe(MetricTimeframe $metricTimeframe, \BackedEnum|MetricGroup|array $data): bool
         {
-            $metrics = ($data instanceof \BackedEnum) ? [$data] : (($data instanceof MetricGroup) ? $data->getMetrics() : (is_array($data) ? $data : [$data]));
+            $metrics = is_array($data) ? $data : (($data instanceof MetricGroup) ? $data->getMetrics() : [$data]);
 
             foreach ($metrics as $metric) {
                 if ($metric instanceof \BackedEnum && method_exists($metric, 'allowedTimeframes')) {

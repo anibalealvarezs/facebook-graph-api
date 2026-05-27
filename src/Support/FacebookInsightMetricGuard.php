@@ -65,7 +65,7 @@
 
             $unsupported = [];
             foreach (self::EXCLUSION_MATRIX[$profile] ?? self::EXCLUSION_MATRIX['unknown'] as $family) {
-                $unsupported = array_merge($unsupported, self::SPECIALIZED_METRIC_FAMILIES[$family] ?? []);
+                $unsupported = array_merge($unsupported, self::SPECIALIZED_METRIC_FAMILIES[$family]);
             }
 
             return array_values(array_unique($unsupported));

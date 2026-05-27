@@ -118,6 +118,7 @@ class FacebookGraphApiLiveTest extends TestCase
     {
         $this->markTestSkipped('Skipping testGetMyPagesBybatch due to Facebook Graph API unknown error');
 
+        // @phpstan-ignore-next-line
         $permissions = [
             PagePermission::PAGES_SHOW_LIST,
         ];
@@ -609,6 +610,7 @@ class FacebookGraphApiLiveTest extends TestCase
     {
         $this->markTestSkipped('Skipping testCreateCustomAudience due to Missing Permissions in test env');
         
+        // @phpstan-ignore-next-line
         $adAccounts = $this->api->getMyAdAccounts();
         if (empty($adAccounts['data'])) {
             $this->markTestSkipped('No Ad Accounts found for testing');
