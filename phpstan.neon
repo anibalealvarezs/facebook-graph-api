@@ -6,5 +6,5 @@ parameters:
     excludePaths:
         - vendor
     scanDirectories:
-        - ../OAuth-v1/src
-        - ../api-client-skeleton/src
+        - vendor/anibalealvarezs/oauth-v1/src
+        - vendor/anibalealvarezs/api-client-skeleton/src
