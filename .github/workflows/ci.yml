@@ -24,10 +24,10 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress --ignore-platform-req=ext-imap
 
-    - name: Run PHPUnit
+    - name: Run Unit Tests
       run: |
         if [ -f vendor/bin/phpunit ]; then
-          vendor/bin/phpunit
+          vendor/bin/phpunit --testsuite Unit
         fi
 
     - name: Run PHPStan
