@@ -3438,6 +3438,7 @@
         public function getDailyInstagramAccountTotalValueInsights(
             string $instagramAccountId,
             string $since,
+            string $until,
             string $timezone = 'America/Caracas',
             int    $option = 1,
         ): array
@@ -3461,7 +3462,7 @@
             return $this->getInstagramAccountInsights(
                 instagramAccountId: $instagramAccountId,
                 since: $since,
-                until: Carbon::parse($since)->addDay()->format('Y-m-d'),
+                until: $until,
                 timezone: $timezone,
                 metrics: $metrics,
                 metricType: MetricType::TOTAL_VALUE,
