@@ -3394,10 +3394,15 @@
                 }
             }
 
+            // The IG insights endpoint with metric_type=total_value requires Unix timestamps
+            // for since/until. Date strings (Y-m-d) cause the API to return data:[] silently.
+            $sinceTs = is_numeric($since) ? (int)$since : strtotime($since);
+            $untilTs = is_numeric($until) ? (int)$until : (strtotime($until) + 86399); // end of day
+
             $query = [
                 'fields' => 'name,period,total_value,values,title',
-                'since'  => $since,
-                'until'  => $until,
+                'since'  => $sinceTs,
+                'until'  => $untilTs,
             ];
 
             if ($metrics) {
