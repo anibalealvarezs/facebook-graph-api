@@ -3459,7 +3459,7 @@
                 default => [],
             };
 
-            return $this->getInstagramAccountInsights(
+            $insights = $this->getInstagramAccountInsights(
                 instagramAccountId: $instagramAccountId,
                 since: $since,
                 until: $until,
@@ -3469,6 +3469,26 @@
                 metricPeriod: MetricPeriod::DAY,
                 metricBreakdown: $metricBreakdown,
             );
+
+            $returnedMetrics = array_map(fn($m) => $m['name'] ?? '', $insights['data'] ?? []);
+            foreach ($metrics as $metric) {
+                $metricName = $metric instanceof \BackedEnum ? $metric->value : $metric;
+                if (!in_array($metricName, $returnedMetrics)) {
+                    $insights['data'][] = [
+                        'name'        => $metricName,
+                        'period'      => 'day',
+                        'title'       => ucwords(str_replace('_', ' ', $metricName)),
+                        'description' => '',
+                        'id'          => "{$instagramAccountId}/insights/{$metricName}/day",
+                        'total_value' => [
+                            'value'      => 0,
+                            'breakdowns' => []
+                        ]
+                    ];
+                }
+            }
+
+            return $insights;
         }
 
         /**
