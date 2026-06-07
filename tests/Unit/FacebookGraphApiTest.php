@@ -1508,6 +1508,51 @@
 
         /**
          * @throws GuzzleException
+         * @throws Exception
+         */
+        public function testGetFacebookPageInsightsIncludesUntilBoundaryDay(): void
+        {
+            $responseData = [
+                'data'   => [
+                    [
+                        'name'   => 'page_impressions_unique',
+                        'period' => 'day',
+                        'values' => [
+                            ['value' => 123, 'end_time' => '2026-05-08T07:00:00+0000'],
+                        ],
+                    ],
+                ],
+                'paging' => ['cursors' => ['after' => null]],
+            ];
+
+            $mock = new MockHandler([new Response(200, [], json_encode($responseData))]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                pageAccesstoken: $this->pageAccessToken,
+                longLivedPageAccesstoken: $this->longLivedPageAccessToken,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                guzzleClient: $guzzle
+            );
+
+            $client->getFacebookPageInsights(
+                pageId: '147613761768682',
+                since: '2026-05-07',
+                until: '2026-05-13',
+            );
+
+            $lastRequest = $mock->getLastRequest();
+            $uri = (string)$lastRequest->getUri();
+            $this->assertStringContainsString('since=2026-05-07', $uri);
+            $this->assertStringContainsString('until=2026-05-14', $uri);
+        }
+
+        /**
+         * @throws GuzzleException
          */
         public function testGetCampaignsAllPaginated(): void
         {

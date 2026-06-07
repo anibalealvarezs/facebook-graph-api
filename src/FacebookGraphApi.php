@@ -2331,7 +2331,7 @@
             ];
 
             if ($since) $query['since'] = Carbon::parse($since)->format('Y-m-d');
-            if ($until) $query['until'] = Carbon::parse($until)->format('Y-m-d');
+            if ($until) $query['until'] = Carbon::parse($until)->addDay()->format('Y-m-d');
 
             $this->fetchAllAndProcess(
                 callback: $callback,
@@ -2350,7 +2350,7 @@
             ];
 
             if ($since) $query['since'] = Carbon::parse($since)->format('Y-m-d');
-            if ($until) $query['until'] = Carbon::parse($until)->format('Y-m-d');
+            if ($until) $query['until'] = Carbon::parse($until)->addDay()->format('Y-m-d');
 
             $response = $this->performRequest(
                 method: 'GET',
