@@ -16,9 +16,9 @@ enum MediaType: string
     {
         $metrics = match ($this) {
             self::REEL => 'comments,likes,reach,saved,shares,total_interactions,views,ig_reels_avg_watch_time,ig_reels_video_view_total_time',
-            self::VIDEO => 'comments,likes,reach,saved,shares,total_interactions,views,reposts',
+            self::VIDEO => 'comments,follows,likes,reach,saved,shares,total_interactions,views,reposts',
             self::IMAGE,
-            self::CAROUSEL_ALBUM => 'comments,likes,reach,saved,shares,total_interactions,views,reposts',
+            self::CAROUSEL_ALBUM => 'comments,follows,likes,reach,saved,shares,total_interactions,views,reposts',
         };
 
         return match ($set) {
