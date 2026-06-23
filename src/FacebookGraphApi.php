@@ -2306,6 +2306,29 @@
         {
             $metricsToTry = !empty($customMetrics) ? $customMetrics : explode(',', (string)$this->resolveMetrics($metricSet, $customMetrics, PagePermission::PAGES_SHOW_LIST->insightsFields($metricSet)));
 
+            $deprecatedMap = [
+                'page_impressions_unique' => 'page_total_media_view_unique',
+                'page_impressions' => 'page_total_media_view_unique',
+                'page_fans' => 'page_follows',
+                'page_fan_adds_unique' => 'page_follows',
+                'page_engaged_users' => 'page_post_engagements',
+                'page_posts_impressions' => 'page_total_media_view_unique',
+                'page_posts_impressions_unique' => 'page_total_media_view_unique',
+                'page_consumptions' => 'page_post_engagements',
+                'page_consumptions_unique' => 'page_post_engagements',
+                'page_places_checkin_total' => 'page_actions_post_reactions_total',
+                'page_places_checkin_total_unique' => 'page_actions_post_reactions_total',
+            ];
+
+            foreach ($metricsToTry as $k => $m) {
+                $m = trim((string)$m);
+                if (isset($deprecatedMap[$m])) {
+                    $metricsToTry[$k] = $deprecatedMap[$m];
+                }
+            }
+            $metricsToTry = array_values(array_unique(array_filter($metricsToTry)));
+
+
             try {
                 $this->executePageInsightsRequestAndProcess($callback, $pageId, $since, $until, $metricsToTry);
             } catch (Exception $e) {
