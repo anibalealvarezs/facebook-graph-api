@@ -461,6 +461,8 @@
             array        $customErrors = [],
             bool         $ignoreAuth = false,
             mixed        $onFailure = null,
+            int          $retries = 0,
+            ?int         $maxRetries = null,
             ?TokenSample $tokenSample = null,
         ): mixed
         {
@@ -503,6 +505,8 @@
                     customErrors: $customErrors,
                     ignoreAuth: $ignoreAuth,
                     onFailure: $onFailure,
+                    retries: $retries,
+                    maxRetries: $maxRetries,
                 );
             } finally {
                 $this->inParentPerformRequest = $wasInParent;
