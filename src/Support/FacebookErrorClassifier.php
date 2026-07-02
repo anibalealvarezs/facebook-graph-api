@@ -129,12 +129,17 @@
             }
 
             if ($input instanceof RequestException && $input->hasResponse()) {
-                $body = $input->getResponse()->getBody();
-                $body->rewind();
-                $contents = json_decode($body->getContents(), true);
-                $body->rewind();
+                return self::extractPayloadFromResponseException($input);
+            }
 
-                return is_array($contents) ? $contents : [];
+            if ($input instanceof Exception) {
+                $prev = $input->getPrevious();
+                if ($prev instanceof RequestException && $prev->hasResponse()) {
+                    return self::extractPayloadFromResponseException($prev);
+                }
+
+                $asJson = json_decode($input->getMessage(), true);
+                return is_array($asJson) ? $asJson : [];
             }
 
             if (is_string($input)) {
@@ -144,6 +149,19 @@
             }
 
             return [];
+        }
+
+        /**
+         * @return array
+         */
+        private static function extractPayloadFromResponseException(RequestException $exception): array
+        {
+            $body = $exception->getResponse()->getBody();
+            $body->rewind();
+            $contents = json_decode($body->getContents(), true);
+            $body->rewind();
+
+            return is_array($contents) ? $contents : [];
         }
 
         /**
