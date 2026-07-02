@@ -111,6 +111,15 @@
 
         /**
          * @param mixed $input
+         * @return bool
+         */
+        public static function isPermanentAuthError(mixed $input): bool
+        {
+            return self::classify($input)['category'] === 'auth';
+        }
+
+        /**
+         * @param mixed $input
          * @return array
          */
         private static function extractPayload(mixed $input): array

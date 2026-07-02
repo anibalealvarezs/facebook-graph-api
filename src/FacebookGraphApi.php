@@ -39,6 +39,7 @@
     use GuzzleHttp\Exception\RequestException;
     use GuzzleHttp\Exception\GuzzleException;
     use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\ApiRequestException;
+    use Anibalealvarezs\ApiSkeleton\Classes\Exceptions\PermanentAuthenticationException;
     use InvalidArgumentException;
     use Psr\Log\LoggerInterface;
 
@@ -584,6 +585,10 @@
                     }
                     throw new FacebookRateLimitException($message, 4, $exception, array_filter($usageHeaders));
                 }
+            }
+
+            if (FacebookErrorClassifier::isPermanentAuthError($exception)) {
+                throw new PermanentAuthenticationException("Permanent authentication failure: " . $exception->getMessage(), $exception->getCode(), $exception);
             }
 
             return parent::handleException($exception, $onFailure);
