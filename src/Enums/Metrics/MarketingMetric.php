@@ -54,7 +54,10 @@ enum MarketingMetric: string
             [MetricBreakdown::AGE],
             [MetricBreakdown::GENDER],
             [MetricBreakdown::COUNTRY],
-            [MetricBreakdown::CITY]
+            [MetricBreakdown::CITY],
+            [MetricBreakdown::PUBLISHER_PLATFORM, MetricBreakdown::PLATFORM_POSITION],
+            [MetricBreakdown::PUBLISHER_PLATFORM],
+            [MetricBreakdown::PLATFORM_POSITION],
         ];
     }
 

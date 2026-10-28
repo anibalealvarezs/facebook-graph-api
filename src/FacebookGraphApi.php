@@ -2669,13 +2669,14 @@
                 'action_breakdowns' => 'action_type', // Default breakdown for actions
             ], $additionalParams);
 
-            if ($metricBreakdown) {
+            if ($metricBreakdown !== null && !empty($metricBreakdown)) {
                 $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
-            } else {
+            } elseif ($metricBreakdown === null) {
                 $query['breakdowns'] = implode(',', array_map(function ($b) {
                     return $b->value;
                 }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
             }
+            // If $metricBreakdown === [] or false, no breakdowns param is sent (true unbroken query)
 
             try {
                 return $this->executeMarketingInsightsRequest($adAccountId, $query);
@@ -3021,13 +3022,14 @@
                 'action_breakdowns' => 'action_type', // Default breakdown for actions
             ], $additionalParams);
 
-            if ($metricBreakdown) {
+            if ($metricBreakdown !== null && !empty($metricBreakdown)) {
                 $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
-            } else {
+            } elseif ($metricBreakdown === null) {
                 $query['breakdowns'] = implode(',', array_map(function ($b) {
                     return $b->value;
                 }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
             }
+            // If $metricBreakdown === [] or false, no breakdowns param is sent (true unbroken query)
 
             $insights = [];
             try {
@@ -3080,13 +3082,14 @@
                 'action_breakdowns' => 'action_type', // Default breakdown for actions
             ], $additionalParams);
 
-            if ($metricBreakdown) {
+            if ($metricBreakdown !== null && !empty($metricBreakdown)) {
                 $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
-            } else {
+            } elseif ($metricBreakdown === null) {
                 $query['breakdowns'] = implode(',', array_map(function ($b) {
                     return $b->value;
                 }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
             }
+            // If $metricBreakdown === [] or false, no breakdowns param is sent (true unbroken query)
 
             $insights = [];
             try {
@@ -3139,13 +3142,14 @@
                 'action_breakdowns' => 'action_type', // Default breakdown for actions
             ], $additionalParams);
 
-            if ($metricBreakdown) {
+            if ($metricBreakdown !== null && !empty($metricBreakdown)) {
                 $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
-            } else {
+            } elseif ($metricBreakdown === null) {
                 $query['breakdowns'] = implode(',', array_map(function ($b) {
                     return $b->value;
                 }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
             }
+            // If $metricBreakdown === [] or false, no breakdowns param is sent (true unbroken query)
 
             $insights = [];
             try {
@@ -3198,13 +3202,14 @@
                 'action_breakdowns' => 'action_type', // Default breakdown for actions
             ], $additionalParams);
 
-            if ($metricBreakdown) {
+            if ($metricBreakdown !== null && !empty($metricBreakdown)) {
                 $query['breakdowns'] = $this->resolveBreakdowns($metricBreakdown);
-            } else {
+            } elseif ($metricBreakdown === null) {
                 $query['breakdowns'] = implode(',', array_map(function ($b) {
                     return $b->value;
                 }, MarketingMetric::IMPRESSIONS->allowedBreakdowns()[0]));
             }
+            // If $metricBreakdown === [] or false, no breakdowns param is sent (true unbroken query)
 
             $insights = [];
             try {
@@ -3748,10 +3753,13 @@
 
         protected function isValidMetricBreakdown(MetricBreakdown|string|array $metricBreakdown, \BackedEnum|MetricGroup|array $data): bool
         {
-            if (is_string($metricBreakdown)) {
+            if (is_string($metricBreakdown) || $metricBreakdown === []) {
                 return true;
             }
             $provided = is_array($metricBreakdown) ? $metricBreakdown : [$metricBreakdown];
+            if (empty($provided)) {
+                return true;
+            }
             $allowedCombinations = [];
             if ($data instanceof \BackedEnum) {
                 $data = [$data];
@@ -3762,8 +3770,8 @@
                         $allowedCombinations[] = $item->allowedBreakdowns();
                     }
                 } else {
-                    $metric = Metric::tryFrom(trim($item));
-                    if ($metric) {
+                    $metric = MarketingMetric::tryFrom(trim($item)) ?? Metric::tryFrom(trim($item));
+                    if ($metric && method_exists($metric, 'allowedBreakdowns')) {
                         $allowedCombinations[] = $metric->allowedBreakdowns();
                     }
                 }

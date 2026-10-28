@@ -11,4 +11,6 @@ enum MetricBreakdown: string
     case FOLLOW_TYPE = 'follow_type';
     case MEDIA_PRODUCT_TYPE = 'media_product_type';
     case CONTACT_BUTTON_TYPE = 'contact_button_type';
+    case PUBLISHER_PLATFORM = 'publisher_platform';
+    case PLATFORM_POSITION = 'platform_position';
 }

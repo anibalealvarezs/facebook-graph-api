@@ -231,7 +231,10 @@ enum Metric: string
                 [MetricBreakdown::AGE],
                 [MetricBreakdown::GENDER],
                 [MetricBreakdown::COUNTRY],
-                [MetricBreakdown::CITY]
+                [MetricBreakdown::CITY],
+                [MetricBreakdown::PUBLISHER_PLATFORM, MetricBreakdown::PLATFORM_POSITION],
+                [MetricBreakdown::PUBLISHER_PLATFORM],
+                [MetricBreakdown::PLATFORM_POSITION],
             ],
             self::FOLLOWER_COUNT,
             self::ACCOUNTS_ENGAGED,

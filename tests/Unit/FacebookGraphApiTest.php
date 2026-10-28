@@ -1195,6 +1195,73 @@
          * @throws GuzzleException
          * @throws Exception
          */
+        public function testGetAdAccountInsightsUnbrokenPassSuccess(): void
+        {
+            $responseData = [
+                'data'   => [['impressions' => '1000', 'spend' => '50.00']],
+                'paging' => ['cursors' => ['after' => null]]
+            ];
+            $mock = new MockHandler([
+                new Response(200, [], json_encode($responseData)),
+            ]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                guzzleClient: $guzzle
+            );
+
+            $adAccountId = '123456789';
+            // Passing explicit empty array [] indicates Pass 0 (Unbroken)
+            $client->getAdAccountInsights($adAccountId, metricBreakdown: []);
+
+            $lastRequest = $mock->getLastRequest();
+            $uri = (string)$lastRequest->getUri();
+            parse_str(parse_url($uri, PHP_URL_QUERY), $queryParams);
+            $this->assertArrayNotHasKey('breakdowns', $queryParams);
+            $this->assertArrayHasKey('action_breakdowns', $queryParams);
+        }
+
+        /**
+         * @throws GuzzleException
+         * @throws Exception
+         */
+        public function testGetAdAccountInsightsPlacementSuccess(): void
+        {
+            $responseData = [
+                'data'   => [['impressions' => '1000', 'publisher_platform' => 'facebook']],
+                'paging' => ['cursors' => ['after' => null]]
+            ];
+            $mock = new MockHandler([
+                new Response(200, [], json_encode($responseData)),
+            ]);
+            $guzzle = $this->createMockedGuzzleClient(mock: $mock);
+            $client = new FacebookGraphApi(
+                userId: $this->userId,
+                appId: $this->appId,
+                appSecret: $this->appSecret,
+                redirectUrl: $this->redirectUrl,
+                pageId: $this->pageId,
+                longLivedUserAccessToken: $this->longLivedUserAccessToken,
+                guzzleClient: $guzzle
+            );
+
+            $adAccountId = '123456789';
+            $client->getAdAccountInsights($adAccountId, metricBreakdown: [MetricBreakdown::PUBLISHER_PLATFORM, MetricBreakdown::PLATFORM_POSITION]);
+
+            $lastRequest = $mock->getLastRequest();
+            $uri = (string)$lastRequest->getUri();
+            $this->assertStringContainsString('breakdowns='.urlencode('publisher_platform,platform_position'), $uri);
+        }
+
+        /**
+         * @throws GuzzleException
+         * @throws Exception
+         */
         public function testGetCampaignInsightsFromAdAccountSuccess(): void
         {
             $responseData = [
